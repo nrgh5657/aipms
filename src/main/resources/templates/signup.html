@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>회원가입 - 스마트파킹</title>
+  <link rel="stylesheet" href="/css/signup-style.css">
+</head>
+<body>
+  <div class="signup-container">
+    <!-- 헤더 -->
+    <div class="signup-header">
+      <div class="logo">
+        <div class="logo-icon">🚗</div>
+        <div class="logo-text">
+          <h1>스마트파킹</h1>
+          <p>안전하고 편리한 주차 서비스</p>
+        </div>
+      </div>
+      <div class="back-link">
+        <a href="index.html">← 메인으로 돌아가기</a>
+      </div>
+    </div>
+
+    <!-- 컨텐츠 래퍼 -->
+    <div class="content-wrapper">
+      <!-- 회원가입 카드 -->
+      <div class="signup-card">
+        <div class="signup-title">
+          <h2>회원가입</h2>
+          <p>스마트파킹 서비스에 가입하여<br>편리한 주차 서비스를 이용해보세요</p>
+        </div>
+
+        <!-- 회원가입 타입 선택 -->
+        <div class="signup-type-selector">
+          <button type="button" class="type-btn active" data-type="customer" onclick="switchSignupType('customer')">
+            <span class="type-icon">👤</span>
+            <span>일반 고객</span>
+          </button>
+          <button type="button" class="type-btn" data-type="admin" onclick="switchSignupType('admin')">
+            <span class="type-icon">👨‍💼</span>
+            <span>관리자</span>
+          </button>
+        </div>
+
+        <!-- 고객 회원가입 폼 -->
+        <form class="signup-form customer-form" id="customer-signup-form">
+          <div class="form-group">
+            <label for="customer-name">
+              <span class="label-icon">👤</span>
+              성명
+            </label>
+            <input type="text" id="customer-name" name="name" required placeholder="실명을 입력해주세요">
+          </div>
+
+          <div class="form-group">
+            <label for="customer-email">
+              <span class="label-icon">📧</span>
+              이메일
+            </label>
+            <input type="email" id="customer-email" name="email" required placeholder="example@email.com">
+            <div class="user-type-indicator" id="email-indicator"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="customer-phone">
+              <span class="label-icon">📱</span>
+              휴대폰 번호
+            </label>
+            <input type="tel" id="customer-phone" name="phone" required placeholder="010-1234-5678">
+          </div>
+
+          <div class="form-group">
+            <label for="customer-password">
+              <span class="label-icon">🔒</span>
+              비밀번호
+            </label>
+            <div class="password-wrapper">
+              <input type="password" id="customer-password" name="password" required placeholder="8자 이상 입력해주세요">
+              <button type="button" class="password-toggle" onclick="togglePassword('customer-password')">👁️</button>
+            </div>
+            <div class="password-strength" id="customer-password-strength"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="customer-password-confirm">
+              <span class="label-icon">🔒</span>
+              비밀번호 확인
+            </label>
+            <div class="password-wrapper">
+              <input type="password" id="customer-password-confirm" name="passwordConfirm" required placeholder="비밀번호를 다시 입력해주세요">
+              <button type="button" class="password-toggle" onclick="togglePassword('customer-password-confirm')">👁️</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="customer-car-number">
+              <span class="label-icon">🚗</span>
+              차량번호 (선택)
+            </label>
+            <input type="text" id="customer-car-number" name="carNumber" placeholder="12가3456">
+          </div>
+
+          <!-- 약관 동의 -->
+          <div class="terms-section">
+            <div class="terms-item">
+              <label class="checkbox-label">
+                <input type="checkbox" id="terms-service" required>
+                <span class="checkmark"></span>
+                <span>서비스 이용약관에 동의합니다 (필수)</span>
+              </label>
+              <a href="#" class="terms-link">보기</a>
+            </div>
+            <div class="terms-item">
+              <label class="checkbox-label">
+                <input type="checkbox" id="terms-privacy" required>
+                <span class="checkmark"></span>
+                <span>개인정보 처리방침에 동의합니다 (필수)</span>
+              </label>
+              <a href="#" class="terms-link">보기</a>
+            </div>
+            <div class="terms-item">
+              <label class="checkbox-label">
+                <input type="checkbox" id="terms-marketing">
+                <span class="checkmark"></span>
+                <span>마케팅 정보 수신에 동의합니다 (선택)</span>
+              </label>
+              <a href="#" class="terms-link">보기</a>
+            </div>
+          </div>
+
+          <button type="submit" class="signup-btn customer-mode">
+            <span class="btn-text">고객 회원가입</span>
+          </button>
+        </form>
+
+        <!-- 관리자 회원가입 폼 -->
+        <form class="signup-form admin-form" id="admin-signup-form" style="display: none;">
+          <div class="admin-notice">
+            <div class="notice-icon">⚠️</div>
+            <div class="notice-text">
+              <h4>관리자 계정 신청 안내</h4>
+              <p>관리자 계정은 별도 승인 과정이 필요합니다.<br>신청 후 영업일 기준 3-5일 내 검토 결과를 안내해드립니다.</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="admin-name">
+              <span class="label-icon">👤</span>
+              성명
+            </label>
+            <input type="text" id="admin-name" name="name" required placeholder="실명을 입력해주세요">
+          </div>
+
+          <div class="form-group">
+            <label for="admin-email">
+              <span class="label-icon">📧</span>
+              이메일
+            </label>
+            <input type="email" id="admin-email" name="email" required placeholder="회사 이메일을 권장합니다">
+          </div>
+
+          <div class="form-group">
+            <label for="admin-phone">
+              <span class="label-icon">📱</span>
+              휴대폰 번호
+            </label>
+            <input type="tel" id="admin-phone" name="phone" required placeholder="010-1234-5678">
+          </div>
+
+          <div class="form-group">
+            <label for="admin-department">
+              <span class="label-icon">🏢</span>
+              소속 부서
+            </label>
+            <select id="admin-department" name="department" required>
+              <option value="">부서를 선택해주세요</option>
+              <option value="facility">시설관리팀</option>
+              <option value="security">보안관리팀</option>
+              <option value="operation">운영관리팀</option>
+              <option value="maintenance">유지보수팀</option>
+              <option value="other">기타</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="admin-employee-id">
+              <span class="label-icon">🆔</span>
+              사번
+            </label>
+            <input type="text" id="admin-employee-id" name="employeeId" required placeholder="사번을 입력해주세요">
+          </div>
+
+          <div class="form-group">
+            <label for="admin-password">
+              <span class="label-icon">🔒</span>
+              비밀번호
+            </label>
+            <div class="password-wrapper">
+              <input type="password" id="admin-password" name="password" required placeholder="8자 이상, 영문+숫자+특수문자">
+              <button type="button" class="password-toggle" onclick="togglePassword('admin-password')">👁️</button>
+            </div>
+            <div class="password-strength" id="admin-password-strength"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="admin-password-confirm">
+              <span class="label-icon">🔒</span>
+              비밀번호 확인
+            </label>
+            <div class="password-wrapper">
+              <input type="password" id="admin-password-confirm" name="passwordConfirm" required placeholder="비밀번호를 다시 입력해주세요">
+              <button type="button" class="password-toggle" onclick="togglePassword('admin-password-confirm')">👁️</button>
+            </div>
+          </div>
+
+          <!-- 관리자 약관 동의 -->
+          <div class="terms-section">
+            <div class="terms-item">
+              <label class="checkbox-label">
+                <input type="checkbox" id="admin-terms-service" required>
+                <span class="checkmark"></span>
+                <span>관리자 서비스 이용약관에 동의합니다 (필수)</span>
+              </label>
+              <a href="#" class="terms-link">보기</a>
+            </div>
+            <div class="terms-item">
+              <label class="checkbox-label">
+                <input type="checkbox" id="admin-terms-privacy" required>
+                <span class="checkmark"></span>
+                <span>개인정보 처리방침에 동의합니다 (필수)</span>
+              </label>
+              <a href="#" class="terms-link">보기</a>
+            </div>
+            <div class="terms-item">
+              <label class="checkbox-label">
+                <input type="checkbox" id="admin-terms-security" required>
+                <span class="checkmark"></span>
+                <span>보안 정책에 동의합니다 (필수)</span>
+              </label>
+              <a href="#" class="terms-link">보기</a>
+            </div>
+          </div>
+
+          <button type="submit" class="signup-btn admin-mode">
+            <span class="btn-text">관리자 계정 신청</span>
+          </button>
+        </form>
+
+        <!-- 로그인 섹션 -->
+        <div class="login-section">
+          <p>이미 계정이 있으신가요?</p>
+          <a href="login.html" class="login-link">로그인하기</a>
+        </div>
+      </div>
+
+      <!-- 서비스 미리보기 -->
+      <div class="service-preview customer-mode" id="service-preview">
+        <h3 id="preview-title">고객 서비스 미리보기</h3>
+        <div class="preview-content" id="preview-content">
+          <!-- 고객 서비스 미리보기 -->
+          <div class="features customer-features">
+            <div class="feature">
+              <div class="feature-icon">🅿️</div>
+              <div class="feature-text">
+                <h4>스마트 예약</h4>
+                <p>원하는 시간에 미리 주차공간을 예약하세요</p>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="feature-icon">💳</div>
+              <div class="feature-text">
+                <h4>간편 결제</h4>
+                <p>앱을 통한 자동 결제로 편리하게</p>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="feature-icon">📱</div>
+              <div class="feature-text">
+                <h4>실시간 알림</h4>
+                <p>주차 현황과 요금을 실시간으로 확인</p>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="feature-icon">🔒</div>
+              <div class="feature-text">
+                <h4>안전한 주차</h4>
+                <p>24시간 CCTV 모니터링으로 안전하게</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 시스템 상태 -->
+        <div class="system-status">
+          <h4>📊 실시간 시스템 상태</h4>
+          <div class="status-indicators">
+            <div class="status-item">
+              <div class="status-dot online"></div>
+              <span>주차 시스템</span>
+              <span class="status-text">정상 운영</span>
+            </div>
+            <div class="status-item">
+              <div class="status-dot online"></div>
+              <span>결제 시스템</span>
+              <span class="status-text">정상 운영</span>
+            </div>
+            <div class="status-item">
+              <div class="status-dot online"></div>
+              <span>보안 시스템</span>
+              <span class="status-text">정상 운영</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 가입 혜택 안내 -->
+    <div class="benefits-section">
+      <h3>🎁 가입 혜택</h3>
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon">🆓</div>
+          <h4>첫 주차 무료</h4>
+          <p>회원가입 후 첫 주차 2시간 무료 이용</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">💰</div>
+          <h4>할인 혜택</h4>
+          <p>정기 이용 시 최대 30% 할인</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">🏆</div>
+          <h4>VIP 서비스</h4>
+          <p>우선 예약 및 전용 고객지원</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">🎯</div>
+          <h4>포인트 적립</h4>
+          <p>이용 금액의 3% 포인트 적립</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 성공 모달 -->
+  <div id="success-modal" class="modal">
+    <div class="modal-content">
+      <div class="success-icon">✅</div>
+      <h3 id="success-title">회원가입 완료!</h3>
+      <p id="success-message">스마트파킹에 가입해주셔서 감사합니다.</p>
+      <div class="success-actions">
+        <button type="button" class="modal-btn" onclick="goToLogin()">로그인하러 가기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 로딩 오버레이 -->
+  <div id="loading-overlay" class="loading-overlay" style="display: none;">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p id="loading-text">회원가입 처리 중...</p>
+    </div>
+  </div>
+
+  <script src="signup-script.js"></script>
+</body>
+</html>

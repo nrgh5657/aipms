@@ -1,0 +1,135 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트파킹 - 고객 대시보드</title>
+  <link rel="stylesheet" href="/css/customer-style.css">
+</head>
+<body>
+  <header>
+    <div class="top-bar">
+      <div class="logo">🚗 스마트파킹</div>
+      <div class="user-info">
+        <span class="welcome">안녕하세요, <strong>김고객</strong>님!</span>
+        <a href="index.html" class="logout-btn">로그아웃</a>
+      </div>
+    </div>
+    <nav class="main-menu">
+      <ul>
+        <li><a href="reservation.html">🅿️ 주차 예약</a></li>
+        <li><a href="payment.html">💳 요금 결제</a></li>
+        <li><a href="my-records.html">📊 이용 내역</a></li>
+        <li><a href="#" onclick="showProfile()">⚙️ 내 정보</a></li>
+        <li><a href="#" onclick="showSupport()">🎧 고객지원</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="dashboard-welcome">
+      <h2>마이 파킹 대시보드</h2>
+      <p>편리하고 안전한 주차 서비스를 이용해보세요!</p>
+    </section>
+
+    <!-- 빠른 액션 버튼들 -->
+    <section class="quick-actions">
+      <div class="action-grid">
+        <a href="reservation.html" class="action-card primary">
+          <div class="action-icon">🅿️</div>
+          <h3>지금 예약하기</h3>
+          <p>월/일 주차 예약</p>
+        </a>
+        <a href="payment.html" class="action-card">
+          <div class="action-icon">💳</div>
+          <h3>결제하기</h3>
+          <p>미납 요금 정산</p>
+        </a>
+        <a href="my-records.html" class="action-card">
+          <div class="action-icon">📊</div>
+          <h3>이용내역</h3>
+          <p>입출차 및 결제기록</p>
+        </a>
+        <a href="#" onclick="showQR()" class="action-card">
+          <div class="action-icon">📱</div>
+          <h3>QR 입차</h3>
+          <p>빠른 입차 코드</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- 현재 상태 -->
+    <section class="current-status">
+      <h3>현재 주차 상태</h3>
+      <div class="status-grid">
+        <div class="status-card active">
+          <div class="status-header">
+            <span class="status-badge">주차중</span>
+            <span class="parking-spot">A-15번</span>
+          </div>
+          <div class="status-details">
+            <p><strong>입차시간:</strong> 2025-07-02 09:30</p>
+            <p><strong>경과시간:</strong> <span id="elapsed-time">2시간 30분</span></p>
+            <p><strong>예상요금:</strong> ₩5,000</p>
+          </div>
+          <button class="exit-btn" onclick="requestExit()">출차 요청</button>
+        </div>
+        
+        <div class="status-card">
+          <div class="status-header">
+            <span class="status-badge upcoming">예정</span>
+            <span class="parking-spot">B-22번</span>
+          </div>
+          <div class="status-details">
+            <p><strong>예약시간:</strong> 2025-07-03 14:00</p>
+            <p><strong>이용시간:</strong> 3시간</p>
+            <p><strong>예약요금:</strong> ₩9,000</p>
+          </div>
+          <button class="cancel-btn" onclick="cancelReservation()">예약 취소</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 최근 이용내역 -->
+    <section class="recent-history">
+      <h3>최근 이용내역</h3>
+      <div class="history-list">
+        <div class="history-item">
+          <div class="history-date">07/01</div>
+          <div class="history-details">
+            <span class="history-spot">A-08번</span>
+            <span class="history-time">09:00-17:30 (8시간 30분)</span>
+            <span class="history-amount">₩15,000</span>
+          </div>
+          <span class="history-status completed">완료</span>
+        </div>
+        <div class="history-item">
+          <div class="history-date">06/28</div>
+          <div class="history-details">
+            <span class="history-spot">C-12번</span>
+            <span class="history-time">13:20-15:45 (2시간 25분)</span>
+            <span class="history-amount">₩4,500</span>
+          </div>
+          <span class="history-status completed">완료</span>
+        </div>
+        <div class="history-item">
+          <div class="history-date">06/25</div>
+          <div class="history-details">
+            <span class="history-spot">B-05번</span>
+            <span class="history-time">10:15-12:00 (1시간 45분)</span>
+            <span class="history-amount">₩3,000</span>
+          </div>
+          <span class="history-status completed">완료</span>
+        </div>
+      </div>
+      <a href="my-records.html" class="view-all-btn">전체 내역 보기 →</a>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
+  </footer>
+
+  <script src="/js/customer-script.js"></script>
+</body>
+</html>

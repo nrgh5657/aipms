@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트파킹 - 요금 결제</title>
+  <link rel="stylesheet" href="/css/customer-style.css">
+</head>
+<body>
+  <header>
+    <div class="top-bar">
+      <div class="logo">🚗 스마트파킹</div>
+      <div class="user-info">
+        <span class="welcome">안녕하세요, <strong>김고객</strong>님!</span>
+        <a href="index.html" class="logout-btn">로그아웃</a>
+      </div>
+    </div>
+    <nav class="main-menu">
+      <ul>
+        <li><a href="reservation.html">🅿️ 주차 예약</a></li>
+        <li><a href="payment.html" class="active">💳 요금 결제</a></li>
+        <li><a href="my-records.html">📊 이용 내역</a></li>
+        <li><a href="customer-dashboard.html">🏠 메인으로</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-header">
+      <h2>요금 결제</h2>
+      <p>미납 요금을 확인하고 간편하게 결제하세요!</p>
+    </section>
+
+    <div class="payment-container">
+      <!-- 미납 요금 현황 -->
+      <section class="unpaid-bills">
+        <h3>미납 요금 현황</h3>
+        <div class="bills-summary">
+          <div class="summary-card">
+            <span class="summary-label">총 미납액</span>
+            <span class="summary-amount">₩23,500</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">미납 건수</span>
+            <span class="summary-count">3건</span>
+          </div>
+        </div>
+
+        <div class="bills-list">
+          <div class="bill-item">
+            <input type="checkbox" id="bill1" class="bill-checkbox" checked>
+            <label for="bill1" class="bill-details">
+              <div class="bill-info">
+                <span class="bill-date">2025-07-01</span>
+                <span class="bill-location">A-08번 (8시간 30분)</span>
+                <span class="bill-period">09:00 - 17:30</span>
+              </div>
+              <div class="bill-amount">₩15,000</div>
+            </label>
+          </div>
+
+          <div class="bill-item">
+            <input type="checkbox" id="bill2" class="bill-checkbox" checked>
+            <label for="bill2" class="bill-details">
+              <div class="bill-info">
+                <span class="bill-date">2025-06-30</span>
+                <span class="bill-location">B-12번 (2시간 25분)</span>
+                <span class="bill-period">13:20 - 15:45</span>
+              </div>
+              <div class="bill-amount">₩4,500</div>
+            </label>
+          </div>
+
+          <div class="bill-item">
+            <input type="checkbox" id="bill3" class="bill-checkbox" checked>
+            <label for="bill3" class="bill-details">
+              <div class="bill-info">
+                <span class="bill-date">2025-06-28</span>
+                <span class="bill-location">C-05번 (3시간)</span>
+                <span class="bill-period">14:00 - 17:00</span>
+              </div>
+              <div class="bill-amount">₩4,000</div>
+            </label>
+          </div>
+        </div>
+
+        <div class="bill-actions">
+          <button class="select-all-btn" onclick="selectAllBills()">전체 선택</button>
+          <button class="deselect-all-btn" onclick="deselectAllBills()">선택 해제</button>
+        </div>
+      </section>
+
+      <!-- 결제 정보 -->
+      <section class="payment-info">
+        <h3>결제 정보</h3>
+        <div class="payment-summary">
+          <div class="summary-row">
+            <span>선택된 건수:</span>
+            <span id="selected-count">3건</span>
+          </div>
+          <div class="summary-row">
+            <span>선택 요금:</span>
+            <span id="selected-amount">₩23,500</span>
+          </div>
+          <div class="summary-row">
+            <span>할인:</span>
+            <span id="discount">-₩0</span>
+          </div>
+          <div class="summary-row total">
+            <span>총 결제금액:</span>
+            <span id="total-amount">₩23,500</span>
+          </div>
+        </div>
+
+        <!-- 할인 쿠폰 -->
+        <div class="coupon-section">
+          <h4>할인 쿠폰</h4>
+          <div class="coupon-input">
+            <input type="text" id="coupon-code" placeholder="쿠폰 코드를 입력하세요">
+            <button class="apply-coupon-btn" onclick="applyCoupon()">적용</button>
+          </div>
+          <div class="available-coupons">
+            <button class="coupon-btn" onclick="useCoupon('WELCOME10')">신규회원 10% 할인</button>
+            <button class="coupon-btn" onclick="useCoupon('MONTH5')">월 주차 5% 할인</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 결제 방법 선택 -->
+      <section class="payment-method">
+        <h3>결제 방법</h3>
+        <div class="method-grid">
+          <label class="method-option">
+            <input type="radio" name="payment" value="card" checked>
+            <div class="method-card">
+              <span class="method-icon">💳</span>
+              <span class="method-name">신용/체크카드</span>
+            </div>
+          </label>
+          
+          <label class="method-option">
+            <input type="radio" name="payment" value="account">
+            <div class="method-card">
+              <span class="method-icon">🏦</span>
+              <span class="method-name">계좌이체</span>
+            </div>
+          </label>
+          
+          <label class="method-option">
+            <input type="radio" name="payment" value="kakaopay">
+            <div class="method-card">
+              <span class="method-icon">💛</span>
+              <span class="method-name">카카오페이</span>
+            </div>
+          </label>
+          
+          <label class="method-option">
+            <input type="radio" name="payment" value="phone">
+            <div class="method-card">
+              <span class="method-icon">📱</span>
+              <span class="method-name">휴대폰결제</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- 자동결제 설정 -->
+      <section class="auto-payment">
+        <h3>자동결제 설정</h3>
+        <div class="auto-payment-options">
+          <label class="auto-option">
+            <input type="checkbox" id="auto-pay">
+            <span class="checkmark"></span>
+            <div class="auto-details">
+              <strong>자동결제 활성화</strong>
+              <p>이용 후 자동으로 결제되어 편리합니다</p>
+            </div>
+          </label>
+          
+          <div class="auto-settings" id="auto-settings" style="display: none;">
+            <select class="auto-method">
+              <option>결제 방법 선택</option>
+              <option value="card">등록된 카드 (*1234)</option>
+              <option value="account">등록된 계좌 (신한 *5678)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- 결제 버튼 -->
+      <section class="payment-action">
+        <div class="payment-terms">
+          <label>
+            <input type="checkbox" id="agree-terms" required>
+            <span class="checkmark"></span>
+            결제 서비스 이용약관에 동의합니다
+          </label>
+        </div>
+        
+        <button class="pay-btn" onclick="processPayment()">
+          <span class="pay-amount" id="pay-btn-amount">₩23,500</span>
+          <span class="pay-text">결제하기</span>
+        </button>
+      </section>
+
+      <!-- 결제내역 (최근) -->
+      <section class="recent-payments">
+        <h3>최근 결제내역</h3>
+        <div class="payment-history">
+          <div class="payment-item">
+            <div class="payment-date">2025-06-25</div>
+            <div class="payment-details">
+              <span>B-05번 이용료</span>
+              <span class="payment-amount">₩3,000</span>
+            </div>
+            <span class="payment-status completed">완료</span>
+          </div>
+          
+          <div class="payment-item">
+            <div class="payment-date">2025-06-20</div>
+            <div class="payment-details">
+              <span>월 주차 요금</span>
+              <span class="payment-amount">₩150,000</span>
+            </div>
+            <span class="payment-status completed">완료</span>
+          </div>
+        </div>
+        <a href="my-records.html" class="view-all-btn">전체 결제내역 보기 →</a>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
+  </footer>
+
+  <script src="/js/customer-script.js"></script>
+</body>
+</html>

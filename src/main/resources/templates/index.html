@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트파킹 - 통합관리시스템</title>
+  <link rel="stylesheet" href="/css/unified-style.css">
+</head>
+<body>
+  <header id="main-header">
+    <div class="top-bar">
+      <div class="logo">
+        <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-image" id="logo-image">
+        
+      </div>
+      <div class="auth-section" id="auth-section">
+        <!-- 로그인 전 -->
+        <div class="login-buttons" id="login-buttons">
+          <button class="login-btn unified-login" onclick="showUnifiedLogin()">로그인</button>
+          <button class="signup-btn" onclick="showSignupModal()">회원가입</button>
+        </div>
+        
+        <!-- 로그인 후 -->
+        <div class="user-info" id="user-info" style="display: none;">
+          <span class="welcome" id="welcome-text">환영합니다!</span>
+          <button class="logout-btn" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 동적 메뉴 -->
+    <nav class="main-menu" id="main-menu">
+      <!-- 로그인 전 메뉴 -->
+      <div class="guest-menu" id="guest-menu">
+        <ul>
+          <li><a href="#features">서비스 소개</a></li>
+          <li><a href="#pricing">요금 안내</a></li>
+          <li><a href="#location">위치 안내</a></li>
+          <li><a href="#contact">고객지원</a></li>
+        </ul>
+      </div>
+      
+      <!-- 고객 메뉴 -->
+      <div class="customer-menu" id="customer-menu" style="display: none;">
+        <ul>
+          <li><a href="#" onclick="loadPage('reservation')">🅿️ 주차 예약</a></li>
+          <li><a href="#" onclick="loadPage('payment')">💳 요금 결제</a></li>
+          <li><a href="#" onclick="loadPage('records')">📊 이용 내역</a></li>
+          <li><a href="#" onclick="showProfile()">⚙️ 내 정보</a></li>
+          <li><a href="#" onclick="showSupport()">🎧 고객지원</a></li>
+        </ul>
+      </div>
+      
+      <!-- 관리자 메뉴 -->
+      <div class="admin-menu" id="admin-menu" style="display: none;">
+        <ul>
+          <li><a href="#" onclick="loadPage('fire-detection')">🔥 화재 감지</a>
+            <ul>
+              <li><a href="#" onclick="loadPage('fire-logs')">📊 감지 로그</a></li>
+              <li><a href="#" onclick="loadPage('cctv')">📹 CCTV 보기</a></li>
+            </ul>
+          </li>
+          <li><a href="#" onclick="loadPage('approval')">✅ 주차 요청 승인</a>
+            <ul>
+              <li><a href="#" onclick="loadPage('approved')">✓ 승인 내역</a></li>
+              <li><a href="#" onclick="loadPage('rejected')">✗ 거절 내역</a></li>
+            </ul>
+          </li>
+          <li><a href="#" onclick="loadPage('pricing-mgmt')">💰 요금 정책 관리</a>
+            <ul>
+              <li><a href="#" onclick="loadPage('create-pricing')">➕ 요금 생성</a></li>
+              <li><a href="#" onclick="loadPage('edit-pricing')">✏️ 요금 수정</a></li>
+            </ul>
+          </li>
+          <li><a href="#" onclick="loadPage('traffic')">🚙 입출차 현황</a>
+            <ul>
+              <li><a href="#" onclick="loadPage('entry-records')">📥 입차 기록</a></li>
+              <li><a href="#" onclick="loadPage('exit-records')">📤 출차 기록</a></li>
+            </ul>
+          </li>
+          <li><a href="#" onclick="loadPage('reservations-mgmt')">📅 예약 관리</a>
+            <ul>
+              <li><a href="#" onclick="loadPage('reservation-requests')">📝 예약 신청</a></li>
+              <li><a href="#" onclick="loadPage('approval-requests')">⏳ 승인 요청</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <!-- 기본 화면 (로그인 전) -->
+    <section class="welcome-section" id="welcome-section">
+      <div class="hero">
+        <h1>스마트파킹에 오신 것을 환영합니다</h1>
+        <p>AI 기반 주차관리와 화재감지 시스템으로 안전하고 편리한 주차 서비스를 제공합니다</p>
+        <div class="cta-buttons">
+          <button class="cta-btn primary" onclick="showUnifiedLogin()">서비스 이용하기</button>
+          <button class="cta-btn secondary" onclick="showSignupModal()">첫 주차 무료 체험</button>
+        </div>
+      </div>
+      
+      <!-- 실시간 주차장 현황 -->
+      <div class="public-status">
+        <h2>실시간 주차장 현황</h2>
+        <div class="status-cards">
+          <div class="status-card">
+            <div class="status-icon">🅿️</div>
+            <div class="status-info">
+              <span class="status-number">247</span>
+              <span class="status-label">총 주차면</span>
+            </div>
+          </div>
+          <div class="status-card">
+            <div class="status-icon">🚗</div>
+            <div class="status-info">
+              <span class="status-number">189</span>
+              <span class="status-label">현재 이용중</span>
+            </div>
+          </div>
+          <div class="status-card">
+            <div class="status-icon">✨</div>
+            <div class="status-info">
+              <span class="status-number">58</span>
+              <span class="status-label">빈 주차면</span>
+            </div>
+          </div>
+          <div class="status-card">
+            <div class="status-icon">📊</div>
+            <div class="status-info">
+              <span class="status-number">76%</span>
+              <span class="status-label">이용률</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 서비스 소개 -->
+      <div class="features-preview" id="features">
+        <h2>주요 서비스</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🅿️</div>
+            <h3>스마트 예약</h3>
+            <p>시간/일일/월 주차 예약으로 편리하게 주차공간을 미리 확보하세요</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">💳</div>
+            <h3>간편 결제</h3>
+            <p>다양한 결제 방법과 자동결제로 편리하게 주차요금을 정산하세요</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔥</div>
+            <h3>화재 안전</h3>
+            <p>AI 화재감지 시스템으로 24시간 안전한 주차환경을 제공합니다</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <h3>실시간 모니터링</h3>
+            <p>CCTV와 IoT 센서로 실시간 주차장 현황을 확인할 수 있습니다</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 요금 안내 섹션 -->
+      <div class="pricing-section" id="pricing">
+        <h2>요금 안내</h2>
+        <div class="pricing-grid">
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3>시간 주차</h3>
+              <div class="price">₩2,000<span>/시간</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li>✓ 30분 단위 과금</li>
+              <li>✓ 최대 12시간</li>
+              <li>✓ QR 코드 입차</li>
+              <li>✓ 자동 결제</li>
+            </ul>
+          </div>
+          <div class="pricing-card popular">
+            <div class="popular-badge">인기</div>
+            <div class="pricing-header">
+              <h3>일일 주차</h3>
+              <div class="price">₩20,000<span>/일</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li>✓ 24시간 이용</li>
+              <li>✓ 입출차 자유</li>
+              <li>✓ 예약 우선권</li>
+              <li>✓ 무료 세차</li>
+            </ul>
+          </div>
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3>월 주차</h3>
+              <div class="price">₩150,000<span>/월</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li>✓ 고정 자리 제공</li>
+              <li>✓ 무제한 이용</li>
+              <li>✓ 전용 앱 서비스</li>
+              <li>✓ 24시간 고객지원</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 위치 안내 섹션 -->
+      <div class="location-section" id="location">
+        <h2>위치 안내</h2>
+        <div class="location-content">
+          <div class="location-info">
+            <h3>📍 세이프파킹 타워</h3>
+            <div class="address">
+              <p><strong>주소:</strong> 서울특별시 강남구 테헤란로 123</p>
+              <p><strong>지하철:</strong> 2호선 역삼역 3번 출구 도보 5분</p>
+              <p><strong>버스:</strong> 146, 360, 740번</p>
+            </div>
+            <div class="operating-hours">
+              <h4>🕒 운영시간</h4>
+              <p>24시간 운영 (연중무휴)</p>
+              <p>고객센터: 09:00 - 18:00</p>
+            </div>
+            <div class="facilities">
+              <h4>🏢 편의시설</h4>
+              <p>• 전기차 충전소 (20대)</p>
+              <p>• 세차장 및 정비소</p>
+              <p>• 편의점 및 카페</p>
+              <p>• 장애인 전용 구역</p>
+            </div>
+          </div>
+          <div class="location-map">
+            <div class="map-placeholder">
+              <div class="map-icon">🗺️</div>
+              <p>지도 서비스</p>
+              <button class="map-btn" onclick="openMap()">길찾기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 고객지원 섹션 -->
+      <div class="contact-section" id="contact">
+        <h2>고객지원</h2>
+        <div class="contact-grid">
+          <div class="contact-card">
+            <div class="contact-icon">📞</div>
+            <h3>전화 상담</h3>
+            <p>1588-1234</p>
+            <p class="contact-time">평일 09:00-18:00</p>
+          </div>
+          <div class="contact-card">
+            <div class="contact-icon">💬</div>
+            <h3>실시간 채팅</h3>
+            <p>앱 내 채팅 상담</p>
+            <p class="contact-time">24시간 운영</p>
+          </div>
+          <div class="contact-card">
+            <div class="contact-icon">📧</div>
+            <h3>이메일 문의</h3>
+            <p>support@smartparking.com</p>
+            <p class="contact-time">24시간 이내 답변</p>
+          </div>
+          <div class="contact-card">
+            <div class="contact-icon">🎧</div>
+            <h3>원격 지원</h3>
+            <p>기술적 문제 해결</p>
+            <p class="contact-time">평일 09:00-17:00</p>
+          </div>
+        </div>
+        
+        <div class="faq-section">
+          <h3>자주 묻는 질문</h3>
+          <div class="faq-list">
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Q. 예약 취소는 언제까지 가능한가요?</span>
+                <span class="faq-toggle">+</span>
+              </div>
+              <div class="faq-answer">
+                <p>이용 시간 30분 전까지 무료 취소가 가능합니다. 그 이후에는 취소 수수료가 부과됩니다.</p>
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Q. 전기차 충전은 어떻게 이용하나요?</span>
+                <span class="faq-toggle">+</span>
+              </div>
+              <div class="faq-answer">
+                <p>전기차 충전구역은 별도 예약이 필요하며, 충전 요금은 주차 요금과 별도로 부과됩니다.</p>
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Q. 월 주차 신청 방법을 알려주세요.</span>
+                <span class="faq-toggle">+</span>
+              </div>
+              <div class="faq-answer">
+                <p>앱에서 월 주차 신청 후 관리사무소에서 계약서 작성 및 결제를 진행하시면 됩니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 고객 대시보드 -->
+    <section class="customer-dashboard" id="customer-dashboard" style="display: none;">
+      <div class="dashboard-header">
+        <h2>마이 파킹 대시보드</h2>
+        <p>편리하고 안전한 주차 서비스를 이용해보세요!</p>
+      </div>
+
+      <!-- 빠른 액션 -->
+      <div class="quick-actions">
+        <div class="action-grid">
+          <div class="action-card primary" onclick="loadPage('reservation')">
+            <div class="action-icon">🅿️</div>
+            <h3>지금 예약하기</h3>
+            <p>월/일 주차 예약</p>
+          </div>
+          <div class="action-card" onclick="loadPage('payment')">
+            <div class="action-icon">💳</div>
+            <h3>결제하기</h3>
+            <p>미납 요금 정산</p>
+          </div>
+          <div class="action-card" onclick="loadPage('records')">
+            <div class="action-icon">📊</div>
+            <h3>이용내역</h3>
+            <p>입출차 및 결제기록</p>
+          </div>
+          <div class="action-card" onclick="showQR()">
+            <div class="action-icon">📱</div>
+            <h3>QR 입차</h3>
+            <p>빠른 입차 코드</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 현재 상태 -->
+      <div class="current-status">
+        <h3>현재 주차 상태</h3>
+        <div class="status-grid">
+          <div class="parking-status-card active">
+            <div class="status-header">
+              <span class="status-badge">주차중</span>
+              <span class="parking-spot">A-15번</span>
+            </div>
+            <div class="status-details">
+              <p><strong>입차시간:</strong> 2025-07-02 09:30</p>
+              <p><strong>경과시간:</strong> <span id="elapsed-time">2시간 30분</span></p>
+              <p><strong>예상요금:</strong> ₩5,000</p>
+            </div>
+            <button class="exit-btn" onclick="requestExit()">출차 요청</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 관리자 대시보드 -->
+    <section class="admin-dashboard" id="admin-dashboard" style="display: none;">
+      <div class="dashboard-header">
+        <h2>관리자 제어판</h2>
+        <p>주차장 운영 현황을 실시간으로 관리하세요</p>
+      </div>
+
+      <!-- 관리자 통계 -->
+      <div class="admin-stats">
+        <div class="stats-grid">
+          <div class="stat-card alert">
+            <div class="stat-icon">🚨</div>
+            <div class="stat-data">
+              <span class="stat-number">0</span>
+              <span class="stat-label">화재 경보</span>
+            </div>
+          </div>
+          <div class="stat-card pending">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-data">
+              <span class="stat-number">5</span>
+              <span class="stat-label">승인 대기</span>
+            </div>
+          </div>
+          <div class="stat-card revenue">
+            <div class="stat-icon">💰</div>
+            <div class="stat-data">
+              <span class="stat-number">₩2.3M</span>
+              <span class="stat-label">오늘 매출</span>
+            </div>
+          </div>
+          <div class="stat-card monitoring">
+            <div class="stat-icon">📹</div>
+            <div class="stat-data">
+              <span class="stat-number">24</span>
+              <span class="stat-label">CCTV 가동</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 관리자 빠른 액션 -->
+      <div class="admin-actions">
+        <div class="action-grid">
+          <div class="admin-action-card" onclick="loadPage('fire-detection')">
+            <div class="action-icon">🔥</div>
+            <h3>화재 감지</h3>
+            <p>실시간 화재감지 현황</p>
+          </div>
+          <div class="admin-action-card" onclick="loadPage('approval')">
+            <div class="action-icon">✅</div>
+            <h3>승인 관리</h3>
+            <p>주차 요청 승인</p>
+          </div>
+          <div class="admin-action-card" onclick="loadPage('traffic')">
+            <div class="action-icon">🚙</div>
+            <h3>입출차 현황</h3>
+            <p>실시간 교통 관리</p>
+          </div>
+          <div class="admin-action-card" onclick="loadPage('cctv')">
+            <div class="action-icon">📹</div>
+            <h3>CCTV 모니터링</h3>
+            <p>보안 카메라 관제</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 동적 컨텐츠 영역 -->
+    <section class="dynamic-content" id="dynamic-content" style="display: none;">
+      <!-- 여기에 각 메뉴별 컨텐츠가 동적으로 로드됩니다 -->
+    </section>
+  </main>
+
+  <!-- 회원가입 모달 -->
+  <div id="signup-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>회원가입</h3>
+        <button class="close-btn" onclick="closeSignupModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="signup-options">
+          <h4>회원가입 유형을 선택하세요</h4>
+          <div class="signup-type-buttons">
+            <a href="customer-signup.html" class="signup-type-btn customer">
+              <div class="signup-icon">👤</div>
+              <h3>일반 고객</h3>
+              <p>주차 서비스 이용</p>
+            </a>
+            <button class="signup-type-btn admin" onclick="showAdminSignupInfo()">
+              <div class="signup-icon">👨‍💼</div>
+              <h3>관리자</h3>
+              <p>시설 관리 담당자</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 스마트파킹 | 안전하고 효율적인 주차장 관리</p>
+  </footer>
+
+  <!-- 로고 이미지 오류 시 폴백 처리 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const logoImage = document.getElementById('logo-image');
+      
+      // 이미지 로드 실패 시 대체 텍스트로 처리
+      logoImage.addEventListener('error', function() {
+        this.style.display = 'none';
+        // 기존 텍스트 로고 스타일 유지
+      });
+      
+      // 이미지 로드 성공 시 텍스트 숨김
+      logoImage.addEventListener('load', function() {
+        const logoText = document.querySelector('.logo-text');
+        if (logoText) {
+          logoText.style.marginLeft = '10px'; // 이미지와 텍스트 간격
+        }
+      });
+    });
+  </script>
+  
+  <script src="/js/unified-script.js"></script>
+</body>
+</html>
