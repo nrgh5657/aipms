@@ -7,19 +7,12 @@
 
     <insert id="insertCctvLog" parameterType="com.aipms.domain.CctvStatusLogVO">
         INSERT INTO cctv_status_log (
-            camera_name,
-            location,
-            status,
-            last_connected,
-            log_type
-        )
-        VALUES (
-                   #{cameraName},
-                   #{location},
-                   #{status},
-                   #{lastConnected},
-                   #{logType}
-               )
+            camera_name, location, status, record_status,
+            log_type, last_connected, last_checked_at, created_at
+        ) VALUES (
+                     #{cameraName}, #{location}, #{status}, #{recordStatus},
+                     #{logType}, #{lastConnected}, #{lastCheckedAt}, #{createdAt}
+                 )
     </insert>
 
 </mapper>

@@ -1035,6 +1035,13 @@ body {
 .video-placeholder {
   text-align: center;
 }
+.video-placeholder img {
+  width: 100%;      /* 또는 원하는 값 예: 320px */
+  height: 100%;     /* 또는 예: 240px */
+  object-fit: cover; /* 비율 유지하며 꽉 채우기 */
+  position: relative;
+  z-index: 1;
+}
 
 .video-placeholder p {
   margin: 5px 0;

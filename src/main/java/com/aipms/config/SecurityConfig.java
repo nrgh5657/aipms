@@ -17,13 +17,15 @@ public class SecurityConfig {
                                 "/admin-dashboard",
                                 "/my-records",
                                 "/signup",
+                                "/fire/**",
                                 "/css/**", "/js/**", "/img/**").permitAll()
 
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .permitAll()
-                );
+                )
+                .csrf(csrf ->csrf.disable());
 
         return http.build();  // ✅ 이 줄이 꼭 필요합니다!
 

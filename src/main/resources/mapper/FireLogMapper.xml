@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.FireLogMapper">
+
+    <insert id="insertFireLog" parameterType="com.aipms.domain.FireLog">
+        INSERT INTO fire_alert_log (
+            label, confidence, video_url,image_path, detected_at, created_at
+        )
+        VALUES (
+                   #{label}, #{confidence}, #{videoUrl}, #{imagePath}, #{detectedAt}, #{createdAt}
+               )
+    </insert>
+
+</mapper>
