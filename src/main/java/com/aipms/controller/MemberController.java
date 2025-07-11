@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -40,6 +41,11 @@ public class MemberController {
     @GetMapping("/{email}")
     public ResponseEntity<Member> getMember(@PathVariable String email) {
         return ResponseEntity.ok(memberService.getMemberByEmail(email));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Member>> getAllMembers() {
+        return ResponseEntity.ok(memberService.findAllMembers());
     }
 
 

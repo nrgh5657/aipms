@@ -1031,59 +1031,66 @@ function saveFireNote(logId) {
 
 // 사용자 알림 표시
 function showUserAlert() {
-  const modalContent = `
-    <div style="max-width: 700px;">
-      <h2>🔔 주차장 이용자 알림</h2>
-      <div style="margin: 20px 0;">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th><input type="checkbox" onchange="toggleSelectAllUsers(this.checked)"></th>
-              <th>차량 번호</th>
-              <th>주차장 이용자</th>
-              <th>구분</th>
-              <th>전화번호</th>
-              <th>주차장 내 유무</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><input type="checkbox" class="user-checkbox"></td>
-              <td>555허 5556</td>
-              <td>소지섭</td>
-              <td>월주차</td>
-              <td>010-1234-5678</td>
-              <td><span style="color: #2f855a; font-weight: 600;">주차중</span></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" class="user-checkbox"></td>
-              <td>444헐 4444</td>
-              <td>이정재</td>
-              <td>일주차</td>
-              <td>010-2345-6789</td>
-              <td><span style="color: #e53e3e; font-weight: 600;">부재</span></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" class="user-checkbox"></td>
-              <td>777럭 7777</td>
-              <td>강민호</td>
-              <td>월주차</td>
-              <td>010-3456-7890</td>
-              <td><span style="color: #2f855a; font-weight: 600;">주차중</span></td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <div style="margin-top: 30px; display: flex; justify-content: center; gap: 15px;">
-          <button class="action-btn" onclick="closeModal()" style="padding: 12px 24px; border-radius: 25px;">Cancel</button>
-          <button class="action-btn primary" onclick="sendUserAlert()" style="padding: 12px 24px; border-radius: 25px;">Send</button>
+  fetch('/api/members/all')
+      .then(res => res.json())
+      .then(members => {
+        console.log("✅ 전체 members 응답:", members);
+        const rows = members.map(m => {
+          console.log("🚗", m.name, m.carNumber);
+          const parkingStatus = m.inParking
+              ? '<span style="color: #2f855a; font-weight: 600;">주차중</span>'
+              : '<span style="color: #e53e3e; font-weight: 600;">부재</span>';
+
+          const type = m.subscription ? '월주차' : '일주차';
+
+          return `
+          <tr>
+            <td><input type="checkbox" class="user-checkbox"></td>
+            <td>${m.carNumber || '-'}</td>
+            <td>${m.name || '-'}</td>
+            <td>${type}</td>
+            <td>${m.phone || '-'}</td>
+            <td>${parkingStatus}</td>
+          </tr>
+        `;
+        }).join('');
+
+        const modalContent = `
+        <div style="max-width: 700px;">
+          <h2>🔔 주차장 이용자 알림</h2>
+          <div style="margin: 20px 0;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" onchange="toggleSelectAllUsers(this.checked)"></th>
+                  <th>차량 번호</th>
+                  <th>주차장 이용자</th>
+                  <th>구분</th>
+                  <th>전화번호</th>
+                  <th>주차장 내 유무</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+            
+            <div style="margin-top: 30px; display: flex; justify-content: center; gap: 15px;">
+              <button class="action-btn" onclick="closeModal()" style="padding: 12px 24px; border-radius: 25px;">Cancel</button>
+              <button class="action-btn primary" onclick="sendUserAlert()" style="padding: 12px 24px; border-radius: 25px;">Send</button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  `;
-  
-  showModal(modalContent);
+      `;
+
+        showModal(modalContent);
+      })
+      .catch(err => {
+        console.error('❌ 회원 정보 불러오기 실패:', err);
+        showAlert('회원 정보를 불러올 수 없습니다.');
+      });
 }
+
 
 // 전체 사용자 선택 토글
 function toggleSelectAllUsers(checked) {

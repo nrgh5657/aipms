@@ -1,7 +1,7 @@
 package com.aipms.controller;
 
 import com.aipms.domain.FireLog;
-import com.aipms.dto.FireAlertDto;
+import com.aipms.dto.FireAlertTargetDto;
 import com.aipms.service.FireLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -28,4 +28,5 @@ public class FireLogController {
         fireLogService.updateLogs(log);
         return "노트 저장 완료";
     }
+
 }

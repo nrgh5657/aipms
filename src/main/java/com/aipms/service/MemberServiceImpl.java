@@ -8,6 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +44,11 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public Member getMemberByEmail(String email) {
         return memberMapper.findByEmail(email);
+    }
+
+    @Override
+    public List<Member> findAllMembers() {
+        return memberMapper.findAll();
     }
 
     @Override

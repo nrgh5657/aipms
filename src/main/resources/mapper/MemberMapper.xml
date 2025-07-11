@@ -22,4 +22,24 @@
         SELECT * FROM member WHERE email = #{email}
     </select>
 
+    <select id="findAll" resultType="com.aipms.domain.Member">
+        SELECT
+            member_id,
+            email,
+            password,
+            name,
+            phone,
+            role,
+            car_number,
+            agree_to_marketing,
+            agree_to_terms,
+            agree_to_privacy,
+            subscription,
+            kakao_id,
+            login_type,
+            reg_date
+        FROM member
+    </select>
+
+
 </mapper>

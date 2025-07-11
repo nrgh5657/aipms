@@ -1,19 +1,24 @@
 package com.aipms.service;
 
 import com.aipms.domain.FireLog;
+import com.aipms.domain.Member;
 import com.aipms.dto.FireAlertDto;
+import com.aipms.dto.FireAlertTargetDto;
 import com.aipms.mapper.FireLogMapper;
+import com.aipms.mapper.MemberMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class FireLogServiceImpl implements FireLogService{
 
     private final FireLogMapper fireLogMapper;
+    private final MemberMapper memberMapper;
 
     @Override
     public void saveFireLog(FireAlertDto dto) {
@@ -62,4 +67,7 @@ public class FireLogServiceImpl implements FireLogService{
     public void updateLogs(FireLog fireLog) {
         fireLogMapper.updateLogs(fireLog);
     }
+
+
+
 }
