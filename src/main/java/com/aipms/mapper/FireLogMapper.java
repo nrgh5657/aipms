@@ -2,6 +2,7 @@ package com.aipms.mapper;
 
 import com.aipms.domain.FireLog;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -11,4 +12,6 @@ public interface FireLogMapper {
     void insertFireLog(FireLog fireLog);
     //화재 감지 로그 읽어오기
     List<FireLog> findAllFireLogs();
+
+    void updateLogs(FireLog fireLog);
 }

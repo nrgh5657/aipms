@@ -52,5 +52,12 @@
         ORDER BY detected_at DESC
     </select>
 
+    <update id="updateLogs" parameterType="com.aipms.domain.FireLog">
+        UPDATE fire_alert_log
+        SET notes = #{notes},
+            admin_judgment = #{adminJudgment}
+        WHERE id = #{id}
+    </update>
+
 
 </mapper>

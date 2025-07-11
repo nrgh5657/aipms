@@ -1,12 +1,11 @@
 package com.aipms.controller;
 
 import com.aipms.domain.FireLog;
+import com.aipms.dto.FireAlertDto;
 import com.aipms.service.FireLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,5 +20,12 @@ public class FireLogController {
     @ResponseBody
     public List<FireLog> getFireLogsJson() {
         return fireLogService.getAllFireLogs();
+    }
+
+    @PostMapping("/update-note")
+    @ResponseBody
+    public String updateLogs(@RequestBody FireLog log) {
+        fireLogService.updateLogs(log);
+        return "노트 저장 완료";
     }
 }

@@ -57,4 +57,9 @@ public class FireLogServiceImpl implements FireLogService{
     public List<FireLog> getAllFireLogs() {
         return fireLogMapper.findAllFireLogs();
     }
+
+    @Override
+    public void updateLogs(FireLog fireLog) {
+        fireLogMapper.updateLogs(fireLog);
+    }
 }

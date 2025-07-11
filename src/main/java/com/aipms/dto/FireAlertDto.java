@@ -10,7 +10,8 @@ public class FireAlertDto {
     @JsonProperty("camera_id")
     private String cameraId;
 
-    private String label;                   // "fire", "smoke"
+    private String label; // "fire", "smoke"
+
     private double confidence;              // 0.87
 
     @JsonProperty("video_url")

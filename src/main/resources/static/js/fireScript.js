@@ -29,9 +29,9 @@ let parkingStatus = {
 const sampleFireData = [
   {
     id: '20250710001',
-    time: '2025-07-10 10:14',
+    detectedAt: '2025-07-10 10:14',
     location: '1층 주차장',
-    result: '화재',
+    label: '화재',
     confidence: '87.5%',
     adminJudgment: '화재 확인',
     alertStatus: '전송 완료',
@@ -40,9 +40,9 @@ const sampleFireData = [
   },
   {
     id: '20250710002',
-    time: '2025-07-10 10:32',
+    detectedAt: '2025-07-10 10:32',
     location: '2층 주차장',
-    result: '화재',
+    label: '화재',
     confidence: '94.3%',
     adminJudgment: '화재 확인',
     alertStatus: '전송 완료',
@@ -51,9 +51,9 @@ const sampleFireData = [
   },
   {
     id: '20250710003',
-    time: '2025-07-10 11:00',
+    detectedAt: '2025-07-10 11:00',
     location: '3층 주차장',
-    result: '정상',
+    label: '정상',
     confidence: '99.1%',
     adminJudgment: '정상',
     alertStatus: '전송 안함',
@@ -580,13 +580,13 @@ function createFireTableRow(item) {
     }
   };
   
-  const resultClass = item.result === '화재' ? 'status-fire' : 'status-normal';
+  const resultClass = item.label === 'fire' ? 'status-fire' : 'status-normal';
   
   row.innerHTML = `
     <td>${item.id}</td>
-    <td>${item.time}</td>
+    <td>${item.detectedAt}</td>
     <td>${item.location}</td>
-    <td><span class="${resultClass}">${item.result}</span></td>
+    <td><span class="${resultClass}">${item.label}</span></td>
     <td>${item.confidence}</td>
     <td>${item.adminJudgment}</td>
     <td>${item.alertStatus}</td>
@@ -881,9 +881,9 @@ function applyFireFilters(filter = null) {
   let filteredData = [...sampleFireData];
   
   if (activeFilter === 'fire') {
-    filteredData = filteredData.filter(item => item.result === '화재');
+    filteredData = filteredData.filter(item => item.label === '화재');
   } else if (activeFilter === 'normal') {
-    filteredData = filteredData.filter(item => item.result === '정상');
+    filteredData = filteredData.filter(item => item.label === '정상');
   }
   
   if (locationFilter) {
@@ -891,7 +891,7 @@ function applyFireFilters(filter = null) {
   }
   
   if (dateFilter) {
-    filteredData = filteredData.filter(item => item.time.startsWith(dateFilter));
+    filteredData = filteredData.filter(item => item.detectedAt.startsWith(dateFilter));
   }
   
   fireDetectionData = filteredData;
@@ -959,38 +959,74 @@ function showFireDetail(logId) {
     <div style="max-width: 600px;">
       <h2>🔥 AI Fire Detection Detail</h2>
       <div style="margin: 20px 0; padding: 20px; border: 2px solid #667eea; border-radius: 15px;">
-        <div style="background: #1a202c; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
-          <p style="font-size: 18px;">🔥 화재 이미지</p>
-          <p style="margin: 10px 0;">Log ID: ${fireItem.id}</p>
-        </div>
+          <div style="background: #1a202c; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+            <p style="font-size: 18px;">감지 이미지</p>
+            <img src="/images/fire/${fireItem.imagePath}" 
+                 alt="감지 이미지" 
+                 style="max-width:100%; height: 250px; border-radius: 10px;">
+            <p style="margin: 10px 0;">Log ID: ${fireItem.id}</p>
+          </div>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
           <div>
             <strong>Log ID:</strong> ${fireItem.id}<br>
             <strong>CCTV 위치:</strong> ${fireItem.location}<br>
-            <strong>감지시간:</strong> ${fireItem.time}
+            <strong>감지시간:</strong> ${fireItem.detectedAt}
           </div>
           <div>
-            <strong>AI 판별 결과:</strong> <span class="${fireItem.result === '화재' ? 'status-fire' : 'status-normal'}">${fireItem.result}</span><br>
-            <strong>관리자 판단:</strong> ${fireItem.adminJudgment}<br>
+            <strong>AI 판별 결과:</strong> <span class="${fireItem.label === 'fire' ? 'status-fire' : 'status-normal'}">${fireItem.label}</span><br>
+            <label for="fireJudgment"><strong>관리자 판단:</strong></label>
+              <select id="fireJudgment" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                <option value="판단 대기">판단 대기</option>
+                <option value="화재 확인">화재 확인</option>
+                <option value="오탐">오탐</option>
+                <option value="기타">기타</option>
+              </select>
+            <br>
             <strong>알림 전송:</strong> ${fireItem.alertTime}
           </div>
         </div>
         
         <div style="margin-bottom: 20px;">
           <strong>Notes</strong>
-          <textarea style="width: 100%; height: 80px; margin-top: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" readonly>${fireItem.notes}</textarea>
+          <textarea id="fireNote" style="width: 100%; height: 80px; margin-top: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">${fireItem.notes}</textarea>
         </div>
         
         <div style="display: flex; gap: 10px; justify-content: center;">
+          <button class="action-btn primary" onclick="saveFireNote(${fireItem.id})">저장</button>
           <button class="action-btn" onclick="closeModal()">닫기</button>
-          ${fireItem.result === '화재' ? '<button class="action-btn primary" onclick="showUserAlert()">주차장 사용자 알림</button>' : ''}
+          ${fireItem.label === 'fire' ? '<button class="action-btn danger" onclick="showUserAlert()">주차장 사용자 알림</button>' : ''}
         </div>
       </div>
     </div>
   `;
   
   showModal(modalContent);
+  document.getElementById('fireJudgment').value = fireItem.adminJudgment || '판단 대기';
+}
+
+//노트 저장
+function saveFireNote(logId) {
+  const noteValue = document.getElementById('fireNote').value;
+  const judgmentValue = document.getElementById('fireJudgment').value;
+
+  fetch(`/fire/update-note`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ id: logId, notes: noteValue, adminJudgment: judgmentValue })
+  })
+      .then(res => res.text())
+      .then(msg => {
+        showAlert(msg);
+        closeModal();
+        loadFireDetectionDataFromServer(); // 테이블 갱신
+      })
+      .catch(err => {
+        console.error("노트 저장 실패:", err);
+        showAlert("노트 저장 중 오류 발생");
+      });
 }
 
 // 사용자 알림 표시

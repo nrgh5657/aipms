@@ -11,4 +11,6 @@ public interface FireLogService {
     void saveFireLogFromScheduler(String cameraName, String location, String streamUrl);
 
     List<FireLog> getAllFireLogs();
+
+    void updateLogs(FireLog fireLog);
 }
