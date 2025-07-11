@@ -34,5 +34,23 @@
                )
     </insert>
 
+    <select id="findAllFireLogs" resultType="com.aipms.domain.FireLog">
+        SELECT
+            id,
+            label,
+            confidence,
+            video_url AS videoUrl,
+            image_path AS imagePath,
+            detected_at AS detectedAt,
+            created_at AS createdAt,
+            location,
+            admin_judgment AS adminJudgment,
+            alert_status AS alertStatus,
+            alert_time AS alertTime,
+            notes
+        FROM fire_alert_log
+        ORDER BY detected_at DESC
+    </select>
+
 
 </mapper>

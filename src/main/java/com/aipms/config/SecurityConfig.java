@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -36,13 +37,14 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/fireDetect/detected").permitAll()
                         .requestMatchers(
                                 "/", "/favicon.ico",
                                 "/css/**", "/js/**", "/images/**", "/img/**",
                                 "/member/login", "/member/signup", "/logout",
                                 "/admin-dashboard", "/my-records", "/signup",
                                 "/api/members/register","/api/members/check-email",
-                                "/fire/**"
+                                "/fire/**", "/fireDetect/detected"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -67,8 +69,17 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.sendRedirect("/member/login?error=unauth");
+                            String uri = request.getRequestURI();
+
+                            // Flask 서버에서 접근하는 화재 감지용 엔드포인트는 JSON 에러 반환
+                            if ("/fireDetect/detected".equals(uri)) {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                response.setContentType("application/json");
+                                response.getWriter().write("{\"error\": \"unauthorized\"}");
+                            } else {
+                                // 그 외 요청은 기존처럼 로그인 페이지로 리다이렉트
+                                response.sendRedirect("/member/login?error=unauth");
+                            }
                         })
                 )
                 .userDetailsService(customUserDetailsService); // ✅ 커스텀 UserDetailsService 등록

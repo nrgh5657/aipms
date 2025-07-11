@@ -3,6 +3,8 @@ package com.aipms.config;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -16,12 +18,12 @@ public class FireDetectionInitRunner {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void initFireDetection() {
         log.info("🚀 서버 시작 시 화재 감지 자동 요청 시작");
 
         List<Map<String, String>> cameras = List.of(
-                Map.of("camera_id", "1", "video_url", "http://192.168.0.101:8080/video"),
+                Map.of("camera_id", "1", "video_url", "http://192.168.10.81:8080/video"),
                 Map.of("camera_id", "2", "video_url", "0"),
                 Map.of("camera_id", "3", "video_url", "1")
         );
@@ -31,7 +33,7 @@ public class FireDetectionInitRunner {
                 Map<String, Object> request = Map.of(
                         "camera_id", cam.get("camera_id"),
                         "video_url", cam.get("video_url"),
-                        "callback_url", "http://localhost:8080/fire/detected"
+                        "callback_url", "http://localhost:8080/fireDetect/detected"
                 );
 
                 restTemplate.postForEntity("http://localhost:5000/stream-fire-detect", request, String.class);

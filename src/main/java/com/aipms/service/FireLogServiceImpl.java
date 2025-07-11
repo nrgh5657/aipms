@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -50,5 +51,10 @@ public class FireLogServiceImpl implements FireLogService{
             case "3": return "3층 주차장";
             default: return "알 수 없음";
         }
+    }
+
+    @Override
+    public List<FireLog> getAllFireLogs() {
+        return fireLogMapper.findAllFireLogs();
     }
 }

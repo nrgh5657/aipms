@@ -20,8 +20,15 @@ public class FireDetectionController {
 
     @PostMapping("/detected")
     public ResponseEntity<String> handleFireDetected(@RequestBody FireAlertDto dto) {
+        System.out.println("🔥 수신된 DTO: " + dto);
+        if (dto.getCameraId() == null || dto.getLabel() == null) {
+            return ResponseEntity.badRequest().body("❌ JSON 파싱 실패 또는 필드 누락");
+        }
+
         fireLogService.saveFireLog(dto);
         cctvLogService.saveFireLogAsRegular(dto);
         return ResponseEntity.ok("화재 로그 저장 완료");
     }
+
+
 }
