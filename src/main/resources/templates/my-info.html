@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트파킹 - 내 정보</title>
+  <link rel="stylesheet" th:href="@{/css/customer-style.css}">
+</head>
+<body>
+<header>
+  <div class="top-bar">
+    <div class="logo">
+      <a href="customer-dashboard.html">
+        <img th:src="@{/img/logo.png}" alt="스마트파킹 로고" class="logo-img">>
+      </a>
+    </div>
+
+    <div class="user-info">
+      <span class="welcome">안녕하세요, <strong>김고객</strong>님!</span>
+      <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
+      <a href="#" onclick="logout()" class="logout-btn">로그아웃</a>
+    </div>
+  </div>
+  <nav class="main-menu">
+    <ul>
+
+      <li><a href="reservation.html">🅿️ 주차 예약</a></li>
+      <li><a href="payment.html">💳 요금 결제</a></li>
+      <li><a href="my-records.html">📊 이용 내역</a></li>
+      <li><a href="my-info.html" class="active">⚙️ 내 정보</a></li>
+      <li><a href="support.html">🎧 고객지원</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <div class="page-header">
+    <h2>내 정보 관리</h2>
+    <p>개인정보, 차량정보, 알림설정을 관리할 수 있습니다</p>
+  </div>
+
+  <!-- 정보 탭 메뉴 -->
+  <section class="info-tabs">
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="switchInfoTab('personal')">개인정보</button>
+      <button class="tab-btn" onclick="switchInfoTab('vehicle')">차량정보</button>
+      <button class="tab-btn" onclick="switchInfoTab('notification')">알림설정</button>
+      <button class="tab-btn" onclick="switchInfoTab('security')">보안설정</button>
+    </div>
+  </section>
+
+  <!-- 개인정보 탭 -->
+  <section id="personal-info" class="info-content active">
+    <div class="info-card">
+      <h3>기본 정보</h3>
+      <form class="info-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">이름</label>
+            <input type="text" id="name" value="김고객" readonly>
+          </div>
+          <div class="form-group">
+            <label for="birth">생년월일</label>
+            <input type="date" id="birth" value="1990-05-15" readonly>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">휴대폰 번호</label>
+            <input type="tel" id="phone" value="010-1234-5678">
+          </div>
+          <div class="form-group">
+            <label for="email">이메일</label>
+            <input type="email" id="email" value="kim.customer@email.com">
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="address">주소</label>
+          <div class="address-input">
+            <input type="text" id="zipcode" placeholder="우편번호" readonly>
+            <button type="button" class="address-btn" onclick="searchAddress()">주소검색</button>
+          </div>
+          <input type="text" id="address" value="서울시 강남구 테헤란로 123" readonly>
+          <input type="text" id="address-detail" placeholder="상세주소" value="스마트빌딩 456호">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="save-btn" onclick="savePersonalInfo()">저장하기</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="info-card">
+      <h3>멤버십 정보</h3>
+      <div class="membership-info">
+        <div class="membership-card">
+          <div class="membership-badge">🌟 골드 멤버</div>
+          <div class="membership-details">
+            <p><strong>가입일:</strong> 2024-01-15</p>
+            <p><strong>총 이용횟수:</strong> 156회</p>
+            <p><strong>누적 결제금액:</strong> ₩2,450,000</p>
+            <p><strong>할인율:</strong> 5%</p>
+          </div>
+        </div>
+        <div class="benefit-list">
+          <h4>멤버십 혜택</h4>
+          <ul>
+            <li>월 주차 5% 할인</li>
+            <li>우선 예약 서비스</li>
+            <li>전용 고객센터 이용</li>
+            <li>포인트 적립 2배</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 차량정보 탭 -->
+  <section id="vehicle-info" class="info-content">
+    <div class="info-card">
+      <div class="card-header">
+        <h3>등록된 차량</h3>
+        <button class="add-btn" onclick="addVehicle()">차량 추가</button>
+      </div>
+
+      <div class="vehicle-list">
+        <div class="vehicle-item primary">
+          <div class="vehicle-badge">주차량</div>
+          <div class="vehicle-details">
+            <div class="vehicle-number">12가3456</div>
+            <div class="vehicle-info-detail">
+              <span>현대 아반떼 (2022년)</span>
+              <span>화이트</span>
+            </div>
+          </div>
+          <div class="vehicle-actions">
+            <button class="edit-btn" onclick="editVehicle('12가3456')">수정</button>
+            <button class="delete-btn" onclick="deleteVehicle('12가3456')">삭제</button>
+          </div>
+        </div>
+
+        <div class="vehicle-item">
+          <div class="vehicle-details">
+            <div class="vehicle-number">34나5678</div>
+            <div class="vehicle-info-detail">
+              <span>기아 K5 (2021년)</span>
+              <span>블랙</span>
+            </div>
+          </div>
+          <div class="vehicle-actions">
+            <button class="primary-btn" onclick="setPrimary('34나5678')">주차량 설정</button>
+            <button class="edit-btn" onclick="editVehicle('34나5678')">수정</button>
+            <button class="delete-btn" onclick="deleteVehicle('34나5678')">삭제</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 차량 추가/수정 폼 -->
+    <div id="vehicle-form" class="info-card" style="display: none;">
+      <h3 id="vehicle-form-title">차량 정보 추가</h3>
+      <form class="vehicle-add-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="car-number">차량번호</label>
+            <input type="text" id="car-number" placeholder="예: 12가3456" maxlength="8">
+          </div>
+          <div class="form-group">
+            <label for="car-model">차종</label>
+            <input type="text" id="car-model" placeholder="예: 현대 아반떼">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="car-year">연식</label>
+            <select id="car-year">
+              <option value="">선택</option>
+              <option value="2024">2024년</option>
+              <option value="2023">2023년</option>
+              <option value="2022">2022년</option>
+              <option value="2021">2021년</option>
+              <option value="2020">2020년</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="car-color">색상</label>
+            <select id="car-color">
+              <option value="">선택</option>
+              <option value="화이트">화이트</option>
+              <option value="블랙">블랙</option>
+              <option value="실버">실버</option>
+              <option value="레드">레드</option>
+              <option value="블루">블루</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" onclick="cancelVehicleForm()">취소</button>
+          <button type="button" class="save-btn" onclick="saveVehicle()">저장</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- 알림설정 탭 -->
+  <section id="notification-info" class="info-content">
+    <div class="info-card">
+      <h3>알림 설정</h3>
+      <div class="notification-settings">
+        <div class="notification-item">
+          <div class="notification-details">
+            <strong>예약 확인 알림</strong>
+            <p>주차 예약이 완료되었을 때 알림을 받습니다</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-details">
+            <strong>출차 임박 알림</strong>
+            <p>예약 종료 30분 전에 알림을 받습니다</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-details">
+            <strong>결제 완료 알림</strong>
+            <p>결제가 완료되었을 때 알림을 받습니다</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-details">
+            <strong>마케팅 알림</strong>
+            <p>할인 이벤트 및 혜택 정보를 받습니다</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-details">
+            <strong>야간 알림 차단</strong>
+            <p>밤 10시~아침 8시 사이에는 알림을 받지 않습니다</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="notification-channels">
+        <h4>알림 수신 방법</h4>
+        <div class="channel-options">
+          <label class="channel-option">
+            <input type="checkbox" checked>
+            <span class="checkmark"></span>
+            <span>SMS</span>
+          </label>
+          <label class="channel-option">
+            <input type="checkbox" checked>
+            <span class="checkmark"></span>
+            <span>이메일</span>
+          </label>
+          <label class="channel-option">
+            <input type="checkbox" checked>
+            <span class="checkmark"></span>
+            <span>앱 푸시</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="save-btn" onclick="saveNotificationSettings()">설정 저장</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 보안설정 탭 -->
+  <section id="security-info" class="info-content">
+    <div class="info-card">
+      <h3>비밀번호 변경</h3>
+      <form class="password-form">
+        <div class="form-group">
+          <label for="current-password">현재 비밀번호</label>
+          <input type="password" id="current-password" placeholder="현재 비밀번호를 입력하세요">
+        </div>
+
+        <div class="form-group">
+          <label for="new-password">새 비밀번호</label>
+          <input type="password" id="new-password" placeholder="새 비밀번호를 입력하세요">
+          <small>8자 이상, 영문+숫자+특수문자 조합</small>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm-password">새 비밀번호 확인</label>
+          <input type="password" id="confirm-password" placeholder="새 비밀번호를 다시 입력하세요">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="save-btn" onclick="changePassword()">비밀번호 변경</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="info-card">
+
+
+      <div class="info-card danger-zone">
+        <h3>계정 관리</h3>
+        <div class="danger-actions">
+          <div class="danger-item">
+            <div class="danger-info">
+              <strong>회원 탈퇴</strong>
+              <p>계정을 완전히 삭제합니다. 이 작업은 되돌릴 수 없습니다.</p>
+            </div>
+            <button class="danger-btn" onclick="deleteAccount()">회원 탈퇴</button>
+          </div>
+        </div>
+      </div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
+</footer>
+
+<script th:src="@{/js/customer-script.js}"></script>
+
+</body>
+</html>

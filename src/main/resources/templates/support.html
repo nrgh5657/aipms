@@ -1,0 +1,935 @@
+<!DOCTYPE html >
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트파킹 - 고객지원</title>
+  <link rel="stylesheet" th:href="@{/css/customer-style.css}">
+</head>
+<body>
+<header>
+  <div class="top-bar">
+    <div class="logo">
+      <a href="customer-dashboard.html">
+        <img th:src="@{/img/logo.png}" alt="스마트파킹 로고" class="logo-img">
+      </a>
+    </div>
+
+    <div class="user-info">
+      <span class="welcome">안녕하세요, <strong>김고객</strong>님!</span>
+      <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
+      <a href="#" onclick="logout()" class="logout-btn">로그아웃</a>
+    </div>
+  </div>
+  <nav class="main-menu">
+    <ul>
+
+      <li><a href="reservation.html">🅿️ 주차 예약</a></li>
+      <li><a href="payment.html">💳 요금 결제</a></li>
+      <li><a href="my-records.html">📊 이용 내역</a></li>
+      <li><a href="my-info.html">⚙️ 내 정보</a></li>
+      <li><a href="support.html" class="active">🎧 고객지원</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <div class="page-header">
+    <h2>고객지원 센터</h2>
+    <p>궁금한 점이 있으시면 언제든지 문의해주세요</p>
+  </div>
+
+  <!-- 연락처 정보 -->
+  <section class="contact-info">
+    <div class="contact-grid">
+      <div class="contact-card phone">
+        <div class="contact-icon">📞</div>
+        <h3>전화 문의</h3>
+        <div class="contact-number">1588-1234</div>
+        <p>평일 09:00 - 18:00<br>주말/공휴일 10:00 - 17:00</p>
+        <button class="contact-btn" onclick="makeCall()">전화하기</button>
+      </div>
+
+      <div class="contact-card email">
+        <div class="contact-icon">📧</div>
+        <h3>이메일 문의</h3>
+        <div class="contact-email">sp@parking.com</div>
+        <p>24시간 접수 가능<br>평균 답변시간: 2시간 이내</p>
+        <button class="contact-btn" onclick="sendEmail()">메일보내기</button>
+      </div>
+
+      <div class="contact-card chat">
+        <div class="contact-icon">💬</div>
+        <h3>실시간 채팅</h3>
+        <div class="chat-status online">상담사 대기중</div>
+        <p>평일 09:00 - 18:00<br>실시간 1:1 상담 서비스</p>
+        <button class="contact-btn chat-btn" onclick="startChat()">채팅시작</button>
+      </div>
+
+      <div class="contact-card visit">
+        <div class="contact-icon">🏢</div>
+        <h3>방문 문의</h3>
+        <div class="visit-address">서울시 강남구 테헤란로 123</div>
+        <p>평일 09:00 - 18:00<br>점심시간 12:00 - 13:00</p>
+        <button class="contact-btn" onclick="showMap()">위치보기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ 섹션 -->
+  <section class="faq-section">
+    <h3>자주 묻는 질문 (FAQ)</h3>
+
+    <div class="faq-categories">
+      <button class="category-btn active" onclick="filterFAQ('all')">전체</button>
+      <button class="category-btn" onclick="filterFAQ('reservation')">예약</button>
+      <button class="category-btn" onclick="filterFAQ('payment')">결제</button>
+      <button class="category-btn" onclick="filterFAQ('service')">서비스</button>
+      <button class="category-btn" onclick="filterFAQ('account')">계정</button>
+    </div>
+
+    <div class="faq-search">
+      <input type="text" id="faq-search" placeholder="궁금한 내용을 검색해보세요..." onkeyup="searchFAQ()">
+      <button class="search-btn">🔍</button>
+    </div>
+
+    <div class="faq-list">
+      <!-- 예약 관련 FAQ -->
+      <div class="faq-item" data-category="reservation">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>예약을 취소하고 싶은데 어떻게 하나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>예약 취소는 다음과 같은 방법으로 가능합니다:</p>
+          <ul>
+            <li><strong>온라인:</strong> 대시보드 > 이용내역 > 예약내역에서 "취소" 버튼 클릭</li>
+            <li><strong>전화:</strong> 고객센터 1588-1234로 연락</li>
+            <li><strong>취소 수수료:</strong> 예약 시간 2시간 전까지는 무료, 이후 취소시 20% 수수료</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="reservation">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>주차장이 만차일 때는 어떻게 하나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>주차장 만차 시 대응 방법:</p>
+          <ul>
+            <li><strong>대기 등록:</strong> 대기자 명단에 등록하여 자리가 나면 자동 알림</li>
+            <li><strong>근처 주차장:</strong> 시스템에서 인근 이용 가능한 주차장 추천</li>
+            <li><strong>시간 연장:</strong> 기존 이용자의 시간 연장 여부에 따라 자리 확보</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="reservation">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>예약 없이 당일 주차가 가능한가요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>당일 주차는 주차장 상황에 따라 가능합니다:</p>
+          <ul>
+            <li><strong>현장 결제:</strong> 주차장 입구에서 QR코드로 즉시 결제 후 이용</li>
+            <li><strong>실시간 확인:</strong> 앱에서 실시간 주차 가능 여부 확인</li>
+            <li><strong>요금:</strong> 당일 요금은 예약 요금보다 10% 할증</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 결제 관련 FAQ -->
+      <div class="faq-item" data-category="payment">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>어떤 결제 방법을 사용할 수 있나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>다양한 결제 방법을 지원합니다:</p>
+          <ul>
+            <li><strong>카드 결제:</strong> 신용카드, 체크카드</li>
+            <li><strong>간편 결제:</strong> 카카오페이, 네이버페이, 페이코</li>
+            <li><strong>계좌 이체:</strong> 실시간 계좌이체</li>
+            <li><strong>포인트:</strong> 적립된 포인트 사용</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="payment">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>자동결제는 어떻게 설정하나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>자동결제 설정 방법:</p>
+          <ul>
+            <li><strong>설정 경로:</strong> 결제하기 > 자동결제 설정 > 결제수단 등록</li>
+            <li><strong>장점:</strong> 매번 결제할 필요 없이 자동으로 정산</li>
+            <li><strong>안전:</strong> 토큰 방식으로 카드 정보 안전 보관</li>
+            <li><strong>해지:</strong> 언제든지 해지 가능</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="payment">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>영수증은 어디서 확인할 수 있나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>영수증 확인 및 출력:</p>
+          <ul>
+            <li><strong>온라인:</strong> 이용내역 > 결제내역에서 영수증 보기</li>
+            <li><strong>이메일:</strong> 결제 완료 시 등록된 이메일로 자동 발송</li>
+            <li><strong>현장:</strong> 주차장 관리실에서 출력 가능</li>
+            <li><strong>세금계산서:</strong> 사업자는 세금계산서 발행 가능</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 서비스 관련 FAQ -->
+      <div class="faq-item" data-category="service">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>주차장 내에서 차량 손상이 발생했을 때는?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>차량 손상 발생 시 처리 절차:</p>
+          <ul>
+            <li><strong>즉시 신고:</strong> 고객센터 1588-1234로 즉시 연락</li>
+            <li><strong>현장 확인:</strong> 관리실 직원과 함께 손상 부위 확인</li>
+            <li><strong>보험 처리:</strong> 주차장 보험으로 손해 배상 처리</li>
+            <li><strong>CCTV:</strong> 필요시 CCTV 영상 확인</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="service">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>주차장 이용 시간은 어떻게 되나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>주차장 이용 시간 안내:</p>
+          <ul>
+            <li><strong>24시간 이용:</strong> 대부분의 주차장은 24시간 이용 가능</li>
+            <li><strong>입출차 시간:</strong> 특별한 제한 없음</li>
+            <li><strong>관리실:</strong> 평일 09:00-18:00, 주말 10:00-17:00</li>
+            <li><strong>응급상황:</strong> 24시간 비상연락망 운영</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="service">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>전기차 충전은 가능한가요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>전기차 충전 서비스:</p>
+          <ul>
+            <li><strong>충전소 위치:</strong> 대부분의 주차장에 전기차 충전소 설치</li>
+            <li><strong>충전 요금:</strong> 주차비 별도, 전력 사용량에 따라 과금</li>
+            <li><strong>예약:</strong> 전기차 충전 구역 우선 예약 가능</li>
+            <li><strong>앱 연동:</strong> 충전 현황 실시간 확인</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 계정 관련 FAQ -->
+      <div class="faq-item" data-category="account">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>비밀번호를 잊어버렸어요</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>비밀번호 재설정 방법:</p>
+          <ul>
+            <li><strong>온라인:</strong> 로그인 페이지 > 비밀번호 찾기 클릭</li>
+            <li><strong>휴대폰 인증:</strong> 등록된 휴대폰으로 인증번호 전송</li>
+            <li><strong>새 비밀번호 설정:</strong> 인증 완료 후 새 비밀번호 설정</li>
+            <li><strong>전화 문의:</strong> 고객센터로 연락하여 본인 확인 후 재설정</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="account">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>회원가입은 어떻게 하나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>회원가입 절차:</p>
+          <ul>
+            <li><strong>1단계:</strong> 웹사이트 또는 앱에서 "회원가입" 클릭</li>
+            <li><strong>2단계:</strong> 개인정보 입력 (이름, 휴대폰, 이메일)</li>
+            <li><strong>3단계:</strong> 휴대폰 인증번호 확인</li>
+            <li><strong>4단계:</strong> 차량정보 등록 및 약관 동의</li>
+            <li><strong>완료:</strong> 가입 완료 후 즉시 서비스 이용 가능</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="account">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>개인정보는 안전하게 보호되나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>개인정보 보호 정책:</p>
+          <ul>
+            <li><strong>암호화:</strong> 모든 개인정보는 256bit SSL 암호화로 보호</li>
+            <li><strong>최소 수집:</strong> 서비스 이용에 필요한 최소한의 정보만 수집</li>
+            <li><strong>동의 철회:</strong> 언제든지 개인정보 이용 동의 철회 가능</li>
+            <li><strong>정기 폐기:</strong> 서비스 탈퇴시 즉시 개인정보 폐기</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 문의하기 폼 -->
+  <section class="inquiry-section">
+    <h3>1:1 문의하기</h3>
+    <div class="inquiry-card">
+      <form class="inquiry-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="inquiry-type">문의 유형</label>
+            <select id="inquiry-type" required>
+              <option value="">선택해주세요</option>
+              <option value="reservation">예약 관련</option>
+              <option value="payment">결제 관련</option>
+              <option value="service">서비스 이용</option>
+              <option value="account">계정 관리</option>
+              <option value="complaint">불만/건의</option>
+              <option value="other">기타</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inquiry-urgent">긴급도</label>
+            <select id="inquiry-urgent">
+              <option value="normal">일반</option>
+              <option value="urgent">긴급</option>
+              <option value="very-urgent">매우 긴급</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="inquiry-title">제목</label>
+          <input type="text" id="inquiry-title" placeholder="문의 제목을 입력해주세요" required>
+        </div>
+
+        <div class="form-group">
+          <label for="inquiry-content">내용</label>
+          <textarea id="inquiry-content" rows="6" placeholder="문의 내용을 자세히 입력해주세요" required></textarea>
+          <small>최소 10자 이상 입력해주세요</small>
+        </div>
+
+        <div class="form-group">
+          <label for="inquiry-file">첨부파일</label>
+          <input type="file" id="inquiry-file" accept="image/*,.pdf,.doc,.docx" multiple>
+          <small>이미지, PDF, 문서 파일만 가능 (최대 5MB, 3개까지)</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reply-email">답변 받을 이메일</label>
+            <input type="email" id="reply-email" value="kim.customer@email.com">
+          </div>
+          <div class="form-group">
+            <label for="reply-phone">답변 받을 휴대폰</label>
+            <input type="tel" id="reply-phone" value="010-1234-5678">
+          </div>
+        </div>
+
+        <div class="agreement-section">
+          <label class="agreement-item">
+            <input type="checkbox" required>
+            <span class="checkmark"></span>
+            <span>개인정보 수집 및 이용에 동의합니다</span>
+            <a href="#" class="agreement-link">[자세히보기]</a>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" onclick="resetInquiryForm()">취소</button>
+          <button type="submit" class="submit-btn" onclick="submitInquiry(event)">문의하기</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- 공지사항 -->
+  <section class="notice-section">
+    <h3>공지사항</h3>
+    <div class="notice-list">
+      <div class="notice-item important">
+        <div class="notice-badge">중요</div>
+        <div class="notice-title">시스템 정기 점검 안내 (7월 10일 02:00-04:00)</div>
+        <div class="notice-date">2025-07-07</div>
+      </div>
+
+      <div class="notice-item">
+        <div class="notice-title">여름휴가철 주차장 이용 안내</div>
+        <div class="notice-date">2025-07-05</div>
+      </div>
+
+      <div class="notice-item">
+        <div class="notice-title">새로운 결제 수단 추가 안내 (페이코, 토스페이)</div>
+        <div class="notice-date">2025-07-03</div>
+      </div>
+
+      <div class="notice-item">
+        <div class="notice-title">전기차 충전소 확대 설치 완료</div>
+        <div class="notice-date">2025-07-01</div>
+      </div>
+    </div>
+    <a href="#" class="view-all-notice">공지사항 전체보기 →</a>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
+</footer>
+
+<!-- 실시간 채팅 모달 -->
+<div id="chat-modal" class="modal">
+  <div class="chat-container">
+    <div class="chat-header">
+      <h3>실시간 상담</h3>
+      <button class="close-chat" onclick="closeChat()">×</button>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="message system">
+        <div class="message-content">
+          안녕하세요! 스마트파킹 고객센터입니다.<br>
+          무엇을 도와드릴까요?
+        </div>
+        <div class="message-time">14:32</div>
+      </div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." onkeypress="handleChatEnter(event)">
+      <button onclick="sendChatMessage()">전송</button>
+    </div>
+  </div>
+</div>
+
+<script th:src="@{/js/customer-script.js}"></script>
+<script>
+  // FAQ 관련 함수들
+  function filterFAQ(category) {
+    // 카테고리 버튼 활성화
+    document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // FAQ 항목 필터링
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => {
+      if (category === 'all' || item.dataset.category === category) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  function searchFAQ() {
+    const searchTerm = document.getElementById('faq-search').value.toLowerCase();
+    const faqItems = document.querySelectorAll('.faq-item');
+
+    faqItems.forEach(item => {
+      const question = item.querySelector('.faq-question span').textContent.toLowerCase();
+      const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+
+      if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  function toggleFAQ(element) {
+    const faqItem = element.parentElement;
+    const answer = faqItem.querySelector('.faq-answer');
+    const toggle = element.querySelector('.faq-toggle');
+
+    if (answer.style.display === 'block') {
+      answer.style.display = 'none';
+      toggle.textContent = '+';
+      faqItem.classList.remove('active');
+    } else {
+      // 다른 열린 FAQ 닫기
+      document.querySelectorAll('.faq-item.active').forEach(item => {
+        item.querySelector('.faq-answer').style.display = 'none';
+        item.querySelector('.faq-toggle').textContent = '+';
+        item.classList.remove('active');
+      });
+
+      answer.style.display = 'block';
+      toggle.textContent = '−';
+      faqItem.classList.add('active');
+    }
+  }
+
+  // 연락처 관련 함수들
+  function makeCall() {
+    if (confirm('1588-1234로 전화를 걸까요?')) {
+      showToast('전화 앱을 실행합니다.', 'info');
+    }
+  }
+
+  function sendEmail() {
+    window.location.href = 'mailto:support@smartparking.com?subject=문의사항&body=안녕하세요. 문의드릴 내용이 있습니다.';
+  }
+
+  function showMap() {
+    alert('주소: 서울시 강남구 테헤란로 123\n\n지도 앱으로 연결됩니다.');
+  }
+
+  // 실시간 채팅 관련 함수들
+  function startChat() {
+    document.getElementById('chat-modal').style.display = 'flex';
+    document.getElementById('chat-input').focus();
+  }
+
+  function closeChat() {
+    document.getElementById('chat-modal').style.display = 'none';
+  }
+
+  function handleChatEnter(event) {
+    if (event.key === 'Enter') {
+      sendChatMessage();
+    }
+  }
+
+  function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    // 사용자 메시지 추가
+    addChatMessage(message, 'user');
+    input.value = '';
+
+    // 상담사 응답 시뮬레이션
+    setTimeout(() => {
+      const responses = [
+        '네, 확인해드리겠습니다. 잠시만 기다려주세요.',
+        '추가로 궁금한 점이 있으시면 언제든지 말씀해주세요.',
+        '도움이 되셨나요? 다른 문의사항이 있으시면 말씀해주세요.',
+        '해당 내용은 담당 부서에 전달하여 빠른 시일 내에 답변드리겠습니다.'
+      ];
+      const response = responses[Math.floor(Math.random() * responses.length)];
+      addChatMessage(response, 'agent');
+    }, 1000 + Math.random() * 2000);
+  }
+
+  function addChatMessage(message, sender) {
+    const messagesContainer = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+
+    const now = new Date();
+    const time = now.getHours().toString().padStart(2, '0') + ':' +
+            now.getMinutes().toString().padStart(2, '0');
+
+    messageDiv.innerHTML = `
+        <div class="message-content">${message}</div>
+        <div class="message-time">${time}</div>
+      `;
+
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  // 문의하기 폼 관련 함수들
+  function submitInquiry(event) {
+    event.preventDefault();
+
+    const type = document.getElementById('inquiry-type').value;
+    const title = document.getElementById('inquiry-title').value;
+    const content = document.getElementById('inquiry-content').value;
+
+    if (!type || !title || !content) {
+      showToast('필수 항목을 모두 입력해주세요.', 'error');
+      return;
+    }
+
+    if (content.length < 10) {
+      showToast('문의 내용을 10자 이상 입력해주세요.', 'error');
+      return;
+    }
+
+    showLoading('문의를 접수하는 중...');
+
+    setTimeout(() => {
+      hideLoading();
+      const inquiryId = 'INQ' + Date.now();
+      showToast(`문의가 접수되었습니다! 문의번호: ${inquiryId}`, 'success');
+      resetInquiryForm();
+    }, 2000);
+  }
+
+  function resetInquiryForm() {
+    document.querySelector('.inquiry-form').reset();
+  }
+
+  // 모달 외부 클릭시 닫기
+  document.addEventListener('click', function(event) {
+    const chatModal = document.getElementById('chat-modal');
+    if (event.target === chatModal) {
+      closeChat();
+    }
+  });
+</script>
+
+<style>
+  /* 추가 스타일 */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .contact-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .contact-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-color: #4299e1;
+  }
+
+  .contact-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .contact-card h3 {
+    margin-bottom: 1rem;
+    color: #2d3748;
+    font-weight: 600;
+  }
+
+  .contact-number, .contact-email {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #4299e1;
+    margin-bottom: 0.5rem;
+  }
+
+  .contact-card p {
+    color: #718096;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  .contact-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: #4299e1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .contact-btn:hover {
+    background: #3182ce;
+  }
+
+  .chat-status.online {
+    color: #48bb78;
+    font-weight: 600;
+  }
+
+  .chat-btn {
+    background: #48bb78;
+  }
+
+  .chat-btn:hover {
+    background: #38a169;
+  }
+
+  .faq-categories {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .category-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .category-btn.active,
+  .category-btn:hover {
+    background: #4299e1;
+    color: white;
+    border-color: #4299e1;
+  }
+
+  .faq-search {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  .faq-search input {
+    width: 100%;
+    padding: 1rem 3rem 1rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  .search-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+
+  .faq-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+  }
+
+  .faq-question {
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.3s ease;
+  }
+
+  .faq-question:hover {
+    background: #f7fafc;
+  }
+
+  .faq-question span:first-child {
+    font-weight: 600;
+    color: #2d3748;
+  }
+
+  .faq-toggle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4299e1;
+  }
+
+  .faq-answer {
+    display: none;
+    padding: 0 1.5rem 1.5rem;
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .faq-answer ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .faq-answer li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
+
+  .inquiry-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .agreement-section {
+    margin: 1.5rem 0;
+  }
+
+  .agreement-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .agreement-link {
+    color: #4299e1;
+    text-decoration: none;
+    margin-left: 0.5rem;
+  }
+
+  .notice-list {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+  }
+
+  .notice-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f7fafc;
+    transition: background 0.3s ease;
+  }
+
+  .notice-item:hover {
+    background: #f7fafc;
+  }
+
+  .notice-item:last-child {
+    border-bottom: none;
+  }
+
+  .notice-badge {
+    padding: 0.25rem 0.75rem;
+    background: #e53e3e;
+    color: white;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 1rem;
+  }
+
+  .notice-title {
+    flex: 1;
+    font-weight: 600;
+    color: #2d3748;
+  }
+
+  .notice-date {
+    color: #718096;
+    font-size: 0.9rem;
+  }
+
+  .view-all-notice {
+    display: inline-block;
+    margin-top: 1rem;
+    color: #4299e1;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  /* 채팅 모달 스타일 */
+  .chat-container {
+    background: white;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    max-height: 500px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .close-chat {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #718096;
+  }
+
+  .chat-messages {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    max-height: 300px;
+  }
+
+  .message {
+    margin-bottom: 1rem;
+  }
+
+  .message.user {
+    text-align: right;
+  }
+
+  .message.user .message-content {
+    background: #4299e1;
+    color: white;
+    margin-left: 2rem;
+  }
+
+  .message.agent .message-content,
+  .message.system .message-content {
+    background: #f7fafc;
+    color: #2d3748;
+    margin-right: 2rem;
+  }
+
+  .message-content {
+    display: inline-block;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    margin-bottom: 0.25rem;
+    max-width: 80%;
+    word-wrap: break-word;
+  }
+
+  .message-time {
+    font-size: 0.8rem;
+    color: #718096;
+  }
+
+  .chat-input {
+    display: flex;
+    padding: 1rem;
+    border-top: 1px solid #e2e8f0;
+    gap: 0.5rem;
+  }
+
+  .chat-input input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+  }
+
+  .chat-input button {
+    padding: 0.75rem 1.5rem;
+    background: #4299e1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+</style>
+</body>
+</html>

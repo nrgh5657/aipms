@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.MemberMapper">
+
+    <insert id="insertMember" parameterType="com.aipms.domain.Member">
+        INSERT INTO member (
+            email, password, name, phone, car_number,
+            agree_to_terms, agree_to_privacy, agree_to_marketing,
+            role, subscription, kakao_id, login_type, reg_date
+        ) VALUES (
+                     #{email}, #{password}, #{name}, #{phone}, #{carNumber},
+                     #{agreeToTerms}, #{agreeToPrivacy}, #{agreeToMarketing},
+                     #{role}, #{subscription}, #{kakaoId}, #{loginType}, #{regDate}
+                 )
+    </insert>
+
+
+    <select id="findByEmail" parameterType="String" resultType="com.aipms.domain.Member">
+        SELECT * FROM member WHERE email = #{email}
+    </select>
+
+</mapper>

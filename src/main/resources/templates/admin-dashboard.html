@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Parking Management System - 관리자</title>
-  <link rel="stylesheet" href="/css/admin-dashboard.css">
+  <title>AI Parking Management System - 대시보드</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <!-- 헤더 -->
+
+  <!-- 헤더: 맨위 상단 파트 -->
   <header class="header">
     <div class="header-top">
       <div class="header-info">
@@ -15,560 +16,228 @@
         <span id="screenName">화면명: 관리자 통합 대시보드</span>
       </div>
       <div class="header-info">
-        <span>사용자: Admin</span>
-        <span id="currentDate">작성일: 2025-07-01</span>
+        <span>사용자: <span id="adminName">Admin</span></span>
+        <span id="currentDate">작성일: 2025-07-10</span>
       </div>
     </div>
-    
+
+    <!-- 헤더: 메인 헤더(제목, 버튼 등) -->
     <div class="main-header">
       <div class="logo-container">
-        <div class="system-title">AI 주차 관리 시스템</div>
+        <div class="system-title">🅿 AI 주차 관리 시스템</div>
        </div>
+
       <div class="header-actions">
+        <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
         <button class="header-btn" onclick="showNotifications()">🔔 알림</button>
         <button class="header-btn" onclick="showSettings()">⚙️ 설정</button>
+        <button class="header-btn" onclick="showAdminRegister()">👥 관리자 등록</button>
         <button class="header-btn logout" onclick="logout()">로그아웃</button>
       </div>
     </div>
     
     <nav class="nav-tabs">
-      <button class="nav-tab active" data-tab="dashboard">대시보드</button>
-      <button class="nav-tab" data-tab="fire-detection">화재 감지</button>
-      <button class="nav-tab" data-tab="pms">주차 관리</button>
-      <button class="nav-tab" data-tab="parking-fee">요금 정책</button>
+      <a href="/management/admin" class="nav-tab active">대시보드</a>
+      <a href="/management/parking" class="nav-tab">주차 관리</a>
+      <a href="/management/fee" class="nav-tab">요금 관리</a>
+      <a href="/management/fireManage" class="nav-tab">화재 관리</a>
+      <a href="/management/member" class="nav-tab">회원 관리</a>
+      <a href="/management/systemLogs" class="nav-tab">시스템 로그</a>
     </nav>
   </header>
 
-  <!-- 사이드바 표시 버튼 (사이드바가 숨겨졌을 때) -->
-  <button class="sidebar-show-btn" id="sidebarShowBtn" onclick="toggleSidebar()">▶</button>
-
-  <!-- 사이드바 -->
+  <!-- 좌측 사이드바-->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <h3>관리 메뉴</h3>
-      <button class="sidebar-toggle" onclick="toggleSidebar()">◀</button>
     </div>
-    
+
     <nav class="sidebar-nav">
-      <div class="nav-section">
-        <h4>🔥 화재 관리</h4>
-        <ul>
-          <li><a href="#" onclick="loadPage('fire-detection')">화재 감지 로그</a></li>
-          <li><a href="#" onclick="loadPage('fire-detail')">상세 정보</a></li>
-          <li><a href="#" onclick="loadPage('fire-alert')">알림 관리</a></li>
-          <li><a href="#" onclick="loadPage('cctv')">CCTV 모니터링</a></li>
-        </ul>
-      </div>
-      
       <div class="nav-section">
         <h4>🅿️ 주차 관리</h4>
         <ul>
-          <li><a href="#" onclick="loadPage('parking-requests')">승인 요청</a></li>
-          <li><a href="#" onclick="loadPage('parking-approval')">승인 처리</a></li>
-          <li><a href="#" onclick="loadPage('parking-log')">입출차 로그</a></li>
-          <li><a href="#" onclick="loadPage('reservation-status')">예약 현황</a></li>
+          <li><a href="/management/parking">주차 현황 확인</a></li>
+          <li><a href="/management/parking">주차 공간 관리</a></li>
         </ul>
       </div>
       
       <div class="nav-section">
         <h4>💰 요금 관리</h4>
         <ul>
-          <li><a href="#" onclick="loadPage('fee-policy')">요금 정책</a></li>
-          <li><a href="#" onclick="loadPage('fee-create')">요금 생성</a></li>
-          <li><a href="#" onclick="loadPage('revenue')">매출 현황</a></li>
+          <li><a href="/management/fee">요금 정책 관리</a></li>
+          <li><a href="/management/fee">환불 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>🔥 화재 관리</h4>
+        <ul>
+          <li><a href="/management/fireManage">화재 기록 관리</a></li>
+          <li><a href="/management/fireCctv">CCTV 영상 확인</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>👥 회원 관리</h4>
+        <ul>
+          <li><a href="/management/member">회원 정보 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>📊 시스템 로그</h4>
+        <ul>
+          <li><a href="/management/systemLogs">시스템 상태</a></li>
         </ul>
       </div>
     </nav>
   </aside>
+<!--공통된 디자인: 디자인 수정하지 말 것-->
+
+
 
   <!-- 메인 컨테이너 -->
   <main class="main-content">
     <!-- 대시보드 개요 -->
     <section class="dashboard-overview" id="dashboard-overview">
-      <div class="stats-grid">
-        <div class="stat-card alert">
-          <div class="stat-icon">🚨</div>
-          <div class="stat-content">
-            <h3>화재 경보</h3>
-            <div class="stat-number" id="fireAlerts">0</div>
-            <div class="stat-change">+0 오늘</div>
+      <div class="content-section">
+        <div class="section-header">
+          <h2>📊 관리자 대시보드</h2>
+          <div class="section-actions">
+            <button class="action-btn" onclick="refreshDashboard()">새로고침</button>
+            <button class="action-btn primary" onclick="exportDashboardData()">리포트 내보내기</button>
           </div>
         </div>
-        
-        <div class="stat-card pending">
-          <div class="stat-icon">⏳</div>
-          <div class="stat-content">
-            <h3>승인 대기</h3>
-            <div class="stat-number" id="pendingApprovals">7</div>
-            <div class="stat-change">-2 어제 대비</div>
+
+        <div class="stats-grid">
+          <div class="stat-card alert">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-content">
+              <h3>화재 알림</h3>
+              <div class="stat-number" id="fireAlerts">2</div>
+              <div class="stat-change">오늘 발생한 화재 감지</div>
+            </div>
           </div>
-        </div>
-        
-        <div class="stat-card revenue">
-          <div class="stat-icon">💰</div>
-          <div class="stat-content">
-            <h3>오늘 매출</h3>
-            <div class="stat-number" id="todayRevenue">₩2.3M</div>
-            <div class="stat-change">+15% 어제 대비</div>
+
+          <div class="stat-card pending">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+              <h3>승인 대기</h3>
+              <div class="stat-number" id="pendingApprovals">7</div>
+              <div class="stat-change">처리 대기 중인 요청</div>
+            </div>
           </div>
-        </div>
-        
-        <div class="stat-card occupancy">
-          <div class="stat-icon">🅿️</div>
-          <div class="stat-content">
-            <h3>주차장 이용률</h3>
-            <div class="stat-number" id="occupancyRate">76%</div>
-            <div class="stat-change">189/247 대</div>
+
+          <div class="stat-card revenue">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+              <h3>오늘 매출</h3>
+              <div class="stat-number" id="todayRevenue">₩2.1M</div>
+              <div class="stat-change">전일 대비 +12%</div>
+            </div>
           </div>
-        </div>
-      </div>
-      
-      <!-- 주차장 현황 -->
-      <div class="parking-status-section">
-        <div class="parking-status-card">
-          <h3>🅿️ 주차장 현황</h3>
-          <div class="parking-status-content">
-            <div class="parking-status-item">
-              <span class="status-label">총 주차면:</span>
-              <span class="status-value" id="totalSpaces">20대</span>
-            </div>
-            <div class="parking-status-item">
-              <span class="status-label">월주차 한도:</span>
-              <span class="status-value" id="monthlyLimit">8대</span>
-            </div>
-            <div class="parking-status-item">
-              <span class="status-label">현재 월주차:</span>
-              <span class="status-value" id="currentMonthly">5대</span>
-            </div>
-            <div class="parking-status-item">
-              <span class="status-label">현재 일주차:</span>
-              <span class="status-value" id="currentDaily">8대</span>
-            </div>
-            <div class="parking-status-item">
-              <span class="status-label">사용 가능:</span>
-              <span class="status-value" id="availableSpaces">7대</span>
+
+          <div class="stat-card occupancy">
+            <div class="stat-icon">🅿️</div>
+            <div class="stat-content">
+              <h3>주차장 점유율</h3>
+              <div class="stat-number" id="occupancyRate">75%</div>
+              <div class="stat-change">20대 중 15대 사용 중</div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <!-- 실시간 모니터링 -->
-      <div class="monitoring-section">
-        <div class="monitoring-card">
-          <h3>🔥 실시간 화재 감지</h3>
-          <div class="monitoring-content">
+
+        <!-- 주차장 현황 -->
+        <div class="parking-status-section">
+          <div class="parking-status-card">
+            <h3>🅿 실시간 주차장 현황</h3>
+            <div class="parking-status-content">
+              <div class="parking-status-item">
+                <span class="status-label">전체 주차 공간</span>
+                <span class="status-value">20대</span>
+              </div>
+              <div class="parking-status-item">
+                <span class="status-label">월주차 승인</span>
+                <span class="status-value" id="currentMonthly">5대</span>
+              </div>
+              <div class="parking-status-item">
+                <span class="status-label">일주차 승인</span>
+                <span class="status-value" id="currentDaily">8대</span>
+              </div>
+              <div class="parking-status-item">
+                <span class="status-label">이용 가능</span>
+                <span class="status-value" id="availableSpaces">7대</span>
+              </div>
+              <div class="parking-status-item">
+                <span class="status-label">월주차 한도</span>
+                <span class="status-value" id="monthlyParkingCount">5/8</span>
+              </div>
+              <div class="parking-status-item">
+                <span class="status-label">승인 대기</span>
+                <span class="status-value" id="waitingCount">4</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 실시간 모니터링 -->
+        <div class="monitoring-section">
+          <div class="monitoring-card">
+            <h3>🔥 화재 감지 시스템</h3>
             <div class="status-indicator safe">
-              <span class="status-dot"></span>
-              <span>시스템 정상</span>
+              <div class="status-dot"></div>
+              <span>시스템 정상 작동</span>
             </div>
-            <div class="last-check">마지막 확인: <span id="lastFireCheck">방금 전</span></div>
-          </div>
-        </div>
-        
-        <div class="monitoring-card">
-          <h3>📹 CCTV 상태</h3>
-          <div class="monitoring-content">
+            <div class="last-check">마지막 점검: <span id="lastFireCheck">방금 전</span></div>
+            
             <div class="cctv-grid">
-              <div class="cctv-item active">1층 (정상)</div>
-              <div class="cctv-item active">2층 (정상)</div>
-              <div class="cctv-item active">3층 (정상)</div>
-              <div class="cctv-item offline">4층 (점검중)</div>
+              <div class="cctv-item active">CCTV 1번</div>
+              <div class="cctv-item active">CCTV 2번</div>
+              <div class="cctv-item active">CCTV 3번</div>
+              <div class="cctv-item offline">CCTV 4번</div>
             </div>
           </div>
-        </div>
-        
-        <div class="monitoring-card">
-          <h3>🚙 실시간 입출차</h3>
-          <div class="monitoring-content">
+
+          <div class="monitoring-card">
+            <h3>🚗 오늘 주차장 이용</h3>
             <div class="traffic-stats">
               <div class="traffic-item">
                 <span class="traffic-label">입차</span>
-                <span class="traffic-number">+12</span>
+                <div class="traffic-number">42</div>
               </div>
               <div class="traffic-item">
                 <span class="traffic-label">출차</span>
-                <span class="traffic-number">-8</span>
+                <div class="traffic-number">38</div>
+              </div>
+              <div class="traffic-item">
+                <span class="traffic-label">현재</span>
+                <div class="traffic-number">15</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="monitoring-card">
+            <h3>♻️ 시스템 상태</h3>
+            <div class="status-indicator safe">
+              <div class="status-dot"></div>
+              <span>모든 시스템 정상</span>
+            </div>
+            <div style="margin-top: 15px;">
+              <div style="margin-bottom: 8px;">
+                <span style="font-size: 12px; color: #4a5568;">CPU 사용률</span>
+                <span style="float: right; font-size: 12px; font-weight: 600;">34%</span>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <span style="font-size: 12px; color: #4a5568;">메모리 사용률</span>
+                <span style="float: right; font-size: 12px; font-weight: 600;">67%</span>
+              </div>
+              <div>
+                <span style="font-size: 12px; color: #4a5568;">디스크 사용률</span>
+                <span style="float: right; font-size: 12px; font-weight: 600;">45%</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- 화재 감지 섹션 -->
-    <section class="content-section" id="fire-detection-section" style="display: none;">
-      <div class="section-header">
-        <h2>Fire Detection Log</h2>
-        <div class="section-actions">
-          <button class="action-btn" onclick="exportFireLog()">📊 내보내기</button>
-          <button class="action-btn primary" onclick="refreshFireLog()">🔄 새로고침</button>
-        </div>
-      </div>
-      
-      <div class="filter-section">
-        <div class="filter-group">
-          <button class="filter-btn active" data-filter="all">전체</button>
-          <button class="filter-btn" data-filter="fire">화재</button>
-          <button class="filter-btn" data-filter="normal">정상</button>
-        </div>
-        
-        <div class="search-group">
-          <select class="search-select" id="cctvLocationFilter">
-            <option value="">CCTV 위치 선택</option>
-            <option value="1층 주차장">1층 주차장</option>
-            <option value="2층 주차장">2층 주차장</option>
-            <option value="3층 주차장">3층 주차장</option>
-          </select>
-          <input type="date" class="search-input" id="dateFilter">
-          <button class="search-btn" onclick="applyFireFilters()">검색</button>
-        </div>
-      </div>
-      
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Log ID</th>
-              <th>감지시간</th>
-              <th>CCTV 위치</th>
-              <th>AI 판별 결과</th>
-              <th>AI 신뢰도</th>
-              <th>알림 전송</th>
-              <th>알림전송 시간</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody id="fireLogTable">
-            <!-- 동적으로 생성됨 -->
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="pagination">
-        <button onclick="changePage('prev')">이전</button>
-        <button class="active">1</button>
-        <button>2</button>
-        <button>3</button>
-        <button onclick="changePage('next')">다음</button>
-      </div>
-    </section>
-
-    <!-- 주차 관리 섹션 -->
-    <section class="content-section" id="pms-section" style="display: none;">
-      <div class="section-header">
-        <h2>Parking Request Approval</h2>
-        <div class="section-actions">
-          <button class="action-btn" onclick="bulkApproval()">일괄 승인</button>
-          <button class="action-btn danger" onclick="bulkReject()">일괄 거절</button>
-        </div>
-      </div>
-      
-      <div class="approval-stats">
-        <div class="approval-stat">
-          <span class="stat-label">대기중</span>
-          <span class="stat-value" id="waitingCount">7</span>
-        </div>
-        <div class="approval-stat">
-          <span class="stat-label">승인완료</span>
-          <span class="stat-value" id="approvedCount">23</span>
-        </div>
-        <div class="approval-stat">
-          <span class="stat-label">거절</span>
-          <span class="stat-value" id="rejectedCount">2</span>
-        </div>
-        <div class="approval-stat">
-          <span class="stat-label">월주차 현황</span>
-          <span class="stat-value" id="monthlyParkingCount">5/8</span>
-        </div>
-      </div>
-      
-      <div class="filter-section">
-        <div class="filter-group">
-          <button class="filter-btn active" data-filter="all">전체</button>
-          <button class="filter-btn" data-filter="waiting">대기중</button>
-          <button class="filter-btn" data-filter="approved">승인완료</button>
-        </div>
-        
-        <div class="search-group">
-          <select class="search-select" id="carNoFilter">
-            <option value="">Car No.</option>
-          </select>
-          <input type="text" class="search-input" placeholder="검색어 입력">
-          <button class="search-btn" onclick="applyApprovalFilters()">검색</button>
-        </div>
-      </div>
-      
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th><input type="checkbox" id="selectAll"></th>
-              <th>Request ID</th>
-              <th>Car No.</th>
-              <th>Requestor</th>
-              <th>구분</th>
-              <th>주차 요청월</th>
-              <th>주차요청일</th>
-              <th>승인여부</th>
-              <th>요청일자</th>
-              <th>승인일자</th>
-              <th>결재여부</th>
-              <th>처리</th>
-            </tr>
-          </thead>
-          <tbody id="approvalTable">
-            <!-- 동적으로 생성됨 -->
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="pagination">
-        <button onclick="changePage('prev')">이전</button>
-        <button class="active">1</button>
-        <button>2</button>
-        <button>3</button>
-        <button onclick="changePage('next')">다음</button>
-      </div>
-    </section>
-
-    <!-- 요금 정책 섹션 -->
-    <section class="content-section" id="parking-fee-section" style="display: none;">
-      <div class="section-header">
-        <h2>Parking Fee Policy Management</h2>
-        <div class="section-actions">
-          <button class="action-btn primary" onclick="createNewPolicy()">+ 새 정책 생성</button>
-        </div>
-      </div>
-      
-      <div class="policy-grid">
-        <div class="policy-card active">
-          <div class="policy-header">
-            <h3>시간 주차</h3>
-            <span class="policy-status active">활성</span>
-          </div>
-          <div class="policy-content">
-            <div class="policy-detail">
-              <span class="detail-label">기본 요금:</span>
-              <span class="detail-value">1,200원/10분</span>
-            </div>
-            <div class="policy-detail">
-              <span class="detail-label">최대 요금:</span>
-              <span class="detail-value">7,200원</span>
-            </div>
-            <div class="policy-detail">
-              <span class="detail-label">적용 시작:</span>
-              <span class="detail-value">2025-07-01</span>
-            </div>
-          </div>
-          <div class="policy-actions">
-            <button class="btn-edit" onclick="editPolicy('hourly')">수정</button>
-            <button class="btn-toggle" onclick="togglePolicy('hourly')">비활성화</button>
-          </div>
-        </div>
-        
-        <div class="policy-card active">
-          <div class="policy-header">
-            <h3>일일 주차</h3>
-            <span class="policy-status active">활성</span>
-          </div>
-          <div class="policy-content">
-            <div class="policy-detail">
-              <span class="detail-label">기본 요금:</span>
-              <span class="detail-value">12,000원/일</span>
-            </div>
-            <div class="policy-detail">
-              <span class="detail-label">적용 시간:</span>
-              <span class="detail-value">24시간</span>
-            </div>
-            <div class="policy-detail">
-              <span class="detail-label">적용 시작:</span>
-              <span class="detail-value">2025-07-01</span>
-            </div>
-          </div>
-          <div class="policy-actions">
-            <button class="btn-edit" onclick="editPolicy('daily')">수정</button>
-            <button class="btn-toggle" onclick="togglePolicy('daily')">비활성화</button>
-          </div>
-        </div>
-        
-        <div class="policy-card inactive">
-          <div class="policy-header">
-            <h3>월 정기권</h3>
-            <span class="policy-status inactive">비활성</span>
-          </div>
-          <div class="policy-content">
-            <div class="policy-detail">
-              <span class="detail-label">기본 요금:</span>
-              <span class="detail-value">100,000원/월</span>
-            </div>
-            <div class="policy-detail">
-              <span class="detail-label">할인률:</span>
-              <span class="detail-value">기존 요금 대비 20% 절약</span>
-            </div>
-            <div class="policy-detail">
-              <span class="detail-label">적용 예정:</span>
-              <span class="detail-value">2025-08-01</span>
-            </div>
-          </div>
-          <div class="policy-actions">
-            <button class="btn-edit" onclick="editPolicy('monthly')">수정</button>
-            <button class="btn-toggle" onclick="togglePolicy('monthly')">활성화</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CCTV 모니터링 -->
-    <section class="content-section" id="cctv-section" style="display: none;">
-      <div class="section-header">
-        <h2>🔍 CCTV 실시간 모니터링</h2>
-        <div class="section-actions">
-          <button class="action-btn" onclick="captureAll()">📸 전체 캡처</button>
-          <button class="action-btn" onclick="toggleFullscreen()">🔍 전체화면</button>
-        </div>
-      </div>
-      
-      <div class="cctv-viewer-grid">
-        <div class="cctv-viewer">
-          <div class="cctv-header">
-            <h4>1층 주차장 - 동쪽</h4>
-            <div class="cctv-controls">
-              <button onclick="captureFrame(1)">📸</button>
-              <button onclick="recordVideo(1)">🎥</button>
-              <span class="status-dot online"></span>
-            </div>
-          </div>
-          <div class="cctv-display">
-            <div class="video-placeholder">
-              <img src="http://192.168.10.81:8080/video" alt="1층 주차장 - 동쪽 실시간 영상">
-            </div>
-          </div>
-        </div>
-        
-        <div class="cctv-viewer">
-          <div class="cctv-header">
-            <h4>1층 주차장 - 서쪽</h4>
-            <div class="cctv-controls">
-              <button onclick="captureFrame(2)">📸</button>
-              <button onclick="recordVideo(2)">🎥</button>
-              <span class="status-dot online"></span>
-            </div>
-          </div>
-          <div class="cctv-display">
-            <div class="video-placeholder">
-              <img src="http://localhost:5000/video_feed_pc" alt="1층 주차장 - 서쪽 실시간 영상">
-            </div>
-          </div>
-        </div>
-        
-        <div class="cctv-viewer">
-          <div class="cctv-header">
-            <h4>2층 주차장 - 중앙</h4>
-            <div class="cctv-controls">
-              <button onclick="captureFrame(3)">📸</button>
-              <button onclick="recordVideo(3)">🎥</button>
-              <span class="status-dot online"></span>
-            </div>
-          </div>
-          <div class="cctv-display">
-            <div class="video-placeholder">
-              <img src="http://192.168.10.81:8080/video" alt="1층 주차장 - 동쪽 실시간 영상">
-            </div>
-          </div>
-        </div>
-        
-        <div class="cctv-viewer">
-          <div class="cctv-header">
-            <h4>3층 주차장 - 전체</h4>
-            <div class="cctv-controls">
-              <button onclick="captureFrame(4)">📸</button>
-              <button onclick="recordVideo(4)">🎥</button>
-              <span class="status-dot offline"></span>
-            </div>
-          </div>
-          <div class="cctv-display offline">
-            <div class="video-placeholder">
-              <img src="http://192.168.10.81:8080/video" alt="1층 주차장 - 동쪽 실시간 영상">
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- CCTV 상태 패널 -->
-      <div class="cctv-status-panel">
-        <h3>시스템 상태</h3>
-        <div class="status-items">
-          <div class="status-item">
-            <span class="status-label">총 CCTV:</span>
-            <span class="status-value">4대</span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">정상 작동:</span>
-            <span class="status-value">3대</span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">점검 중:</span>
-            <span class="status-value">1대</span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">녹화 용량:</span>
-            <span class="status-value">75%</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 입출차 로그 섹션 -->
-    <section class="content-section" id="parking-log-section" style="display: none;">
-      <div class="section-header">
-        <h2>입출차 현황</h2>
-        <div class="section-actions">
-          <button class="action-btn" onclick="exportParkingLog()">📊 내보내기</button>
-          <button class="action-btn primary" onclick="refreshParkingLog()">🔄 새로고침</button>
-        </div>
-      </div>
-      
-      <div class="filter-section">
-        <div class="filter-group">
-          <button class="filter-btn active" data-filter="all">전체</button>
-          <button class="filter-btn" data-filter="월주차">월주차</button>
-          <button class="filter-btn" data-filter="일주차">일주차</button>
-          <button class="filter-btn" data-filter="일반">일반</button>
-        </div>
-        
-        <div class="search-group">
-          <select class="search-select" id="parkingCarNoFilter">
-            <option value="">CarNo.</option>
-          </select>
-          <input type="text" class="search-input" placeholder="검색어 입력">
-          <button class="search-btn" onclick="applyParkingLogFilters()">검색</button>
-        </div>
-      </div>
-      
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>CarNo</th>
-              <th>Owner</th>
-              <th>parking_type</th>
-              <th>in_time</th>
-              <th>out_time</th>
-            </tr>
-          </thead>
-          <tbody id="parkingLogTable">
-            <!-- 동적으로 생성됨 -->
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="pagination">
-        <button onclick="changePage('prev')">이전</button>
-        <button class="active">1</button>
-        <button>2</button>
-        <button>3</button>
-        <button onclick="changePage('next')">다음</button>
       </div>
     </section>
   </main>
@@ -589,6 +258,6 @@
     </div>
   </div>
 
-  <script src="/js/admin-dashboard.js"></script>
+  <script src="/js/script.js"></script>
 </body>
 </html>

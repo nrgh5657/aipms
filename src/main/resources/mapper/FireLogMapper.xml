@@ -7,11 +7,32 @@
 
     <insert id="insertFireLog" parameterType="com.aipms.domain.FireLog">
         INSERT INTO fire_alert_log (
-            label, confidence, video_url,image_path, detected_at, created_at
+            label,
+            confidence,
+            video_url,
+            image_path,
+            location,
+            admin_judgment,
+            alert_status,
+            alert_time,
+            notes,
+            detected_at,
+            created_at
         )
         VALUES (
-                   #{label}, #{confidence}, #{videoUrl}, #{imagePath}, #{detectedAt}, #{createdAt}
+                   #{label},
+                   #{confidence},
+                   #{videoUrl},
+                   #{imagePath},
+                   #{location},
+                   #{adminJudgment},
+                   #{alertStatus},
+                   #{alertTime},
+                   #{notes},
+                   #{detectedAt},
+                   #{createdAt}
                )
     </insert>
+
 
 </mapper>

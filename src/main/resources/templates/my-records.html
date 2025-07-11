@@ -4,373 +4,382 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>스마트파킹 - 이용내역</title>
-  <link rel="stylesheet" href="/css/customer-style.css">
+  <link rel="stylesheet" th:href="@{/css/customer-style.css}">
 </head>
 <body>
-  <header>
-    <div class="top-bar">
-      <div class="logo">🚗 스마트파킹</div>
-      <div class="user-info">
-        <span class="welcome">안녕하세요, <strong>김고객</strong>님!</span>
-        <a href="index.html" class="logout-btn">로그아웃</a>
-      </div>
+<header>
+  <div class="top-bar">
+    <div class="logo">
+      <a href="customer-dashboard.html">
+        <img th:src="@{/img/logo.png}" alt="스마트파킹 로고" class="logo-img">
+      </a>
     </div>
-    <nav class="main-menu">
-      <ul>
-        <li><a href="reservation.html">🅿️ 주차 예약</a></li>
-        <li><a href="payment.html">💳 요금 결제</a></li>
-        <li><a href="my-records.html" class="active">📊 이용 내역</a></li>
-        <li><a href="customer-dashboard.html">🏠 메인으로</a></li>
-      </ul>
-    </nav>
-  </header>
 
-  <main>
-    <section class="page-header">
-      <h2>이용 내역</h2>
-      <p>주차 이용기록과 결제내역을 확인하세요!</p>
+    <div class="user-info">
+      <span class="welcome">안녕하세요, <strong>김고객</strong>님!</span>
+      <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
+      <a href="#" onclick="logout()" class="logout-btn">로그아웃</a>
+    </div>
+  </div>
+  <nav class="main-menu">
+    <ul>
+
+      <li><a href="reservation.html">🅿️ 주차 예약</a></li>
+      <li><a href="payment.html">💳 요금 결제</a></li>
+      <li><a href="my-records.html" class="active">📊 이용 내역</a></li>
+      <li><a href="my-info.html">⚙️ 내 정보</a></li>
+      <li><a href="support.html">🎧 고객지원</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <section class="page-header">
+    <h2>이용 내역</h2>
+    <p>주차 이용기록과 결제내역을 확인하세요!</p>
+  </section>
+
+  <div class="records-container">
+    <!-- 통계 요약 -->
+    <section class="records-summary">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-icon">🚗</div>
+          <div class="summary-data">
+            <span class="summary-number">47</span>
+            <span class="summary-label">총 이용횟수</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">⏱️</div>
+          <div class="summary-data">
+            <span class="summary-number">156h</span>
+            <span class="summary-label">총 이용시간</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">💰</div>
+          <div class="summary-data">
+            <span class="summary-number">₩342K</span>
+            <span class="summary-label">총 결제금액</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">⭐</div>
+          <div class="summary-data">
+            <span class="summary-number">3.2h</span>
+            <span class="summary-label">평균 이용시간</span>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <div class="records-container">
-      <!-- 통계 요약 -->
-      <section class="records-summary">
-        <div class="summary-grid">
-          <div class="summary-card">
-            <div class="summary-icon">🚗</div>
-            <div class="summary-data">
-              <span class="summary-number">47</span>
-              <span class="summary-label">총 이용횟수</span>
+    <!-- 필터 및 검색 -->
+    <section class="records-filter">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="date-from">기간</label>
+          <input type="date" id="date-from" value="2025-06-01">
+          <span>~</span>
+          <input type="date" id="date-to" value="2025-07-02">
+        </div>
+
+        <div class="filter-group">
+          <label for="record-type">유형</label>
+          <select id="record-type">
+            <option value="all">전체</option>
+            <option value="parking">주차이용</option>
+            <option value="payment">결제내역</option>
+            <option value="reservation">예약내역</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="status-filter">상태</label>
+          <select id="status-filter">
+            <option value="all">전체</option>
+            <option value="completed">완료</option>
+            <option value="pending">진행중</option>
+            <option value="cancelled">취소</option>
+          </select>
+        </div>
+
+        <button class="filter-btn" onclick="applyFilter()">검색</button>
+        <button class="export-btn" onclick="exportRecords()">📁 내보내기</button>
+      </div>
+    </section>
+
+    <!-- 탭 메뉴 -->
+    <section class="records-tabs">
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="switchRecordTab('parking')">주차 이용내역</button>
+        <button class="tab-btn" onclick="switchRecordTab('payment')">결제 내역</button>
+        <button class="tab-btn" onclick="switchRecordTab('reservation')">예약 내역</button>
+      </div>
+    </section>
+
+    <!-- 주차 이용내역 -->
+    <section id="parking-records" class="records-content active">
+      <div class="records-list">
+        <div class="record-item">
+          <div class="record-date">
+            <span class="date">07/02</span>
+            <span class="day">화</span>
+          </div>
+          <div class="record-details">
+            <div class="record-main">
+              <span class="parking-spot">A-15번</span>
+              <span class="duration">2시간 30분</span>
+              <span class="time-range">09:30 - 12:00</span>
+            </div>
+            <div class="record-sub">
+              <span class="car-number">12가3456</span>
+              <span class="amount">₩5,000</span>
             </div>
           </div>
-          <div class="summary-card">
-            <div class="summary-icon">⏱️</div>
-            <div class="summary-data">
-              <span class="summary-number">156h</span>
-              <span class="summary-label">총 이용시간</span>
-            </div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-icon">💰</div>
-            <div class="summary-data">
-              <span class="summary-number">₩342K</span>
-              <span class="summary-label">총 결제금액</span>
-            </div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-icon">⭐</div>
-            <div class="summary-data">
-              <span class="summary-number">3.2h</span>
-              <span class="summary-label">평균 이용시간</span>
-            </div>
+          <div class="record-status">
+            <span class="status-badge current">이용중</span>
+            <button class="detail-btn" onclick="showDetail('P240702001')">상세</button>
           </div>
         </div>
-      </section>
 
-      <!-- 필터 및 검색 -->
-      <section class="records-filter">
-        <div class="filter-row">
-          <div class="filter-group">
-            <label for="date-from">기간</label>
-            <input type="date" id="date-from" value="2025-06-01">
-            <span>~</span>
-            <input type="date" id="date-to" value="2025-07-02">
+        <div class="record-item">
+          <div class="record-date">
+            <span class="date">07/01</span>
+            <span class="day">월</span>
           </div>
-          
-          <div class="filter-group">
-            <label for="record-type">유형</label>
-            <select id="record-type">
-              <option value="all">전체</option>
-              <option value="parking">주차이용</option>
-              <option value="payment">결제내역</option>
-              <option value="reservation">예약내역</option>
-            </select>
-          </div>
-          
-          <div class="filter-group">
-            <label for="status-filter">상태</label>
-            <select id="status-filter">
-              <option value="all">전체</option>
-              <option value="completed">완료</option>
-              <option value="pending">진행중</option>
-              <option value="cancelled">취소</option>
-            </select>
-          </div>
-          
-          <button class="filter-btn" onclick="applyFilter()">검색</button>
-          <button class="export-btn" onclick="exportRecords()">📁 내보내기</button>
-        </div>
-      </section>
-
-      <!-- 탭 메뉴 -->
-      <section class="records-tabs">
-        <div class="tab-buttons">
-          <button class="tab-btn active" onclick="switchRecordTab('parking')">주차 이용내역</button>
-          <button class="tab-btn" onclick="switchRecordTab('payment')">결제 내역</button>
-          <button class="tab-btn" onclick="switchRecordTab('reservation')">예약 내역</button>
-        </div>
-      </section>
-
-      <!-- 주차 이용내역 -->
-      <section id="parking-records" class="records-content active">
-        <div class="records-list">
-          <div class="record-item">
-            <div class="record-date">
-              <span class="date">07/02</span>
-              <span class="day">화</span>
+          <div class="record-details">
+            <div class="record-main">
+              <span class="parking-spot">A-08번</span>
+              <span class="duration">8시간 30분</span>
+              <span class="time-range">09:00 - 17:30</span>
             </div>
-            <div class="record-details">
-              <div class="record-main">
-                <span class="parking-spot">A-15번</span>
-                <span class="duration">2시간 30분</span>
-                <span class="time-range">09:30 - 12:00</span>
-              </div>
-              <div class="record-sub">
-                <span class="car-number">12가3456</span>
-                <span class="amount">₩5,000</span>
-              </div>
-            </div>
-            <div class="record-status">
-              <span class="status-badge current">이용중</span>
-              <button class="detail-btn" onclick="showDetail('P240702001')">상세</button>
-            </div>
-          </div>
-
-          <div class="record-item">
-            <div class="record-date">
-              <span class="date">07/01</span>
-              <span class="day">월</span>
-            </div>
-            <div class="record-details">
-              <div class="record-main">
-                <span class="parking-spot">A-08번</span>
-                <span class="duration">8시간 30분</span>
-                <span class="time-range">09:00 - 17:30</span>
-              </div>
-              <div class="record-sub">
-                <span class="car-number">12가3456</span>
-                <span class="amount">₩15,000</span>
-              </div>
-            </div>
-            <div class="record-status">
-              <span class="status-badge completed">완료</span>
-              <button class="detail-btn" onclick="showDetail('P240701001')">상세</button>
-            </div>
-          </div>
-
-          <div class="record-item">
-            <div class="record-date">
-              <span class="date">06/28</span>
-              <span class="day">금</span>
-            </div>
-            <div class="record-details">
-              <div class="record-main">
-                <span class="parking-spot">C-12번</span>
-                <span class="duration">2시간 25분</span>
-                <span class="time-range">13:20 - 15:45</span>
-              </div>
-              <div class="record-sub">
-                <span class="car-number">12가3456</span>
-                <span class="amount">₩4,500</span>
-              </div>
-            </div>
-            <div class="record-status">
-              <span class="status-badge completed">완료</span>
-              <button class="detail-btn" onclick="showDetail('P240628001')">상세</button>
-            </div>
-          </div>
-
-          <div class="record-item">
-            <div class="record-date">
-              <span class="date">06/25</span>
-              <span class="day">화</span>
-            </div>
-            <div class="record-details">
-              <div class="record-main">
-                <span class="parking-spot">B-05번</span>
-                <span class="duration">1시간 45분</span>
-                <span class="time-range">10:15 - 12:00</span>
-              </div>
-              <div class="record-sub">
-                <span class="car-number">12가3456</span>
-                <span class="amount">₩3,000</span>
-              </div>
-            </div>
-            <div class="record-status">
-              <span class="status-badge completed">완료</span>
-              <button class="detail-btn" onclick="showDetail('P240625001')">상세</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 결제 내역 -->
-      <section id="payment-records" class="records-content">
-        <div class="records-list">
-          <div class="payment-record-item">
-            <div class="payment-date">
-              <span class="date">07/01</span>
-              <span class="time">17:35</span>
-            </div>
-            <div class="payment-details">
-              <span class="payment-type">주차요금 결제</span>
-              <span class="payment-method">신용카드</span>
-              <span class="payment-ref">A-08번 (8시간 30분)</span>
-            </div>
-            <div class="payment-amount">
+            <div class="record-sub">
+              <span class="car-number">12가3456</span>
               <span class="amount">₩15,000</span>
-              <span class="status completed">완료</span>
             </div>
           </div>
+          <div class="record-status">
+            <span class="status-badge completed">완료</span>
+            <button class="detail-btn" onclick="showDetail('P240701001')">상세</button>
+          </div>
+        </div>
 
-          <div class="payment-record-item">
-            <div class="payment-date">
-              <span class="date">06/25</span>
-              <span class="time">12:05</span>
+        <div class="record-item">
+          <div class="record-date">
+            <span class="date">06/28</span>
+            <span class="day">금</span>
+          </div>
+          <div class="record-details">
+            <div class="record-main">
+              <span class="parking-spot">C-12번</span>
+              <span class="duration">2시간 25분</span>
+              <span class="time-range">13:20 - 15:45</span>
             </div>
-            <div class="payment-details">
-              <span class="payment-type">주차요금 결제</span>
-              <span class="payment-method">카카오페이</span>
-              <span class="payment-ref">B-05번 (1시간 45분)</span>
+            <div class="record-sub">
+              <span class="car-number">12가3456</span>
+              <span class="amount">₩4,500</span>
             </div>
-            <div class="payment-amount">
+          </div>
+          <div class="record-status">
+            <span class="status-badge completed">완료</span>
+            <button class="detail-btn" onclick="showDetail('P240628001')">상세</button>
+          </div>
+        </div>
+
+        <div class="record-item">
+          <div class="record-date">
+            <span class="date">06/25</span>
+            <span class="day">화</span>
+          </div>
+          <div class="record-details">
+            <div class="record-main">
+              <span class="parking-spot">B-05번</span>
+              <span class="duration">1시간 45분</span>
+              <span class="time-range">10:15 - 12:00</span>
+            </div>
+            <div class="record-sub">
+              <span class="car-number">12가3456</span>
               <span class="amount">₩3,000</span>
-              <span class="status completed">완료</span>
             </div>
           </div>
-
-          <div class="payment-record-item">
-            <div class="payment-date">
-              <span class="date">06/20</span>
-              <span class="time">00:05</span>
-            </div>
-            <div class="payment-details">
-              <span class="payment-type">월 주차 요금</span>
-              <span class="payment-method">계좌이체</span>
-              <span class="payment-ref">7월분 월 주차</span>
-            </div>
-            <div class="payment-amount">
-              <span class="amount">₩150,000</span>
-              <span class="status completed">완료</span>
-            </div>
+          <div class="record-status">
+            <span class="status-badge completed">완료</span>
+            <button class="detail-btn" onclick="showDetail('P240625001')">상세</button>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- 예약 내역 -->
-      <section id="reservation-records" class="records-content">
-        <div class="records-list">
-          <div class="reservation-record-item">
-            <div class="reservation-date">
-              <span class="date">07/03</span>
-              <span class="time">14:00</span>
-            </div>
-            <div class="reservation-details">
-              <span class="reservation-type">시간 주차</span>
-              <span class="reservation-spot">B-22번</span>
-              <span class="reservation-duration">3시간</span>
-            </div>
-            <div class="reservation-status">
-              <span class="status upcoming">예정</span>
-              <button class="cancel-btn" onclick="cancelReservation('R240703001')">취소</button>
-            </div>
+    <!-- 결제 내역 -->
+    <section id="payment-records" class="records-content">
+      <div class="records-list">
+        <div class="payment-record-item">
+          <div class="payment-date">
+            <span class="date">07/01</span>
+            <span class="time">17:35</span>
           </div>
-
-          <div class="reservation-record-item">
-            <div class="reservation-date">
-              <span class="date">07/01</span>
-              <span class="time">09:00</span>
-            </div>
-            <div class="reservation-details">
-              <span class="reservation-type">일일 주차</span>
-              <span class="reservation-spot">A-08번</span>
-              <span class="reservation-duration">1일</span>
-            </div>
-            <div class="reservation-status">
-              <span class="status completed">완료</span>
-            </div>
+          <div class="payment-details">
+            <span class="payment-type">주차요금 결제</span>
+            <span class="payment-method">신용카드</span>
+            <span class="payment-ref">A-08번 (8시간 30분)</span>
           </div>
-
-          <div class="reservation-record-item">
-            <div class="reservation-date">
-              <span class="date">06/20</span>
-              <span class="time">-</span>
-            </div>
-            <div class="reservation-details">
-              <span class="reservation-type">월 주차</span>
-              <span class="reservation-spot">고정자리</span>
-              <span class="reservation-duration">1개월</span>
-            </div>
-            <div class="reservation-status">
-              <span class="status completed">완료</span>
-            </div>
+          <div class="payment-amount">
+            <span class="amount">₩15,000</span>
+            <span class="status completed">완료</span>
           </div>
         </div>
-      </section>
 
-      <!-- 페이지네이션 -->
-      <section class="pagination">
-        <button class="page-btn" onclick="prevPage()">‹ 이전</button>
-        <span class="page-numbers">
+        <div class="payment-record-item">
+          <div class="payment-date">
+            <span class="date">06/25</span>
+            <span class="time">12:05</span>
+          </div>
+          <div class="payment-details">
+            <span class="payment-type">주차요금 결제</span>
+            <span class="payment-method">카카오페이</span>
+            <span class="payment-ref">B-05번 (1시간 45분)</span>
+          </div>
+          <div class="payment-amount">
+            <span class="amount">₩3,000</span>
+            <span class="status completed">완료</span>
+          </div>
+        </div>
+
+        <div class="payment-record-item">
+          <div class="payment-date">
+            <span class="date">06/20</span>
+            <span class="time">00:05</span>
+          </div>
+          <div class="payment-details">
+            <span class="payment-type">월 주차 요금</span>
+            <span class="payment-method">계좌이체</span>
+            <span class="payment-ref">7월분 월 주차</span>
+          </div>
+          <div class="payment-amount">
+            <span class="amount">₩150,000</span>
+            <span class="status completed">완료</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 예약 내역 -->
+    <section id="reservation-records" class="records-content">
+      <div class="records-list">
+        <div class="reservation-record-item">
+          <div class="reservation-date">
+            <span class="date">07/03</span>
+            <span class="time">14:00</span>
+          </div>
+          <div class="reservation-details">
+            <span class="reservation-type">시간 주차</span>
+            <span class="reservation-spot">B-22번</span>
+            <span class="reservation-duration">3시간</span>
+          </div>
+          <div class="reservation-status">
+            <span class="status upcoming">예정</span>
+            <button class="cancel-btn" onclick="cancelReservation('R240703001')">취소</button>
+          </div>
+        </div>
+
+        <div class="reservation-record-item">
+          <div class="reservation-date">
+            <span class="date">07/01</span>
+            <span class="time">09:00</span>
+          </div>
+          <div class="reservation-details">
+            <span class="reservation-type">일일 주차</span>
+            <span class="reservation-spot">A-08번</span>
+            <span class="reservation-duration">1일</span>
+          </div>
+          <div class="reservation-status">
+            <span class="status completed">완료</span>
+          </div>
+        </div>
+
+        <div class="reservation-record-item">
+          <div class="reservation-date">
+            <span class="date">06/20</span>
+            <span class="time">-</span>
+          </div>
+          <div class="reservation-details">
+            <span class="reservation-type">월 주차</span>
+            <span class="reservation-spot">고정자리</span>
+            <span class="reservation-duration">1개월</span>
+          </div>
+          <div class="reservation-status">
+            <span class="status completed">완료</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 페이지네이션 -->
+    <section class="pagination">
+      <button class="page-btn" onclick="prevPage()">‹ 이전</button>
+      <span class="page-numbers">
           <button class="page-num active">1</button>
           <button class="page-num">2</button>
           <button class="page-num">3</button>
           <span>...</span>
           <button class="page-num">10</button>
         </span>
-        <button class="page-btn" onclick="nextPage()">다음 ›</button>
-      </section>
-    </div>
+      <button class="page-btn" onclick="nextPage()">다음 ›</button>
+    </section>
+  </div>
 
-    <!-- 상세보기 모달 -->
-    <div id="detail-modal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>상세 내역</h3>
-          <button class="close-btn" onclick="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="detail-grid">
-            <div class="detail-item">
-              <span class="detail-label">이용 번호:</span>
-              <span class="detail-value" id="detail-id">P240701001</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">주차 위치:</span>
-              <span class="detail-value" id="detail-spot">A-08번</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">차량 번호:</span>
-              <span class="detail-value" id="detail-car">12가3456</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">입차 시간:</span>
-              <span class="detail-value" id="detail-entry">2025-07-01 09:00:15</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">출차 시간:</span>
-              <span class="detail-value" id="detail-exit">2025-07-01 17:30:22</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">이용 시간:</span>
-              <span class="detail-value" id="detail-duration">8시간 30분 7초</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">기본 요금:</span>
-              <span class="detail-value" id="detail-base">₩13,500</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">부가세:</span>
-              <span class="detail-value" id="detail-tax">₩1,500</span>
-            </div>
-            <div class="detail-item total">
-              <span class="detail-label">총 요금:</span>
-              <span class="detail-value" id="detail-total">₩15,000</span>
-            </div>
+  <!-- 상세보기 모달 -->
+  <div id="detail-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>상세 내역</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">이용 번호:</span>
+            <span class="detail-value" id="detail-id">P240701001</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">주차 위치:</span>
+            <span class="detail-value" id="detail-spot">A-08번</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">차량 번호:</span>
+            <span class="detail-value" id="detail-car">12가3456</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">입차 시간:</span>
+            <span class="detail-value" id="detail-entry">2025-07-01 09:00:15</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">출차 시간:</span>
+            <span class="detail-value" id="detail-exit">2025-07-01 17:30:22</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">이용 시간:</span>
+            <span class="detail-value" id="detail-duration">8시간 30분 7초</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">기본 요금:</span>
+            <span class="detail-value" id="detail-base">₩13,500</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">부가세:</span>
+            <span class="detail-value" id="detail-tax">₩1,500</span>
+          </div>
+          <div class="detail-item total">
+            <span class="detail-label">총 요금:</span>
+            <span class="detail-value" id="detail-total">₩15,000</span>
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="receipt-btn" onclick="downloadReceipt()">📄 영수증 다운로드</button>
-          <button class="close-modal-btn" onclick="closeModal()">닫기</button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="receipt-btn" onclick="downloadReceipt()">📄 영수증 다운로드</button>
+        <button class="close-modal-btn" onclick="closeModal()">닫기</button>
       </div>
     </div>
+  </div>
+  <script src="/js/customer-script.js"></script>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Parking Management System - 화재 관리</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- 헤더: 맨위 상단 파트 -->
+  <header class="header">
+    <div class="header-top">
+      <div class="header-info">
+        <span id="currentScreen">화면ID: Fire_001</span>
+        <span id="screenName">화면명: 화재 관리</span>
+      </div>
+      <div class="header-info">
+        <span>사용자: <span id="adminName">Admin</span></span>
+        <span id="currentDate">작성일: 2025-07-10</span>
+      </div>
+    </div>
+
+    <!-- 헤더: 메인 헤더(제목, 버튼 등) -->
+    <div class="main-header">
+      <div class="logo-container">
+        <div class="system-title">🅿 AI 주차 관리 시스템</div>
+       </div>
+      <div class="header-actions">
+        <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
+        <button class="header-btn" onclick="showNotifications()">🔔 알림</button>
+        <button class="header-btn" onclick="showSettings()">⚙️ 설정</button>
+        <button class="header-btn" onclick="showAdminRegister()">👥 관리자 등록</button>
+        <button class="header-btn logout" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+    
+    <nav class="nav-tabs">
+      <a href="/management/admin" class="nav-tab active">대시보드</a>
+      <a href="/management/parking" class="nav-tab">주차 관리</a>
+      <a href="/management/fee" class="nav-tab">요금 관리</a>
+      <a href="/management/fireManage" class="nav-tab">화재 관리</a>
+      <a href="/management/member" class="nav-tab">회원 관리</a>
+      <a href="/management/systemLogs" class="nav-tab">시스템 로그</a>>
+    </nav>
+  </header>
+
+  <!-- 좌측 사이드바-->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h3>관리 메뉴</h3>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <h4>🅿️ 주차 관리</h4>
+        <ul>
+          <li><a href="/management/parking">주차 현황 확인</a></li>
+          <li><a href="/management/parking">주차 공간 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>💰 요금 관리</h4>
+        <ul>
+          <li><a href="/management/fee">요금 정책 관리</a></li>
+          <li><a href="/management/fee">환불 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>🔥 화재 관리</h4>
+        <ul>
+          <li><a href="/management/fireManage" class="active">화재 기록 관리</a></li>
+          <li><a href="/management/fireCctv">CCTV 영상 확인</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>👥 회원 관리</h4>
+        <ul>
+          <li><a href="/management/member">회원 정보 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>📊 시스템 로그</h4>
+        <ul>
+          <li><a href="/management/systemLogs">시스템 상태</a></li>
+        </ul>
+      </div>
+    </nav>
+  </aside>
+<!--공통된 디자인: 디자인 수정하지 말 것-->
+
+
+
+
+  <!-- 메인 컨테이너 -->
+  <main class="main-content">
+    <!-- 화재 관리 섹션 -->
+    <section class="content-section" id="fire-management-section">
+      
+      <!-- CCTV 모니터링 섹션 -->
+      <div class="cctv-section">
+        <div class="section-header">
+          <h2>📹 CCTV 실시간 모니터링</h2>
+          
+        </div>
+        
+        <!--각 cctv 클릭시 전체 화면 구현은 아직 안함-->
+        <div class="cctv-viewer-grid">
+          <div class="cctv-viewer">
+            <div class="cctv-header">
+              <h4>1층 주차장 - 동쪽</h4>
+              <div class="cctv-controls">
+                <button onclick="captureFrame(1)">📸</button>
+                <button onclick="recordVideo(1)">🎥</button>
+                <span class="status-dot online"></span>
+              </div>
+            </div>
+            <div class="cctv-display">
+              <div class="video-placeholder">
+
+                <p>🎥 실시간 영상</p>
+                <p>1층 동쪽 구역</p>
+                <p class="timestamp" id="timestamp1">2025-07-10 14:30:25</p>
+
+              </div>
+            </div>
+          </div>
+          
+
+          <div class="cctv-viewer">
+            <div class="cctv-header">
+              <h4>1층 주차장 - 서쪽</h4>
+              <div class="cctv-controls">
+                <button onclick="captureFrame(2)">📸</button>
+                <button onclick="recordVideo(2)">🎥</button>
+                <span class="status-dot online"></span>
+              </div>
+
+
+            </div>
+            <div class="cctv-display" onclick="openCctvModal('2층 출입구')"><!--css: 1129, js: 1448-->
+            <!--카메라 마다 적용하고 싶다면 onclick="openCctvModal('2층 출입구')에서 괄호 안의 층수 이름을 각자 다르게 입력해야함-->
+              <div class="video-placeholder">
+
+                <p>cctv 전체 화면 테스트 클릭하시오</p>
+
+              </div>
+            </div>
+          </div>
+          
+          <div class="cctv-viewer">
+            <div class="cctv-header">
+              <h4>2층 주차장 - 중앙</h4>
+              <div class="cctv-controls">
+                <button onclick="captureFrame(3)">📸</button>
+                <button onclick="recordVideo(3)">🎥</button>
+                <span class="status-dot online"></span>
+              </div>
+            </div>
+            <div class="cctv-display">
+              <div class="video-placeholder">
+
+                <p>🎥 실시간 영상</p>
+                <p>2층 중앙 구역</p>
+                <p class="timestamp" id="timestamp3">2025-07-10 14:30:25</p>
+
+              </div>
+            </div>
+          </div>
+          
+          <div class="cctv-viewer">
+            <div class="cctv-header">
+              <h4>3층 주차장 - 전체</h4>
+              <div class="cctv-controls">
+                <button onclick="captureFrame(4)">📸</button>
+                <button onclick="recordVideo(4)">🎥</button>
+                <span class="status-dot offline"></span>
+              </div>
+            </div>
+            <div class="cctv-display offline">
+              <div class="video-placeholder">
+                <p>📴 연결 끊김</p>
+                <p>점검 중...</p>
+                <p class="timestamp">마지막 연결: 14:25:10</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="cctv-viewer">
+            <div class="cctv-header">
+              <h4>3층 주차장 - 전체</h4>
+              <div class="cctv-controls">
+                <button onclick="captureFrame(4)">📸</button>
+                <button onclick="recordVideo(4)">🎥</button>
+                <span class="status-dot offline"></span>
+              </div>
+            </div>
+            <div class="cctv-display offline">
+              <div class="video-placeholder">
+
+                <p>📴 연결 끊김</p>
+                <p>점검 중...</p>
+                <p class="timestamp">마지막 연결: 14:25:10</p>
+                
+              </div>
+            </div>
+          </div>
+          
+          <div class="cctv-viewer">
+            <div class="cctv-header">
+              <h4>3층 주차장 - 전체</h4>
+              <div class="cctv-controls">
+                <button onclick="captureFrame(4)">📸</button>
+                <button onclick="recordVideo(4)">🎥</button>
+                <span class="status-dot offline"></span>
+              </div>
+            </div>
+            <div class="cctv-display offline">
+              <div class="video-placeholder">
+                <p>📴 연결 끊김</p>
+                <p>점검 중...</p>
+                <p class="timestamp">마지막 연결: 14:25:10</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="cctv-viewer">
+            <div class="cctv-header">
+              <h4>3층 주차장 - 전체</h4>
+              <div class="cctv-controls">
+                <button onclick="captureFrame(4)">📸</button>
+                <button onclick="recordVideo(4)">🎥</button>
+                <span class="status-dot offline"></span>
+              </div>
+            </div>
+            <div class="cctv-display offline">
+              <div class="video-placeholder">
+                <p>📴 연결 끊김</p>
+                <p>점검 중...</p>
+                <p class="timestamp">마지막 연결: 14:25:10</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="cctv-viewer">
+            <div class="cctv-header">
+              <h4>3층 주차장 - 전체</h4>
+              <div class="cctv-controls">
+                <button onclick="captureFrame(4)">📸</button>
+                <button onclick="recordVideo(4)">🎥</button>
+                <span class="status-dot offline"></span>
+              </div>
+            </div>
+            <div class="cctv-display offline">
+              <div class="video-placeholder">
+                <p>📴 연결 끊김</p>
+                <p>점검 중...</p>
+                <p class="timestamp">마지막 연결: 14:25:10</p>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+      
+
+       <!--페이징:기능은 없음-->
+      <div class="pagination">
+        <button onclick="changePage('prev')">이전</button>
+        <button class="active">1</button>
+        <button>2</button>
+        <button>3</button>
+        <button onclick="changePage('next')">다음</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 모달 영역 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent">
+      <!-- 동적으로 생성됨 -->
+    </div>
+  </div>
+
+
+<!-- CCTV 전체 화면 -->
+<div id="cctvModal2" class="modal2">
+  <div class="modal-content2">
+    <span class="close-btn" onclick="closeCctvModal()">&times;</span>
+    <h3 id="modalTitle2"></h3>
+    <div id="modalContent2" class="modal-video-placeholder">
+      <!-- 동적으로 CCTV 화면 추가 -->
+    </div>
+  </div>
+</div>
+
+
+
+
+  <!-- 알림 메시지 팝업 -->
+  <div class="alert-popup" id="alertPopup">
+    <div class="alert-content">
+      <div class="alert-message" id="alertMessage"></div>
+      <button class="alert-close-btn" onclick="closeAlert()">확인</button>
+    </div>
+  </div>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>

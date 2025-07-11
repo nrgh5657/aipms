@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Parking Management System - 시스템 로그</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- 헤더: 맨위 상단 파트 -->
+  <header class="header">
+    <div class="header-top">
+      <div class="header-info">
+        <span id="currentScreen">화면ID: Logs_001</span>
+        <span id="screenName">화면명: 시스템 로그</span>
+      </div>
+      <div class="header-info">
+        <span>사용자: <span id="adminName">Admin</span></span>
+        <span id="currentDate">작성일: 2025-07-10</span>
+      </div>
+    </div>
+
+    <!-- 헤더: 메인 헤더(제목, 버튼 등) -->
+    <div class="main-header">
+      <div class="logo-container">
+        <div class="system-title">🅿️ AI 주차 관리 시스템</div>
+       </div>
+      <div class="header-actions">
+        <button class="header-btn" onclick="showNotifications()">🔔 알림</button>
+        <button class="header-btn" onclick="showSettings()">⚙️ 설정</button>
+        <button class="header-btn" onclick="showAdminRegister()">👥 관리자 등록</button>
+        <button class="header-btn logout" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+    
+    <nav class="nav-tabs">
+      <a href="/management/admin" class="nav-tab active">대시보드</a>
+      <a href="/management/parking" class="nav-tab">주차 관리</a>
+      <a href="/management/fee" class="nav-tab">요금 관리</a>
+      <a href="/management/fireManage" class="nav-tab">화재 관리</a>
+      <a href="/management/member" class="nav-tab">회원 관리</a>
+      <a href="/management/systemLogs" class="nav-tab">시스템 로그</a>
+    </nav>
+  </header>
+
+  <!-- 좌측 사이드바-->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h3>관리 메뉴</h3>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <h4>🅿️ 주차 관리</h4>
+        <ul>
+          <li><a href="/management/parking" class="active">주차 현황 확인</a></li>
+          <li><a href="/management/parking">주차 공간 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>💰 요금 관리</h4>
+        <ul>
+          <li><a href="/management/fee">요금 정책 관리</a></li>
+          <li><a href="/management/fee">환불 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>🔥 화재 관리</h4>
+        <ul>
+          <li><a href="/management/fireManage">화재 기록 관리</a></li>
+          <li><a href="/management/fireCctv">CCTV 영상 확인</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>👥 회원 관리</h4>
+        <ul>
+          <li><a href="/management/member">회원 정보 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>📊 시스템 로그</h4>
+        <ul>
+          <li><a href="/management/systemLogs" class="active">시스템 상태</a></li>
+        </ul>
+      </div>
+    </nav>
+  </aside>
+<!--공통된 디자인: 디자인 수정하지 말 것-->
+
+
+
+  <!-- 메인 컨테이너:아직 디자인만 구현 -->
+  <main class="main-content">
+    <!-- 시스템 로그 섹션 -->
+    <section class="content-section" id="system-logs-section">
+      <div class="section-header">
+        <h2>♻️ 시스템 로그 관리</h2>
+        <div class="section-actions">
+          <button class="action-btn primary" onclick="clearOldLogs()">초기화</button>
+          <button class="action-btn" onclick="exportSystemLogs()">로그 내보내기</button>
+          <button class="action-btn" onclick="refreshSystemLogs()">새로고침</button>
+        </div>
+      </div>
+      
+      <div class="system-status-overview">
+        <div class="status-card">
+          <h3>🖥️ 시스템 상태 개요</h3>
+          <div class="status-grid">
+            <div class="status-item">
+              <div class="status-dot online"></div>
+              <span>주차 관리 시스템</span>
+              <span class="status-text">정상</span>
+            </div>
+            <div class="status-item">
+              <div class="status-dot online"></div>
+              <span>화재 감지 시스템</span>
+              <span class="status-text">정상</span>
+            </div>
+            <div class="status-item">
+              <div class="status-dot warning"></div>
+              <span>결제 시스템</span>
+              <span class="status-text">경고</span>
+            </div>
+            <div class="status-item">
+              <div class="status-dot online"></div>
+              <span>CCTV 시스템</span>
+              <span class="status-text">정상</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="log-stats">
+        <div class="log-stat">
+          <span class="stat-label">오늘 로그</span>
+          <span class="stat-value">1,234</span>
+        </div>
+        <div class="log-stat">
+          <span class="stat-label">경고</span>
+          <span class="stat-value">12</span>
+        </div>
+        <div class="log-stat">
+          <span class="stat-label">오류</span>
+          <span class="stat-value">3</span>
+        </div>
+        <div class="log-stat">
+          <span class="stat-label">디스크 사용량</span>
+          <span class="stat-value">68%</span>
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">전체</button>
+          <button class="filter-btn" data-filter="info">INFO</button>
+          <button class="filter-btn" data-filter="warning">WARNING</button>
+          <button class="filter-btn" data-filter="error">ERROR</button>
+        </div>
+        
+        <div class="search-group">
+          <select class="search-select" id="logModuleFilter">
+            <option value="">모듈 선택</option>
+            <option value="주차관리">주차관리</option>
+            <option value="화재감지">화재감지</option>
+            <option value="결제시스템">결제시스템</option>
+            <option value="CCTV">CCTV</option>
+          </select>
+          <input type="date" class="search-input" id="logDateFilter">
+          <input type="text" class="search-input" placeholder="메시지 검색" id="logMessageSearch">
+          <button class="search-btn" onclick="applyLogFilters()">검색</button>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>로그 ID</th>
+              <th>시간</th>
+              <th>레벨</th>
+              <th>모듈</th>
+              <th>메시지</th>
+              <th>사용자</th>
+              <th>IP 주소</th>
+              <th>상태</th>
+              <th>처리</th>
+            </tr>
+          </thead>
+          <tbody id="systemLogsTable">
+            <!-- 동적으로 생성됨 -->
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="pagination">
+        <button onclick="changePage('prev')">이전</button>
+        <button class="active">1</button>
+        <button>2</button>
+        <button>3</button>
+        <button onclick="changePage('next')">다음</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 모달 영역 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent">
+      <!-- 동적으로 생성됨 -->
+    </div>
+  </div>
+
+  <!-- 알림 메시지 팝업 -->
+  <div class="alert-popup" id="alertPopup">
+    <div class="alert-content">
+      <div class="alert-icon">✅</div>
+      <div class="alert-message" id="alertMessage"></div>
+      <button class="alert-close-btn" onclick="closeAlert()">확인</button>
+    </div>
+  </div>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>
