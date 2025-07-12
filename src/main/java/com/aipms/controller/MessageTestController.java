@@ -15,12 +15,19 @@ import java.util.List;
 public class MessageTestController {
     private final KakaoMessageService kakaoMessageService;
 
-    @GetMapping("/test/send-alert")
-    public String sendTestAlert(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        String kakaoId = userDetails.getMember().getKakaoId();
-        kakaoMessageService.sendMessageToMe(kakaoId);
-        return "redirect:/dashboard"; // 또는 다른 화면
+    @GetMapping("/test/send-direct")
+    @ResponseBody
+    public String sendDirectMessage() {
+        String kakaoId = "4345559909"; // 여기 실제 존재하는 kakaoId를 넣으세요
+        try {
+            kakaoMessageService.sendMessageToMe(kakaoId);
+            return "✅ 메시지 전송 성공";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "❌ 전송 실패: " + e.getMessage();
+        }
     }
+
 
     @PostMapping("/send-messages")
     @ResponseBody
