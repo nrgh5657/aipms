@@ -268,6 +268,10 @@ function showLoginError() {
     }
 }
 
+document.getElementById('kakao-btn').addEventListener('click', () => {
+    window.location.href = '/oauth2/authorization/kakao';
+});
+
 // ========================================
 // 4. 사용자 타입 감지
 // ========================================

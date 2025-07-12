@@ -41,5 +41,11 @@
         FROM member
     </select>
 
+    <update id="updateMemberKakaoId" parameterType="com.aipms.domain.Member">
+        UPDATE member
+        SET kakao_id = #{kakaoId}
+        WHERE email = #{email}
+    </update>
+
 
 </mapper>

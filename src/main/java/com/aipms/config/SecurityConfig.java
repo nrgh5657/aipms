@@ -1,6 +1,7 @@
 package com.aipms.config;
 
 import com.aipms.security.CustomUserDetailsServiceImpl;
+import com.aipms.service.CustomOAuth2UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final CustomUserDetailsServiceImpl customUserDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     // 비밀번호 암호화 빈 등록
     @Bean
@@ -39,7 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/fireDetect/detected","/fire/update-note").permitAll()
                         .requestMatchers(
-                                "/", "/favicon.ico",
+                                "/", "/favicon.ico", "/oauth/**",
                                 "/css/**", "/js/**", "/images/**", "/img/**",
                                 "/member/login", "/member/signup", "/logout",
                                 "/admin-dashboard", "/my-records", "/signup",
@@ -57,6 +59,15 @@ public class SecurityConfig {
                         .failureUrl("/member/login?error=true") // 실패 시 이동 경로
                         .permitAll()
                 )
+
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/member/login") // 로그인 페이지
+                        .defaultSuccessUrl("/dashboard", true)
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService) // 위에서 만든 서비스
+                        )
+                )
+
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")

@@ -2,6 +2,7 @@ package com.aipms.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,19 +31,25 @@ public class HomeController {
 
     @GetMapping("/dashboard")
     public String dashboard(HttpServletRequest request,
-                            @org.springframework.security.core.annotation.AuthenticationPrincipal com.aipms.security.CustomUserDetails userDetails,
+                            @org.springframework.security.core.annotation.AuthenticationPrincipal Object principal,
                             org.springframework.ui.Model model) {
 
-        // 사용자 정보 바인딩
-        model.addAttribute("member", userDetails.getMember());
+        if (principal instanceof com.aipms.security.CustomUserDetails userDetails) {
+            model.addAttribute("member", userDetails.getMember());
+        } else if (principal instanceof OAuth2User oauthUser) {
+            model.addAttribute("member", oauthUser.getAttributes()); // 또는 필요한 속성 추출
+        } else {
+            return "redirect:/member/login?error=noauth";
+        }
 
         // 권한에 따라 분기
         if (request.isUserInRole("ROLE_ADMIN")) {
             return "admin-dashboard";
         } else if (request.isUserInRole("ROLE_USER")) {
-            return "my-records"; // 사용자용 페이지
+            return "my-records";
         } else {
             return "redirect:/member/login?error=noauth";
         }
     }
+
 }

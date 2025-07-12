@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.KakaoTokenMapper">
+
+    <select id="findByKakaoId" parameterType="string" resultType="com.aipms.domain.KakaoToken">
+        SELECT * FROM kakao_token
+        WHERE kakao_id = #{kakaoId}
+    </select>
+
+    <insert id="insertToken" parameterType="com.aipms.domain.KakaoToken">
+        INSERT INTO kakao_token (kakao_id, access_token, refresh_token, issued_at, expires_at)
+        VALUES (#{kakaoId}, #{accessToken}, #{refreshToken}, #{issuedAt}, #{expiresAt})
+    </insert>
+
+    <update id="updateToken" parameterType="com.aipms.domain.KakaoToken">
+        UPDATE kakao_token
+        SET access_token = #{accessToken},
+            refresh_token = #{refreshToken},
+            issued_at = #{issuedAt},
+            expires_at = #{expiresAt}
+        WHERE kakao_id = #{kakaoId}
+    </update>
+
+</mapper>

@@ -14,4 +14,5 @@ public interface MemberMapper {
 
     FireAlertTargetDto findSubscribedMemberByCarNumber(String carNumber);
 
+    void updateMemberKakaoId(Member member);
 }

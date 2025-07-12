@@ -1035,8 +1035,10 @@ function showUserAlert() {
       .then(res => res.json())
       .then(members => {
         console.log("✅ 전체 members 응답:", members);
+
         const rows = members.map(m => {
-          console.log("🚗", m.name, m.carNumber);
+          const hasKakao = !!m.kakaoId && m.kakaoId.trim() !== '';
+
           const parkingStatus = m.inParking
               ? '<span style="color: #2f855a; font-weight: 600;">주차중</span>'
               : '<span style="color: #e53e3e; font-weight: 600;">부재</span>';
@@ -1044,13 +1046,18 @@ function showUserAlert() {
           const type = m.subscription ? '월주차' : '일주차';
 
           return `
-          <tr>
-            <td><input type="checkbox" class="user-checkbox"></td>
+          <tr data-kakao-id="${m.kakaoId || ''}">
+            <td>
+              <input type="checkbox" class="user-checkbox" ${hasKakao ? '' : 'disabled'}>
+            </td>
             <td>${m.carNumber || '-'}</td>
             <td>${m.name || '-'}</td>
             <td>${type}</td>
             <td>${m.phone || '-'}</td>
-            <td>${parkingStatus}</td>
+            <td>
+              ${parkingStatus}
+              ${!hasKakao ? '<br><span style="color:red; font-size:0.85em;">(카카오 미연동)</span>' : ''}
+            </td>
           </tr>
         `;
         }).join('');
@@ -1074,7 +1081,7 @@ function showUserAlert() {
                 ${rows}
               </tbody>
             </table>
-            
+
             <div style="margin-top: 30px; display: flex; justify-content: center; gap: 15px;">
               <button class="action-btn" onclick="closeModal()" style="padding: 12px 24px; border-radius: 25px;">Cancel</button>
               <button class="action-btn primary" onclick="sendUserAlert()" style="padding: 12px 24px; border-radius: 25px;">Send</button>
@@ -1107,26 +1114,55 @@ function sendUserAlert() {
     showAlert('알림을 받을 사용자를 선택해주세요.');
     return;
   }
-  
+
   const selectedUsers = [];
+  const kakaoIdsToSend = [];
+
   checkedUsers.forEach(checkbox => {
     const row = checkbox.closest('tr');
     const carNumber = row.cells[1].textContent;
     const userName = row.cells[2].textContent;
     const phoneNumber = row.cells[4].textContent;
+    const kakaoId = row.getAttribute('data-kakao-id');
+
     selectedUsers.push({ carNumber, userName, phoneNumber });
+
+    if (kakaoId) {
+      kakaoIdsToSend.push(kakaoId);
+    }
   });
-  
+
+  // 🔴 실제 메시지 전송
+  if (kakaoIdsToSend.length > 0) {
+    fetch('/api/alert/send-messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(kakaoIdsToSend)
+    })
+        .then(res => {
+          if (!res.ok) throw new Error("전송 실패");
+          return res.text();
+        })
+        .then(text => {
+          console.log("✅ 메시지 전송 성공:", text);
+        })
+        .catch(err => {
+          console.error("❌ 메시지 전송 오류:", err);
+          showAlert("❌ 메시지 전송 중 오류가 발생했습니다.");
+        });
+  }
+
   closeModal();
-  
+
   setTimeout(() => {
     const message = `${selectedUsers.length}명에게 화재 알림이 전송되었습니다.\n\n` +
-                   `전송 메시지: "현재 회원님이 사용중이신 유료주차장에 화재가 발생하였습니다. 안전을 위해 신속히 대피해 주세요."\n\n` +
-                   `전송 대상:\n${selectedUsers.map(user => `• ${user.userName} (${user.carNumber})`).join('\n')}`;
-    
+        `전송 메시지: "현재 회원님이 사용중이신 유료주차장에 화재가 발생하였습니다. 안전을 위해 신속히 대피해 주세요."\n\n` +
+        `전송 대상:\n${selectedUsers.map(user => `• ${user.userName} (${user.carNumber})`).join('\n')}`;
+
     showAlert(message);
   }, 500);
 }
+
 
 // 승인 처리
 function approveRequest(requestId) {
