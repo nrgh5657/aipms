@@ -4,6 +4,7 @@ import com.aipms.domain.FireLog;
 import com.aipms.domain.Member;
 import com.aipms.dto.FireAlertDto;
 import com.aipms.dto.FireAlertTargetDto;
+import com.aipms.dto.Page;
 import com.aipms.mapper.FireLogMapper;
 import com.aipms.mapper.MemberMapper;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +20,10 @@ public class FireLogServiceImpl implements FireLogService{
 
     private final FireLogMapper fireLogMapper;
     private final MemberMapper memberMapper;
+    private final KakaoMessageService kakaoMessageService;
 
     @Override
-    public void saveFireLog(FireAlertDto dto) {
+    public void saveFireLogAndNotifyAdmins(FireAlertDto dto) {
         LocalDateTime now = LocalDateTime.now();
 
         // cameraId → location 변환
@@ -42,6 +44,12 @@ public class FireLogServiceImpl implements FireLogService{
                 .build();
 
         fireLogMapper.insertFireLog(log);
+
+        List<Member> admins = memberMapper.findAdmins();
+
+        for (Member admin : admins) {
+            kakaoMessageService.sendMessageToMe(admin.getKakaoId(), dto);
+        }
     }
 
     @Override
@@ -64,10 +72,24 @@ public class FireLogServiceImpl implements FireLogService{
     }
 
     @Override
+    public FireAlertDto getLatestFireLog() {
+        return fireLogMapper.findLatestLog();
+    }
+
+    @Override
     public void updateLogs(FireLog fireLog) {
         fireLogMapper.updateLogs(fireLog);
     }
 
+    @Override
+    public Page<FireLog> getPagedFireLogs(int page, int size) {
+        int totalCount = fireLogMapper.countFireLogs();
+        int offset = page * size;
+        List<FireLog> logs = fireLogMapper.findFireLogsPaged(offset, size);
+
+        return new Page<>(logs, totalCount, page, size);
+
+    }
 
 
 }

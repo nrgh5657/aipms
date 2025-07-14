@@ -38,6 +38,16 @@ public class MemberServiceImpl implements MemberService {
         member.setRegDate(dto.getRegDate() != null ? dto.getRegDate() : LocalDateTime.now());
 
         memberMapper.insertMember(member);
+
+        String memberCode = String.format("M%03d", member.getMemberId());
+
+        memberMapper.updateMemberCode(member.getMemberId(), memberCode);
+    }
+
+    @Override
+    public void updateMemberCode(Long memberId, String memberCode) {
+        memberMapper.updateMemberCode(memberId, memberCode);
+
     }
 
 
@@ -49,6 +59,11 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public List<Member> findAllMembers() {
         return memberMapper.findAll();
+    }
+
+    @Override
+    public void deleteByMemberCode(String memberCode) {
+        memberMapper.deleteByMemberCode(memberCode);
     }
 
     @Override

@@ -5,7 +5,7 @@
 
 <mapper namespace="com.aipms.mapper.MemberMapper">
 
-    <insert id="insertMember" parameterType="com.aipms.domain.Member">
+    <insert id="insertMember" useGeneratedKeys="true" keyProperty="memberId" parameterType="com.aipms.domain.Member">
         INSERT INTO member (
             email, password, name, phone, car_number,
             agree_to_terms, agree_to_privacy, agree_to_marketing,
@@ -17,6 +17,12 @@
                  )
     </insert>
 
+    <update id="updateMemberCode" parameterType="map">
+        UPDATE member
+        SET member_code = #{memberCode}
+        WHERE member_id = #{memberId}
+    </update>
+
 
     <select id="findByEmail" parameterType="String" resultType="com.aipms.domain.Member">
         SELECT * FROM member WHERE email = #{email}
@@ -25,16 +31,19 @@
     <select id="findAll" resultType="com.aipms.domain.Member">
         SELECT
             member_id,
+            member_code,
             email,
             password,
             name,
             phone,
             role,
             car_number,
+            car_model,
             agree_to_marketing,
             agree_to_terms,
             agree_to_privacy,
             subscription,
+            status,
             kakao_id,
             login_type,
             reg_date
@@ -46,6 +55,17 @@
         SET kakao_id = #{kakaoId}
         WHERE email = #{email}
     </update>
+
+    <select id="findAdmins" resultType="com.aipms.domain.Member">
+        SELECT *
+        FROM member
+        WHERE role = 'ADMIN'
+          AND kakao_id IS NOT NULL
+    </select>
+
+    <delete id="deleteByMemberCode" parameterType="string">
+        DELETE FROM member WHERE member_code = #{memberCode}
+    </delete>
 
 
 </mapper>

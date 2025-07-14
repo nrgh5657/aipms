@@ -1,6 +1,8 @@
 package com.aipms.controller;
 
+import com.aipms.dto.FireAlertDto;
 import com.aipms.security.CustomUserDetails;
+import com.aipms.service.FireLogService;
 import com.aipms.service.KakaoMessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,6 +16,7 @@ import java.util.List;
 @RequestMapping("/api/alert")
 public class MessageTestController {
     private final KakaoMessageService kakaoMessageService;
+    private final FireLogService fireLogService;
 
 //    @GetMapping("/test/send-direct")
 //    @ResponseBody
@@ -33,9 +36,10 @@ public class MessageTestController {
     @ResponseBody
     public String sendMessagesToUsers(@RequestBody List<String> kakaoIdList) {
         int count = 0;
+        FireAlertDto latestLog = fireLogService.getLatestFireLog();
         for (String kakaoId : kakaoIdList) {
             try {
-                kakaoMessageService.sendMessageToMe(kakaoId);
+                kakaoMessageService.sendMessageToMe(kakaoId, latestLog);
                 count++;
             } catch (Exception e) {
                 System.out.println("❌ 전송 실패: " + kakaoId + " - " + e.getMessage());

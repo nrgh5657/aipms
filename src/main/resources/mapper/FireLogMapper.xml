@@ -59,5 +59,35 @@
         WHERE id = #{id}
     </update>
 
+    <select id="findLatestLog" resultType="com.aipms.dto.FireAlertDto">
+        SELECT id, location, detected_at, confidence
+        FROM fire_alert_log
+        ORDER BY detected_at DESC
+            LIMIT 1
+    </select>
+
+    <select id="findFireLogsPaged" resultType="com.aipms.domain.FireLog">
+        SELECT
+            id,
+            label,
+            confidence,
+            video_url AS videoUrl,
+            image_path AS imagePath,
+            detected_at AS detectedAt,
+            created_at AS createdAt,
+            location,
+            admin_judgment AS adminJudgment,
+            alert_status AS alertStatus,
+            alert_time AS alertTime,
+            notes
+        FROM fire_alert_log
+        ORDER BY detected_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countFireLogs" resultType="int">
+        SELECT COUNT(*) FROM fire_alert_log
+    </select>
+
 
 </mapper>

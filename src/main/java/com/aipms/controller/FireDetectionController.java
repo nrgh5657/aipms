@@ -25,7 +25,7 @@ public class FireDetectionController {
             return ResponseEntity.badRequest().body("❌ JSON 파싱 실패 또는 필드 누락");
         }
 
-        fireLogService.saveFireLog(dto);
+        fireLogService.saveFireLogAndNotifyAdmins(dto);
         cctvLogService.saveFireLogAsRegular(dto);
         return ResponseEntity.ok("화재 로그 저장 완료");
     }

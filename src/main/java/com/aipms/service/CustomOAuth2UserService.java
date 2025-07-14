@@ -4,6 +4,7 @@ import com.aipms.domain.KakaoToken;
 import com.aipms.domain.Member;
 import com.aipms.mapper.KakaoTokenMapper;
 import com.aipms.mapper.MemberMapper;
+import com.aipms.util.AES256Util;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -25,6 +26,7 @@ import java.util.Map;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
     private final MemberMapper memberMapper;
     private final KakaoTokenMapper kakaoTokenMapper;
+    private final AES256Util aes256Util;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -60,27 +62,35 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             }
         }
 
-        // ✅ access_token & refresh_token 저장
-        OAuth2AccessToken accessToken = userRequest.getAccessToken();
+        try {
+            OAuth2AccessToken accessToken = userRequest.getAccessToken();
 
-        KakaoToken token = new KakaoToken();
-        token.setKakaoId(kakaoId);
-        token.setAccessToken(accessToken.getTokenValue());
+            KakaoToken token = new KakaoToken();
+            token.setKakaoId(kakaoId);
 
-        // refresh_token은 Optional이므로 체크
-        Object refresh = userRequest.getAdditionalParameters().get("refresh_token");
-        if (refresh != null) {
-            token.setRefreshToken(refresh.toString());
+            // 🔐 암호화된 access_token 저장
+            token.setAccessToken(aes256Util.encrypt(accessToken.getTokenValue()));
+
+            // 🔐 refresh_token도 있으면 암호화
+            Object refresh = userRequest.getAdditionalParameters().get("refresh_token");
+            if (refresh != null) {
+                token.setRefreshToken(aes256Util.encrypt(refresh.toString()));
+            }
+
+            token.setIssuedAt(LocalDateTime.now());
+            token.setExpiresAt(LocalDateTime.ofInstant(accessToken.getExpiresAt(), ZoneId.systemDefault()));
+
+            // 기존 insert/update 로직 유지
+            if (kakaoTokenMapper.findByKakaoId(kakaoId) == null) {
+                kakaoTokenMapper.insertToken(token);
+            } else {
+                kakaoTokenMapper.updateToken(token);
+            }
+
+        } catch (Exception e) {
+            throw new IllegalStateException("🔐 Kakao 토큰 암호화 실패", e);
         }
 
-        token.setIssuedAt(LocalDateTime.now());
-        token.setExpiresAt(LocalDateTime.ofInstant(accessToken.getExpiresAt(), ZoneId.systemDefault()));
-
-        if (kakaoTokenMapper.findByKakaoId(kakaoId) == null) {
-            kakaoTokenMapper.insertToken(token);
-        } else {
-            kakaoTokenMapper.updateToken(token);
-        }
 
         return new DefaultOAuth2User(
                 Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),

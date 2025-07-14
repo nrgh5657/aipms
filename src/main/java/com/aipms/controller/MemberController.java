@@ -48,5 +48,19 @@ public class MemberController {
         return ResponseEntity.ok(memberService.findAllMembers());
     }
 
+    @GetMapping("/list")
+    @ResponseBody
+    public List<Member> getMemberList() {
+        return memberService.findAllMembers();
+    }
+
+    @DeleteMapping("/delete/{memberCode}")
+    @ResponseBody
+    public ResponseEntity<String> deleteMember(@PathVariable String memberCode) {
+        System.out.println("삭제 요청 수신: " + memberCode);
+        memberService.deleteByMemberCode(memberCode); // memberCode 기준으로 삭제
+        return ResponseEntity.ok("삭제 완료");
+    }
+
 
 }

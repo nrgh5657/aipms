@@ -644,6 +644,32 @@ function createParkingTableRow(item) {
   return row;
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+  fetch('/api/members/list') // 실제 Spring Controller 경로
+      .then(res => res.json())
+      .then(data => {
+        memberData = data.map(member => ({
+          id: member.memberCode || '-',  // ✅ id는 memberCode 사용
+          name: member.name || '-',
+          carNumber: member.carNumber || '-',
+          carModel: member.carModel || '-',
+          phone: member.phone || '-',
+          email: member.email || '-',
+          joinDate: formatDate(member.regDate),
+          status: member.status === 'ACTIVE' ? '활성' : '비활성',
+          membership: member.subscription ? '월주차' : '일반'
+        }));
+        renderMemberTable();
+      })
+      .catch(err => console.error("회원 데이터 불러오기 실패", err));
+});
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString().slice(0, 5);
+}
+
 // 회원 관리 테이블 렌더링
 function renderMemberTable() {
   const tableBody = document.getElementById('memberTable');
@@ -691,6 +717,29 @@ function createMemberTableRow(item) {
   `;
   
   return row;
+}
+
+function deleteMember(id) {
+  if (!confirm('정말 이 회원을 삭제하시겠습니까?')) return;
+  console.log("삭제 요청 ID:", id);
+
+  fetch(`/api/members/delete/${id}`, {
+    method: 'DELETE'
+  })
+      .then(res => {
+        if (!res.ok) throw new Error('삭제 실패');
+        return res.text(); // 또는 res.json()
+      })
+      .then(() => {
+        alert('회원이 삭제되었습니다.');
+        // 삭제 후 목록 갱신
+        memberData = memberData.filter(m => m.id !== id);
+        renderMemberTable();
+      })
+      .catch(err => {
+        console.error('회원 삭제 오류', err);
+        alert('삭제 중 오류가 발생했습니다.');
+      });
 }
 
 // 결제 내역 테이블 렌더링

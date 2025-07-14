@@ -4,6 +4,10 @@ let parkingData = [];
 let memberData = [];
 let paymentData = [];
 let systemLogs = [];
+let currentPage = 0;// 전역 변수로 현재 페이지 추적
+let totalPages =0;
+const pageSize = 3;   // 필요에 따라 조정 가능
+
 
 // 주차 제한 상수
 const PARKING_LIMITS = {
@@ -323,7 +327,7 @@ function initializeSystemLogs() {
 
 // 샘플 데이터 로드
 function loadSampleData() {
-  fireDetectionData = [...sampleFireData];
+  // fireDetectionData = [...sampleFireData];
   parkingData = [...sampleParkingData];
   memberData = [...sampleMemberData];
   paymentData = [...samplePaymentData];
@@ -336,12 +340,14 @@ function loadSampleData() {
   });
 }
 
-function loadFireDetectionDataFromServer() {
-  fetch('/fire/logs/json') // 🔁 실제 스프링 API 엔드포인트 주소
+function loadFireDetectionDataFromServer(page = currentPage, size = pageSize) {
+  fetch(`/fire/logs/paged?page=${page}&size=${size}`) // 🔁 실제 스프링 API 엔드포인트 주소
       .then(response => response.json())
       .then(data => {
-        fireDetectionData = data;
-        renderFireTable(); // 테이블 렌더링
+        fireDetectionData = data.content;
+        currentPage = data.currentPage;       // 🔹 현재 페이지 업데이트
+        totalPages = data.totalPages;         // 🔹 전체 페이지 수 업데이트
+        applyFireFilters(); // 테이블 렌더링
       })
       .catch(error => {
         console.error('🔥 화재 감지 데이터 로드 실패:', error);
@@ -544,21 +550,92 @@ function updateElementIfExists(id, value) {
   }
 }
 
+
+function loadFireLogsPaged(page = 0, size = pageSize, filters = null) {
+  fetch(`/fire/logs/paged?page=${page}&size=${size}`)
+      .then(res => res.json())
+      .then(data => {
+        fireDetectionData = data.content;
+        currentPage = data.currentPage;
+        totalPages = Math.ceil(data.totalElements / data.pageSize);
+
+        if (filters) {
+          // 필터 UI는 이미 적용했으니 데이터 필터만 적용
+          applyFireFilters(filters.filter, false);
+        } else {
+          applyFireFilters(); // 기본 필터 적용
+        }
+        renderPagination(totalPages, currentPage);
+      });
+}
+
+
+function getPageFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  return parseInt(params.get('page')) || 0;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const pageFromURL = getPageFromURL();
+  const filters = getStoredFireFilters();
+  applyStoredFilterUI(filters);
+  loadFireLogsPaged(pageFromURL, pageSize, filters);
+});
+
+function renderPagination(totalPages, currentPage) {
+  const paginationDiv = document.querySelector(".pagination");
+  paginationDiv.innerHTML = '';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.textContent = '이전';
+  prevBtn.onclick = () => {
+    if (currentPage > 0) {
+      const newPage = currentPage - 1;
+      window.history.replaceState({}, '', `?page=${newPage}`);
+      loadFireLogsPaged(currentPage - 1);
+    }
+  };
+  paginationDiv.appendChild(prevBtn);
+
+  for (let i = 0; i < totalPages; i++) {
+    const pageBtn = document.createElement('button');
+    pageBtn.textContent = i + 1;
+    pageBtn.className = (i === currentPage) ? 'active' : '';
+    pageBtn.onclick = () => {
+      window.history.replaceState({}, '', `?page=${i}`);
+      loadFireLogsPaged(i);}
+    paginationDiv.appendChild(pageBtn);
+  }
+
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = '다음';
+  nextBtn.onclick = () => {
+    if (currentPage < totalPages - 1){
+      const newPage = currentPage + 1;
+      window.history.replaceState({}, '', `?page=${newPage}`);
+      loadFireLogsPaged(currentPage + 1);
+    }
+  };
+  paginationDiv.appendChild(nextBtn);
+}
+
+
+
 // 화재 감지 테이블 렌더링
-function renderFireTable() {
+function renderFireTable(data = fireDetectionData) {
   const tableBody = document.getElementById('fireLogTable');
   if (!tableBody) return;
   
   console.log('화재 테이블 렌더링 시작');
   tableBody.innerHTML = '';
   
-  if (fireDetectionData && fireDetectionData.length > 0) {
-    fireDetectionData.forEach(item => {
+  if (data && data.length > 0) {
+    data.forEach(item => {
       const row = createFireTableRow(item);
       tableBody.appendChild(row);
     });
     
-    const remainingRows = Math.max(0, 10 - fireDetectionData.length);
+    const remainingRows = Math.max(0, 10 - data.length);
     for (let i = 0; i < remainingRows; i++) {
       const emptyRow = document.createElement('tr');
       emptyRow.innerHTML = '<td colspan="10">&nbsp;</td>';
@@ -566,7 +643,7 @@ function renderFireTable() {
       tableBody.appendChild(emptyRow);
     }
     
-    console.log(`화재 테이블 렌더링 완료: ${fireDetectionData.length}개 항목`);
+    console.log(`화재 테이블 렌더링 완료: ${data.length}개 항목`);
   }
 }
 
@@ -873,30 +950,68 @@ function applyFilters() {
 }
 
 // 화재 감지 필터 적용
-function applyFireFilters(filter = null) {
+function applyFireFilters(filter = null, updateUI = true) {
   const activeFilter = filter || document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
   const locationFilter = document.getElementById('cctvLocationFilter')?.value || '';
   const dateFilter = document.getElementById('dateFilter')?.value || '';
-  
-  let filteredData = [...sampleFireData];
-  
-  if (activeFilter === 'fire') {
-    filteredData = filteredData.filter(item => item.label === '화재');
-  } else if (activeFilter === 'normal') {
-    filteredData = filteredData.filter(item => item.label === '정상');
+
+  if (updateUI) {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === activeFilter);
+    });
   }
-  
+
+  let filteredData = [...fireDetectionData];
+
+  if (activeFilter === 'fire') {
+    filteredData = filteredData.filter(item => item.label === 'fire');
+  } else if (activeFilter === 'normal') {
+    filteredData = filteredData.filter(item => item.label === 'normal');
+  }
+
   if (locationFilter) {
     filteredData = filteredData.filter(item => item.location === locationFilter);
   }
-  
+
   if (dateFilter) {
     filteredData = filteredData.filter(item => item.detectedAt.startsWith(dateFilter));
   }
-  
-  fireDetectionData = filteredData;
-  renderFireTable();
+
+  saveFireFilterState();
+  renderFireTable(filteredData);
 }
+
+function saveFireFilterState() {
+  const activeFilter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
+  const location = document.getElementById('cctvLocationFilter')?.value || '';
+  const date = document.getElementById('dateFilter')?.value || '';
+
+  const state = { filter: activeFilter, location, date };
+  sessionStorage.setItem('fireFilterState', JSON.stringify(state));
+}
+
+function getStoredFireFilters() {
+  return JSON.parse(sessionStorage.getItem('fireFilterState')) || {
+    filter: 'all',
+    location: '',
+    date: ''
+  };
+}
+
+function applyStoredFilterUI(filters) {
+  const { filter = 'all', location = '', date = '' } = filters || getStoredFireFilters();
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+
+  const locationSelect = document.getElementById('cctvLocationFilter');
+  if (locationSelect) locationSelect.value = location;
+
+  const dateInput = document.getElementById('dateFilter');
+  if (dateInput) dateInput.value = date;
+}
+
 
 // 주차 관리 필터 적용
 function applyParkingFilters(filter = null) {

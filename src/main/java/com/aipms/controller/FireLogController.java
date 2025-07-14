@@ -2,6 +2,7 @@ package com.aipms.controller;
 
 import com.aipms.domain.FireLog;
 import com.aipms.dto.FireAlertTargetDto;
+import com.aipms.dto.Page;
 import com.aipms.service.FireLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -16,10 +17,13 @@ public class FireLogController {
 
     private final FireLogService fireLogService;
 
-    @GetMapping("/logs/json")
+    @GetMapping("/logs/paged")
     @ResponseBody
-    public List<FireLog> getFireLogsJson() {
-        return fireLogService.getAllFireLogs();
+    public Page<FireLog> getFireLogsPaged(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size)
+    {
+        return fireLogService.getPagedFireLogs(page, size);
     }
 
     @PostMapping("/update-note")
