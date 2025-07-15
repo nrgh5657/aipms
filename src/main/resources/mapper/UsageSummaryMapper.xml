@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.UsageSummaryMapper">
+
+    <select id="getSummary" resultType="com.aipms.dto.UsageSummaryDto">
+        SELECT
+            COUNT(el.entry_id) AS totalCount,
+            FLOOR(SUM(TIMESTAMPDIFF(MINUTE, el.entry_time, el.exit_time)) / 60) AS totalTime,
+            IFNULL(SUM(p.total_fee), 0) AS totalPaid,
+            ROUND(AVG(TIMESTAMPDIFF(MINUTE, el.entry_time, el.exit_time)) / 60, 1) AS averageTime
+        FROM entry_log el
+                 JOIN car c ON el.car_id = c.car_id
+                 JOIN member m ON c.member_id = m.member_id
+                 LEFT JOIN payment p ON el.payment_id = p.payment_id
+        WHERE m.member_id = #{memberId}
+    </select>
+
+</mapper>

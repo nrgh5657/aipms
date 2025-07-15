@@ -1,32 +1,41 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>스마트파킹 - 결제 서비스</title>
-  <link rel="stylesheet" th:href="@{/css/customer-style.css}">
+  <link rel="stylesheet" href="/css/customer-style.css">
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    let serverUserData = {
+      user: {
+        name: /*[[${member.name}]]*/ "비로그인"
+      },
+      role: /*[[${member.role}]]*/ "GUEST"
+    };
+    /*]]>*/
+  </script>
 </head>
 <body>
 <header>
   <div class="top-bar">
     <div class="logo">
       <a href="customer-dashboard.html">
-        <img th:src="@{/img/logo.png}" alt="스마트파킹 로고" class="logo-img"> >
+        <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img" >
       </a>
     </div>
     <div class="user-info">
       <span class="welcome">안녕하세요, <strong>김고객</strong>님!</span>
-      <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
-      <a href="#" onclick="logout()" class="logout-btn">로그아웃</a>
+      <a href="index.html" class="logout-btn">로그아웃</a>
     </div>
   </div>
   <nav class="main-menu">
     <ul>
-      <li><a href="reservation.html">🅿️ 주차 예약</a></li>
-      <li><a href="payment.html" class="active">💳 결제 서비스</a></li>
-      <li><a href="my-records.html">📊 이용 내역</a></li>
-      <li><a href="my-info.html">⚙️ 내 정보</a></li>
-      <li><a href="support.html">🎧 고객지원</a></li>
+      <li><a href="/reservation">🅿️ 주차 예약</a></li>
+      <li><a href="/payment" class="active">💳 요금 결제</a></li>
+      <li><a href="/my-records">📊 이용 내역</a></li>
+      <li><a href="/my-info">⚙️ 내 정보</a></li>
+      <li><a href="/support">🎧 고객지원</a></li>
     </ul>
   </nav>
 </header>
@@ -348,6 +357,10 @@
   <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
 </footer>
 
-<script src="/js/customer-script.js"></script>
+<!-- 공통 라이브러리 먼저 로드 -->
+<script src="/common/utils.js"></script>
+<script src="/common/api.js"></script>
+<script src="/js/payment.js"></script>
 </body>
 </html>
+

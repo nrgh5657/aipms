@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.ParkingMapper">
+
+    <insert id="insert" parameterType="com.aipms.domain.Parking">
+        INSERT INTO parking (name, location, space_no, is_occupied, cctv_url)
+        VALUES (#{name}, #{location}, #{spaceNo}, #{isOccupied}, #{cctvUrl})
+    </insert>
+
+    <select id="selectById" parameterType="long" resultType="com.aipms.domain.Parking">
+        SELECT * FROM parking WHERE parking_id = #{id}
+    </select>
+
+    <select id="selectAll" resultType="com.aipms.domain.Parking">
+        SELECT * FROM parking
+    </select>
+
+    <update id="update" parameterType="com.aipms.domain.Parking">
+        UPDATE parking
+        SET name = #{name},
+            location = #{location},
+            space_no = #{spaceNo},
+            is_occupied = #{isOccupied},
+            cctv_url = #{cctvUrl}
+        WHERE parking_id = #{parkingId}
+    </update>
+
+    <delete id="delete" parameterType="long">
+        DELETE FROM parking WHERE parking_id = #{id}
+    </delete>
+
+    <select id="countTotalSlots" resultType="int">
+        SELECT COUNT(*)          -- 모든 주차 공간
+        FROM parking             -- parking 테이블
+    </select>
+
+    <!-- 현재 사용 중인 주차면 수 -->
+    <select id="countOccupiedSlots" resultType="int">
+        SELECT COUNT(*)
+        FROM parking
+        WHERE is_occupied = 1    -- 1 = 사용중, 0 = 비어있음
+    </select>
+
+</mapper>

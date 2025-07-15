@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.UsageHistoryMapper">
+
+    <select id="getUsageHistory" resultType="com.aipms.dto.UsageHistoryDto">
+        SELECT
+        DATE_FORMAT(el.entry_time, '%Y-%m-%d') AS date,
+        -- dayOfWeek 제거됨
+        CONCAT(SUBSTRING_INDEX(p.name, ' ', 1), '-', p.space_no) AS slotName,
+        CONCAT(
+        FLOOR(TIMESTAMPDIFF(MINUTE, el.entry_time, el.exit_time)/60), '시간 ',
+        MOD(TIMESTAMPDIFF(MINUTE, el.entry_time, el.exit_time), 60), '분'
+        ) AS duration,
+        DATE_FORMAT(el.entry_time,'%H:%i') AS startTime,
+        DATE_FORMAT(el.exit_time ,'%H:%i') AS endTime,
+        CONCAT(DATE_FORMAT(el.entry_time,'%H:%i'), ' - ', DATE_FORMAT(el.exit_time,'%H:%i')) AS timeRange,
+        c.car_number AS carNumber,
+        IFNULL(pmt.total_fee, 0) AS fee,
+        CASE
+        WHEN el.exit_time IS NULL THEN '이용중'
+        ELSE '완료'
+        END AS status
+        FROM entry_log el
+        JOIN car c ON el.car_id = c.car_id
+        JOIN member m ON c.member_id = m.member_id
+        JOIN parking p ON el.parking_id = p.parking_id
+        LEFT JOIN payment pmt ON el.payment_id = pmt.payment_id
+        WHERE m.member_id = #{memberId}
+        <if test="startDate != null and endDate != null">
+            AND DATE(el.entry_time) BETWEEN #{startDate} AND #{endDate}
+        </if>
+        ORDER BY el.entry_time DESC
+    </select>
+
+
+
+</mapper>
+

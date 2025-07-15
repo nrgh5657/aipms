@@ -56,7 +56,7 @@
         <h4>🅿️ 주차 관리</h4>
         <ul>
           <li><a href="/management/parking" class="active">주차 현황 확인</a></li>
-          <li><a href="/management/parking">주차 공간 관리</a></li>
+          <li><a href="/management/parkingLog">차량 입출차 로그</a></li>
         </ul>
       </div>
       
@@ -193,6 +193,45 @@
       <button class="alert-close-btn" onclick="closeAlert()">확인</button>
     </div>
   </div>
+
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeEditModal()">&times;</span>
+      <h3>회원 정보 수정</h3>
+      <form id="editForm">
+        <label for="editName">이름</label>
+        <input type="text" id="editName" required>
+
+        <label for="editCarNumber">차량번호</label>
+        <input type="text" id="editCarNumber" required>
+
+        <label for="editCarModel">차량 모델</label>
+        <input type="text" id="editCarModel" required>
+
+        <label for="editPhone">연락처</label>
+        <input type="text" id="editPhone" required>
+
+        <label for="editEmail">이메일</label>
+        <input type="email" id="editEmail" required>
+
+        <label for="editStatus">상태</label>
+        <select id="editStatus">
+          <option value="활성">활성</option>
+          <option value="비활성">비활성</option>
+        </select>
+
+        <label for="editMembership">멤버십</label>
+        <select id="editMembership">
+          <option value="월주차">월주차</option>
+          <option value="일반">일반</option>
+        </select>
+
+        <input type="hidden" id="editId">
+        <button type="submit">저장</button>
+      </form>
+    </div>
+  </div>
+
 
   <script src="/js/script.js"></script>
 </body>

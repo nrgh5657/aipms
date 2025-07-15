@@ -1432,9 +1432,20 @@ function exportDashboardData() {
 }
 
 function refreshFireLog() {
-  fireDetectionData = [...sampleFireData];
-  renderFireTable();
-  showAlert('화재 감지 로그를 새로고침했습니다.');
+  // 🔄 필터 초기화
+  const locationInput = document.getElementById('cctvLocationFilter');
+  if (locationInput) locationInput.value = '';
+
+  const dateInput = document.getElementById('dateFilter');
+  if (dateInput) dateInput.value = '';
+
+  sessionStorage.removeItem('fireFilterState');
+
+  // 🔁 데이터 재로드
+  currentPage = 0;
+  loadFireDetectionDataFromServer(currentPage, pageSize, () => {
+    showAlert('화재 감지 로그를 새로고침했습니다.');
+  });
 }
 
 function exportFireLog() {

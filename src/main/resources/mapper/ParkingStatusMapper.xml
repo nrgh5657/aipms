@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.ParkingStatusMapper">
+
+    <!-- 🔸 현재 주차 중인 차량 상태 -->
+    <select id="getCurrentStatus" resultType="com.aipms.dto.ParkingStatusResponseDto$CurrentStatus">
+        SELECT
+            'active' AS type,
+            CONCAT(p.name, ' - ', p.space_no) AS slotName,
+            el.entry_time AS entryTime,
+            TIMESTAMPDIFF(HOUR, el.entry_time, NOW()) AS elapsedTime,
+            IFNULL(pm.total_fee, 0) AS estimatedFee
+        FROM entry_log el
+                 JOIN parking p ON el.parking_id = p.parking_id
+                 LEFT JOIN payment pm ON el.payment_id = pm.payment_id
+        WHERE el.car_id = (
+            SELECT car_id FROM car WHERE member_id = #{memberId} LIMIT 1
+            )
+          AND el.status = 'IN'
+        ORDER BY el.entry_time DESC
+            LIMIT 1
+    </select>
+
+    <!-- 🔸 예약 정보 -->
+    <select id="getReservationStatus" resultType="com.aipms.dto.ParkingStatusResponseDto$ReservationStatus">
+        SELECT
+            'reserved' AS type,
+            vehicle_number AS vehicleNumber,
+            reservation_start AS reservationStart,
+            reservation_end AS reservationEnd,
+            status
+        FROM reservation
+        WHERE member_id = #{memberId}
+          AND status = 'RESERVED'
+        ORDER BY reservation_start DESC
+            LIMIT 1
+    </select>
+
+    <!-- 🔸 과거 이용 내역 -->
+    <select id="getParkingHistory" resultType="com.aipms.dto.ParkingStatusResponseDto$ParkingHistory">
+        SELECT
+            DATE(el.entry_time) AS date,
+            CONCAT(p.name, ' - ', p.space_no) AS slotName,
+            TIME(el.entry_time) AS startTime,
+            TIME(el.exit_time) AS endTime,
+            SEC_TO_TIME(TIMESTAMPDIFF(SECOND, el.entry_time, el.exit_time)) AS duration,
+            IFNULL(pm.total_fee, 0) AS fee,
+            '완료' AS status
+        FROM entry_log el
+            JOIN parking p ON el.parking_id = p.parking_id
+            LEFT JOIN payment pm ON el.payment_id = pm.payment_id
+        WHERE el.car_id IN (
+            SELECT car_id FROM car WHERE member_id = #{memberId}
+            )
+          AND el.status = 'OUT'
+        ORDER BY el.entry_time DESC
+            LIMIT 10
+    </select>
+
+</mapper>

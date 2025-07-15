@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Parking Management System - 입출차 로그</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- 헤더: 맨위 상단 파트 -->
+  <header class="header">
+    <div class="header-top">
+      <div class="header-info">
+        <span id="currentScreen">화면ID: Parking_001</span>
+        <span id="screenName">화면명: 주차 관리</span>
+      </div>
+      <div class="header-info">
+        <span>사용자: <span id="adminName">Admin</span></span>
+        <span id="currentDate">작성일: 2025-07-10</span>
+      </div>
+    </div>
+
+    <!-- 헤더: 메인 헤더(제목, 버튼 등) -->
+    <div class="main-header">
+      <div class="logo-container">
+        <div class="system-title">🅿 AI 주차 관리 시스템</div>
+       </div>
+      <div class="header-actions">
+        <button class="header-btn" onclick="showNotifications()">🔔 알림</button>
+        <button class="header-btn" onclick="showSettings()">⚙️ 설정</button>
+        <button class="header-btn" onclick="showAdminRegister()">👥 관리자 등록</button>
+        <button class="header-btn logout" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+    
+    <nav class="nav-tabs">
+      <a href="/management/admin" class="nav-tab active">대시보드</a>
+      <a href="/management/parking" class="nav-tab">주차 관리</a>
+      <a href="/management/fee" class="nav-tab">요금 관리</a>
+      <a href="/management/fireManage" class="nav-tab">화재 관리</a>
+      <a href="/management/member" class="nav-tab">회원 관리</a>
+      <a href="/management/systemLogs" class="nav-tab">시스템 로그</a>
+    </nav>
+  </header>
+
+  <!-- 좌측 사이드바-->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h3>관리 메뉴</h3>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <h4>🅿️ 주차 관리</h4>
+        <ul>
+          <li><a href="/management/parking" class="active">주차 현황 확인</a></li>
+          <li><a href="/management/parkingLog">차량 입출차 로그</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>💰 요금 관리</h4>
+        <ul>
+          <li><a href="/management/fee">요금 정책 관리</a></li>
+          <li><a href="/management/fee">환불 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>🔥 화재 관리</h4>
+        <ul>
+          <li><a href="/management/fireManage">화재 기록 관리</a></li>
+          <li><a href="/management/fireCctv">CCTV 영상 확인</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>👥 회원 관리</h4>
+        <ul>
+          <li><a href="/management/member">회원 정보 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>📊 시스템 로그</h4>
+        <ul>
+          <li><a href="/management/systemLogs">시스템 상태</a></li>
+        </ul>
+      </div>
+    </nav>
+  </aside>
+<!--공통된 디자인: 디자인 수정하지 말 것-->
+
+
+
+
+  <!-- 메인 컨테이너 -->
+  <main class="main-content">
+    <!-- 주차 관리 섹션 -->
+    <section class="content-section" id="parking-loge-section">
+      <div class="section-header">
+        <h2>🅿 입출차 로그</h2>
+       <div class="section-actions">
+          <button class="action-btn primary" onclick="clearOldLogs()">초기화</button>
+          <button class="action-btn" onclick="exportSystemLogs()">로그 내보내기</button>
+          <button class="action-btn" onclick="refreshSystemLogs()">새로고침</button>
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">전체</button>
+          <button class="filter-btn" data-filter="monthly">월주차</button>
+          <button class="filter-btn" data-filter="daily">일주차</button>
+        </div>
+        
+        <div class="search-group">
+          <input type="text" class="search-input" placeholder="차량번호 검색" id="searchInput">
+          <input type="text" class="search-input" placeholder="신청자 검색" id="requesterSearch">
+          <button class="search-btn" onclick="applyParkingFilters()">검색</button>
+        </div>
+      </div>
+
+
+      
+      <div class="table-container">
+        <table class="data-table"> <!--js 650에 임의로 데이터 넣음-->
+          <thead>
+            <tr>
+              <th>번호</th>
+              <th>차량번호</th>
+              <th>신청자</th>
+              <th>주차 유형</th>
+              <th>입차 시간</th>
+              <th>출차 시간</th>
+            </tr>
+          </thead>
+
+          <tbody id="parkinglog">
+            <!-- 동적으로 생성됨 -->
+          </tbody>
+        </table>
+      </div>
+      
+      
+
+      <!--페이징:기능은 없음-->
+      <div class="pagination">
+        <button onclick="changePage('prev')">이전</button>
+        <button class="active">1</button>
+        <button>2</button>
+        <button>3</button>
+        <button onclick="changePage('next')">다음</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 모달 영역 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent">
+      <!-- 동적으로 생성됨 -->
+    </div>
+  </div>
+
+  <!-- 알림 메시지 팝업 -->
+  <div class="alert-popup" id="alertPopup">
+    <div class="alert-content">
+      <div class="alert-message" id="alertMessage"></div>
+      <button class="alert-close-btn" onclick="closeAlert()">확인</button>
+    </div>
+  </div>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>

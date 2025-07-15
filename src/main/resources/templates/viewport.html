@@ -1,24 +1,43 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>스마트파킹 - 고객 대시보드</title>
-  <link rel="stylesheet" th:href="@{/css/customer-style.css}">
+  <link rel="stylesheet" href="customer-style.css">
+
+  <!-- 서버 사용자 정보를 JavaScript로 전달 (Thymeleaf) -->
+  <script th:if="${#authentication.principal != 'anonymousUser'}" th:inline="javascript">
+    /*<![CDATA[*/
+    window.serverUserData = {
+      user: {
+        id: /*[[${#authentication.principal.id}]]*/ 1,
+        name: /*[[${#authentication.principal.username}]]*/ '김고객',
+        email: /*[[${#authentication.principal.email}]]*/ 'customer@example.com'
+      },
+      role: /*[[${#authentication.principal.authorities[0].authority}]]*/ 'CUSTOMER'
+    };
+    /*]]>*/
+  </script>
+
+  <!-- 비로그인 상태 처리 -->
+  <script th:unless="${#authentication.principal != 'anonymousUser'}">
+    // 비로그인 상태에서는 serverUserData를 정의하지 않음
+  </script>
 </head>
 <body>
 <header>
   <div class="top-bar">
     <div class="logo">
       <a href="customer-dashboard.html">
-        <img th:src="@{/img/logo.png}" alt="스마트파킹 로고" class="logo-img">
+        <img src="img/logo.png" alt="스마트파킹 로고" class="logo-img" >
       </a>
     </div>
 
     <div class="user-info">
-      <span class="welcome">안녕하세요, <strong>김고객</strong>님!</span>
-      <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
-      <a href="#" onclick="logout()" class="logout-btn">로그아웃</a>
+      <span class="welcome">안녕하세요, <strong id="user-name">김고객</strong>님!</span>
+      <span class="user-grade" id="membership-grade">골드 멤버</span>
+      <a href="index.html" class="logout-btn">로그아웃</a>
     </div>
   </div>
   <nav class="main-menu">
@@ -36,6 +55,48 @@
   <section class="dashboard-welcome">
     <h2>마이 파킹 대시보드</h2>
     <p>편리하고 안전한 주차 서비스를 이용해보세요!</p>
+  </section>
+
+  <!-- 내 계정 정보 -->
+  <section class="account-overview">
+    <h3>내 계정 현황</h3>
+    <div class="account-grid">
+      <div class="account-card">
+        <div class="account-icon">💎</div>
+        <div class="account-info">
+          <span class="account-label">적립 포인트</span>
+          <span class="account-value" id="point">-P</span>
+          <small class="expire-point">다음달 소멸 예정: -P</small>
+        </div>
+      </div>
+
+      <div class="account-card">
+        <div class="account-icon">💳</div>
+        <div class="account-info">
+          <span class="account-label">선불 잔액</span>
+          <span class="account-value" id="prepaid-balance">₩-</span>
+          <small>최종충전: <span id="last-charged">-</span></small>
+        </div>
+      </div>
+
+      <div class="account-card">
+        <div class="account-icon">📊</div>
+        <div class="account-info">
+          <span class="account-label">이번달 사용액</span>
+          <span class="account-value monthly-usage">₩-</span>
+          <small class="savings-rate">전월 대비: -</small>
+        </div>
+      </div>
+
+      <div class="account-card">
+        <div class="account-icon">🏆</div>
+        <div class="account-info">
+          <span class="account-label">멤버십 혜택</span>
+          <span class="account-value discount-rate">-%</span>
+          <small>할인율</small>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- 빠른 액션 버튼들 -->
@@ -71,12 +132,12 @@
       <div class="status-card active">
         <div class="status-header">
           <span class="status-badge">주차중</span>
-          <span class="parking-spot">A-15번</span>
+          <span class="parking-slot">A-15번</span>
         </div>
         <div class="status-details">
-          <p><strong>입차시간:</strong> 2025-07-02 09:30</p>
+          <p><strong>입차시간:</strong> <span id="entry-time">2025-07-02 09:30</span></p>
           <p><strong>경과시간:</strong> <span id="elapsed-time">2시간 30분</span></p>
-          <p><strong>예상요금:</strong> ₩5,000</p>
+          <p><strong>예상요금:</strong> <span class="estimated-fee">₩5,000</span></p>
         </div>
         <button class="exit-btn" onclick="requestExit()">출차 요청</button>
       </div>
@@ -84,14 +145,14 @@
       <div class="status-card">
         <div class="status-header">
           <span class="status-badge upcoming">예정</span>
-          <span class="parking-spot">B-22번</span>
+          <span class="reserved-slot">B-22번</span>
         </div>
         <div class="status-details">
-          <p><strong>예약시간:</strong> 2025-07-03 14:00</p>
-          <p><strong>이용시간:</strong> 3시간</p>
-          <p><strong>예약요금:</strong> ₩9,000</p>
+          <p><strong>예약시간:</strong> <span class="reserved-time">2025-07-03 14:00</span></p>
+          <p><strong>이용시간:</strong> <span class="reserved-duration">3시간</span></p>
+          <p><strong>예약요금:</strong> <span class="reserved-fee">₩9,000</span></p>
         </div>
-        <button class="cancel-btn" onclick="cancelReservation()">예약 취소</button>
+        <button class="cancel-btn" onclick="cancelReservation('RES001')">예약 취소</button>
       </div>
     </div>
   </section>
@@ -130,12 +191,94 @@
     </div>
     <a href="my-records.html" class="view-all-btn">전체 내역 보기 →</a>
   </section>
+
+  <!-- 실시간 주차장 현황 -->
+  <section class="live-status">
+    <h3>실시간 주차장 현황</h3>
+    <div class="parking-stats">
+      <div class="stat-card">
+        <div class="stat-number status-number" aria-label="전체 주차면 수">247</div>
+        <div class="stat-label">전체</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number status-number" aria-label="현재 사용중인 주차면 수">189</div>
+        <div class="stat-label">사용중</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number status-number" aria-label="빈 주차면 수">58</div>
+        <div class="stat-label">빈공간</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number status-number" aria-label="주차장 이용률">76%</div>
+        <div class="stat-label">이용률</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 상세보기 모달 -->
+  <div id="detail-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>이용 상세 정보</h3>
+        <button onclick="closeModal()" class="close-btn">&times;</button>
+      </div>
+
+      <div class="detail-content">
+        <div class="detail-row">
+          <span>이용번호:</span>
+          <span id="detail-id">-</span>
+        </div>
+        <div class="detail-row">
+          <span>주차구역:</span>
+          <span id="detail-spot">-</span>
+        </div>
+        <div class="detail-row">
+          <span>차량번호:</span>
+          <span id="detail-car">-</span>
+        </div>
+        <div class="detail-row">
+          <span>입차시간:</span>
+          <span id="detail-entry">-</span>
+        </div>
+        <div class="detail-row">
+          <span>출차시간:</span>
+          <span id="detail-exit">-</span>
+        </div>
+        <div class="detail-row">
+          <span>이용시간:</span>
+          <span id="detail-duration">-</span>
+        </div>
+
+        <div class="fee-breakdown">
+          <div class="detail-row">
+            <span>기본요금:</span>
+            <span id="detail-base">₩-</span>
+          </div>
+          <div class="detail-row discount">
+            <span>할인금액:</span>
+            <span id="detail-discount">₩-</span>
+          </div>
+          <div class="detail-row">
+            <span>부가세:</span>
+            <span id="detail-tax">₩-</span>
+          </div>
+          <div class="detail-row total">
+            <span>최종요금:</span>
+            <span id="detail-total">₩-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </main>
 
 <footer>
   <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
 </footer>
 
-<script th:src="@{/js/customer-script.js}"></script>
+<!-- 공통 라이브러리 먼저 로드 -->
+<script src="common/utils.js"></script>
+<script src="common/api.js"></script>
+<script src="dashboard.js"></script>
 </body>
 </html>

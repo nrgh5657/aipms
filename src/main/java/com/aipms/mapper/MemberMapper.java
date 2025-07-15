@@ -27,4 +27,8 @@ public interface MemberMapper {
     Member findByMemberCode(String memberCode);
 
     void deleteByMemberCode(String memberCode);
+
+    Member findByName(String nickname);
+
+    Member findByKakaoId(String kakaoId);
 }

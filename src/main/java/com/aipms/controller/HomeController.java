@@ -1,11 +1,14 @@
 package com.aipms.controller;
 
+import com.aipms.domain.Member;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+
+import java.util.Map;
 
 @Controller
 public class HomeController {
@@ -37,8 +40,22 @@ public class HomeController {
         if (principal instanceof com.aipms.security.CustomUserDetails userDetails) {
             model.addAttribute("member", userDetails.getMember());
         } else if (principal instanceof OAuth2User oauthUser) {
-            model.addAttribute("member", oauthUser.getAttributes()); // 또는 필요한 속성 추출
-        } else {
+            Map<String, Object> attributes = oauthUser.getAttributes();
+            Map<String, Object> props = (Map<String, Object>) attributes.get("properties");
+
+            Member member = new Member();
+            member.setName((String) props.get("nickname"));
+            member.setRole("USER"); // 또는 적절한 권한 로직
+
+            // 이메일도 필요한 경우:
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            if (kakaoAccount != null && kakaoAccount.get("email") != null) {
+                member.setEmail((String) kakaoAccount.get("email"));
+            }
+
+            model.addAttribute("member", member); // ✅ 여기가 핵심
+        } // 또는 필요한 속성 추출
+         else {
             return "redirect:/member/login?error=noauth";
         }
 

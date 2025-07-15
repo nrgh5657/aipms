@@ -31,9 +31,11 @@ public class MemberController {
     //}
 
     @PostMapping("/register")
-    public String register(@ModelAttribute MemberDto memberDto) {
+    public ResponseEntity<Map<String, String>> register(@RequestBody MemberDto memberDto) {
+        // ❌ 암호화하지 말고 그대로 넘긴다
         memberService.register(memberDto);
-        return "redirect:/member/login"; // 또는 가입 완료 페이지로 이동
+
+        return ResponseEntity.ok(Map.of("message", "회원가입 완료"));
     }
 
     // ✅ 이메일로 회원 정보 조회

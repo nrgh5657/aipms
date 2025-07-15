@@ -4,6 +4,7 @@ import com.aipms.domain.KakaoToken;
 import com.aipms.domain.Member;
 import com.aipms.mapper.KakaoTokenMapper;
 import com.aipms.mapper.MemberMapper;
+import com.aipms.security.CustomUserDetails;
 import com.aipms.util.AES256Util;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -97,10 +98,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         }
 
 
-        return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                user.getAttributes(),
-                "id"
-        );
+        Member member = memberMapper.findByEmail(email);
+        return new CustomUserDetails(member, user.getAttributes());
     }
 }

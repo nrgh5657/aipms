@@ -644,6 +644,88 @@ function createParkingTableRow(item) {
   return row;
 }
 
+//입출차 로그
+(() => {
+  const MIN_ROWS = 10;
+
+  const parkinglog = [
+    { carNumber: '555허 5556', requester: '소지섭' },
+    { carNumber: '444월 4444', requester: '이정재' },
+    { carNumber: '777럭 7777', requester: '강민호' },
+    { carNumber: '888가 8888', requester: '김영희' },
+    { carNumber: '999나 9999', requester: '박철수' },
+  ];
+
+  function getRandomParkingType() {
+    return Math.random() > 0.5 ? '월주차' : '일주차';
+  }
+
+  function getFormattedDate(date) {
+    const yyyy = date.getFullYear();
+    const MM = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${MM}-${dd} ${hh}:${mm}`;
+  }
+
+  function getRandomEntryTime() {
+    const now = new Date();
+    const hour = Math.floor(Math.random() * 10) + 8;
+    const minute = Math.floor(Math.random() * 60);
+    now.setHours(hour, minute, 0, 0);
+    return new Date(now);
+  }
+
+  function getRandomExitTime(entryTime) {
+    const exit = new Date(entryTime);
+    const extraHours = Math.floor(Math.random() * 5) + 1;
+    exit.setHours(exit.getHours() + extraHours);
+    return exit;
+  }
+
+  function renderParkingTable(data) {
+    const tbody = document.getElementById('parkinglog');
+    tbody.innerHTML = ''; // 기존 내용 초기화
+
+    data.forEach((item, index) => {
+      const row = document.createElement('tr');
+      const parkingType = getRandomParkingType();
+      const entryTime = getRandomEntryTime();
+      const exitTime = getRandomExitTime(entryTime);
+      const formattedEntry = getFormattedDate(entryTime);
+      const formattedExit = getFormattedDate(exitTime);
+
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${item.carNumber}</td>
+        <td>${item.requester}</td>
+        <td>${parkingType}</td>
+        <td>${formattedEntry}</td>
+        <td>${formattedExit}</td>
+      `;
+
+      tbody.appendChild(row);
+    });
+
+    // 여백 채우기 (빈 줄 추가)
+    const emptyRows = MIN_ROWS - data.length;
+    for (let i = 0; i < emptyRows; i++) {
+      const emptyRow = document.createElement('tr');
+      emptyRow.innerHTML = `
+        <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
+      `;
+      emptyRow.classList.add('empty-row'); // 스타일 지정용
+      tbody.appendChild(emptyRow);
+    }
+  }
+
+  // 페이지 로드 시 실행
+  document.addEventListener('DOMContentLoaded', () => {
+    renderParkingTable(parkinglog);
+  });
+})();
+
 document.addEventListener("DOMContentLoaded", function () {
   fetch('/api/members/list') // 실제 Spring Controller 경로
       .then(res => res.json())
@@ -659,7 +741,21 @@ document.addEventListener("DOMContentLoaded", function () {
           status: member.status === 'ACTIVE' ? '활성' : '비활성',
           membership: member.subscription ? '월주차' : '일반'
         }));
-        renderMemberTable();
+
+        const savedFilter = localStorage.getItem('memberFilter') || 'all';
+        const savedKeyword = localStorage.getItem('memberSearch') || '';
+        const savedStatus = localStorage.getItem('memberStatus') || '';
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.dataset.filter === savedFilter) {
+            btn.classList.add('active');
+          }
+        });
+        document.getElementById('memberSearchInput').value = savedKeyword;
+        document.getElementById('memberStatusFilter').value = savedStatus;
+
+        applyMemberFilters(savedFilter);
       })
       .catch(err => console.error("회원 데이터 불러오기 실패", err));
 });
@@ -671,19 +767,19 @@ function formatDate(dateStr) {
 }
 
 // 회원 관리 테이블 렌더링
-function renderMemberTable() {
+function renderMemberTable(data = memberData) {
   const tableBody = document.getElementById('memberTable');
   if (!tableBody) return;
   
   console.log('회원 테이블 렌더링 시작');
   tableBody.innerHTML = '';
   
-  memberData.forEach(item => {
+  data.forEach(item => {
     const row = createMemberTableRow(item);
     tableBody.appendChild(row);
   });
   
-  const remainingRows = Math.max(0, 10 - memberData.length);
+  const remainingRows = Math.max(0, 10 - data.length);
   for (let i = 0; i < remainingRows; i++) {
     const emptyRow = document.createElement('tr');
     emptyRow.innerHTML = '<td colspan="10">&nbsp;</td>';
@@ -691,7 +787,7 @@ function renderMemberTable() {
     tableBody.appendChild(emptyRow);
   }
   
-  console.log(`회원 테이블 렌더링 완료: ${memberData.length}개 항목`);
+  console.log(`회원 테이블 렌더링 완료: ${data.length}개 항목`);
 }
 
 // 회원 테이블 행 생성
@@ -719,12 +815,6 @@ function createMemberTableRow(item) {
   return row;
 }
 
-function deleteMember(id) {
-  if (!confirm('정말 이 회원을 삭제하시겠습니까?')) return;
-  console.log("삭제 요청 ID:", id);
-
-
-}
 
 // 결제 내역 테이블 렌더링
 function renderPaymentTable() {
@@ -940,9 +1030,21 @@ function applyParkingFilters(filter = null) {
 // 회원 관리 필터 적용
 function applyMemberFilters(filter = null) {
   const activeFilter = filter || document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
-  
-  let filteredData = [...sampleMemberData];
-  
+  const keyword = document.getElementById('memberSearchInput')?.value?.trim().toLowerCase();
+  const statusSelect = document.getElementById('memberStatusFilter')?.value;
+  localStorage.setItem('memberFilter', activeFilter);
+  localStorage.setItem('memberSearch', keyword);
+  localStorage.setItem('memberStatus', statusSelect);
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.filter === activeFilter) {
+      btn.classList.add('active');
+    }
+  });
+
+  let filteredData = [...memberData];
+
   if (activeFilter === 'active') {
     filteredData = filteredData.filter(item => item.status === '활성');
   } else if (activeFilter === 'inactive') {
@@ -950,9 +1052,21 @@ function applyMemberFilters(filter = null) {
   } else if (activeFilter === 'monthly') {
     filteredData = filteredData.filter(item => item.membership === '월주차');
   }
-  
-  memberData = filteredData;
-  renderMemberTable();
+
+  if (statusSelect === 'active') {
+    filteredData = filteredData.filter(item => item.status === '활성');
+  } else if (statusSelect === 'inactive') {
+    filteredData = filteredData.filter(item => item.status === '비활성');
+  }
+
+  if (keyword) {
+    filteredData = filteredData.filter(item =>
+        item.name.toLowerCase().includes(keyword) ||
+        item.carNumber.toLowerCase().includes(keyword)
+    );
+  }
+
+  renderMemberTable(filteredData);
 }
 
 // 로그 필터 적용
@@ -1319,9 +1433,41 @@ function exportMemberData() {
 }
 
 function refreshMemberData() {
-  memberData = [...sampleMemberData];
-  renderMemberTable();
-  showAlert('회원 데이터를 새로고침했습니다.');
+  fetch('/api/members/list')
+      .then(res => res.json())
+      .then(data => {
+        // 서버 응답을 memberData로 초기화
+        memberData = data.map(member => ({
+          id: member.memberCode || '-',
+          name: member.name || '-',
+          carNumber: member.carNumber || '-',
+          carModel: member.carModel || '-',
+          phone: member.phone || '-',
+          email: member.email || '-',
+          joinDate: formatDate(member.regDate),
+          status: member.status === 'ACTIVE' ? '활성' : '비활성',
+          membership: member.subscription ? '월주차' : '일반'
+        }));
+
+        // 필터 조건 초기화
+        localStorage.removeItem('memberFilter');
+        localStorage.removeItem('memberSearch');
+        localStorage.removeItem('memberStatus');
+
+        document.getElementById('memberSearchInput').value = '';
+        document.getElementById('memberStatusFilter').value = '';
+
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector('[data-filter="all"]').classList.add('active');
+
+        // 전체 목록 그대로 렌더링
+        renderMemberTable(memberData);
+        showAlert('회원 데이터를 초기 상태로 새로고침했습니다.');
+      })
+      .catch(err => {
+        console.error("회원 데이터 새로고침 실패", err);
+        alert('데이터 새로고침 중 오류가 발생했습니다.');
+      });
 }
 
 function createNewPolicy() {

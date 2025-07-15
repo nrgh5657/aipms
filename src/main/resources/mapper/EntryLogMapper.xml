@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.EntryLogMapper">
+
+    <insert id="insertEntryLog" parameterType="com.aipms.domain.EntryLog">
+        INSERT INTO entry_log (vehicle_id, parking_id, entry_time, ai_detected, payment_id)
+        VALUES (#{vehicleId}, #{parkingId}, #{entryTime}, #{aiDetected}, #{paymentId})
+    </insert>
+
+    <update id="updateExitTime">
+        UPDATE entry_log
+        SET exit_time = #{exitTime}
+        WHERE entry_id = #{entryId}
+    </update>
+
+    <select id="selectActiveEntryByVehicle" resultType="com.aipms.domain.EntryLog">
+        SELECT * FROM entry_log
+        WHERE vehicle_id = #{vehicleId}
+          AND exit_time IS NULL
+        ORDER BY entry_time DESC
+            LIMIT 1
+    </select>
+
+    <select id="selectLogsByParkingId" resultType="com.aipms.domain.EntryLog">
+        SELECT * FROM entry_log
+        WHERE parking_id = #{parkingId}
+        ORDER BY entry_time DESC
+    </select>
+
+</mapper>

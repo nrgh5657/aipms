@@ -22,6 +22,12 @@ public class AdminController {
     public String parking() {
         return "parking-management";
     }
+
+    @GetMapping("parkingLog")
+    public String parkingLog() {
+        return "parking-log";
+    }
+
     @GetMapping("fireManage")
     public String fire() {
         return "fire-management";

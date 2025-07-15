@@ -71,5 +71,22 @@
         DELETE FROM member WHERE member_code = #{memberCode}
     </delete>
 
+    <select id="findByName" parameterType="string" resultType="com.aipms.domain.Member">
+        SELECT *
+        FROM member
+        WHERE name = #{name}
+    </select>
+
+    <select id="findByKakaoId" resultType="com.aipms.domain.Member" parameterType="string">
+        SELECT *
+        FROM member
+        WHERE kakao_id = #{kakaoId}
+    </select>
+
+
+
+
+
+
 
 </mapper>
