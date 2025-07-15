@@ -8,4 +8,5 @@ public interface KakaoTokenMapper {
     KakaoToken findByKakaoId(String kakaoId);
     void insertToken(KakaoToken token);
     void updateToken(KakaoToken token);
+    void deleteByKakaoId(String kakaoId);
 }

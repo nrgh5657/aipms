@@ -1,11 +1,13 @@
 package com.aipms.service;
 
+import com.aipms.mapper.KakaoTokenMapper;
 import com.aipms.mapper.MemberMapper;
 import lombok.RequiredArgsConstructor;
 import com.aipms.domain.Member;
 import com.aipms.dto.MemberDto;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,7 +17,9 @@ import java.util.List;
 public class MemberServiceImpl implements MemberService {
 
     private final MemberMapper memberMapper;
+    private final KakaoTokenMapper kakaoTokenMapper;
     private final BCryptPasswordEncoder passwordEncoder;
+
 
     @Override
     public void register(MemberDto dto) {
@@ -62,8 +66,15 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional
     public void deleteByMemberCode(String memberCode) {
-        memberMapper.deleteByMemberCode(memberCode);
+        Member member = memberMapper.findByMemberCode(memberCode);
+        if (member != null) {
+            if (member.getKakaoId() != null && !member.getKakaoId().isBlank()) {
+                kakaoTokenMapper.deleteByKakaoId(member.getKakaoId());
+            }
+            memberMapper.deleteByMemberCode(memberCode);
+        }
     }
 
     @Override

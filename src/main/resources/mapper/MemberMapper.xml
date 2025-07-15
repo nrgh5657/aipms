@@ -63,6 +63,10 @@
           AND kakao_id IS NOT NULL
     </select>
 
+    <select id="findByMemberCode" parameterType="string" resultType="com.aipms.domain.Member">
+        SELECT * FROM member WHERE member_code = #{memberCode}
+    </select>
+
     <delete id="deleteByMemberCode" parameterType="string">
         DELETE FROM member WHERE member_code = #{memberCode}
     </delete>

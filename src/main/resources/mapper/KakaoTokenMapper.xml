@@ -24,4 +24,8 @@
         WHERE kakao_id = #{kakaoId}
     </update>
 
+    <delete id="deleteByKakaoId" parameterType="string">
+        DELETE FROM kakao_token WHERE kakao_id = #{kakaoId}
+    </delete>
+
 </mapper>

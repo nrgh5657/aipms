@@ -54,6 +54,11 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             newMember.setAgreeToPrivacy(true);
             newMember.setAgreeToMarketing(false);
             memberMapper.insertMember(newMember);
+            Member inserted = memberMapper.findByEmail(email);
+            String memberCode = String.format("M%03d", inserted.getMemberId());
+
+            memberMapper.updateMemberCode(inserted.getMemberId(), memberCode);
+
         } else {
             // ✅ 기존 회원인데 kakaoId 없을 경우 업데이트
             if (existing.getKakaoId() == null || existing.getKakaoId().isBlank()) {

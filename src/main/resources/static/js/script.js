@@ -723,23 +723,7 @@ function deleteMember(id) {
   if (!confirm('정말 이 회원을 삭제하시겠습니까?')) return;
   console.log("삭제 요청 ID:", id);
 
-  fetch(`/api/members/delete/${id}`, {
-    method: 'DELETE'
-  })
-      .then(res => {
-        if (!res.ok) throw new Error('삭제 실패');
-        return res.text(); // 또는 res.json()
-      })
-      .then(() => {
-        alert('회원이 삭제되었습니다.');
-        // 삭제 후 목록 갱신
-        memberData = memberData.filter(m => m.id !== id);
-        renderMemberTable();
-      })
-      .catch(err => {
-        console.error('회원 삭제 오류', err);
-        alert('삭제 중 오류가 발생했습니다.');
-      });
+
 }
 
 // 결제 내역 테이블 렌더링
@@ -1308,9 +1292,27 @@ function editMember(id) {
 
 function deleteMember(id) {
   if (confirm('정말 삭제하시겠습니까?')) {
-    showAlert(`회원 ${id}가 삭제되었습니다.`);
+    fetch(`/api/members/delete/${id}`, {
+      method: 'DELETE'
+    })
+        .then(res => {
+          if (!res.ok) throw new Error('삭제 실패');
+          return res.text(); // 또는 res.json()
+        })
+        .then(() => {
+          showAlert(`회원 ${id}가 삭제되었습니다.`);
+
+          // 삭제 후 목록 갱신
+          memberData = memberData.filter(m => m.id !== id);
+          renderMemberTable();
+        })
+        .catch(err => {
+          console.error('회원 삭제 오류', err);
+          alert('삭제 중 오류가 발생했습니다.');
+        });
   }
 }
+
 
 function exportMemberData() {
   showAlert('회원 데이터를 내보냅니다.');

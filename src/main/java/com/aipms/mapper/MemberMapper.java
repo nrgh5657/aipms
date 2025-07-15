@@ -24,5 +24,7 @@ public interface MemberMapper {
 
     void updateMemberKakaoId(Member member);
 
+    Member findByMemberCode(String memberCode);
+
     void deleteByMemberCode(String memberCode);
 }
