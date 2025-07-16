@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 "/api/parking/live-status",
                                 "/api/parking/status",
                                 "/api/membership/info",
+                                "/api/parking-log/logs",
                                 "/error", "/error/**",
                                 "/fire/**", "/fireDetect/detected"
                         ).permitAll()

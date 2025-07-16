@@ -335,6 +335,21 @@ function loadSampleData() {
   });
 }
 
+// parking-log-data.js 또는 script.js 내부 최상단에 위치
+function fetchParkingLogs(callback) {
+  fetch('/api/parking-log/logs')
+      .then(res => res.json())
+      .then(data => {
+        if (typeof callback === 'function') {
+          callback(data);
+        }
+      })
+      .catch(err => {
+        console.error('❌ 입출차 로그 불러오기 실패:', err);
+        showAlert('입출차 로그를 불러오지 못했습니다.');
+      });
+}
+
 // 이벤트 리스너 설정
 function setupEventListeners() {
   // 필터 버튼 이벤트
@@ -646,23 +661,14 @@ function createParkingTableRow(item) {
   
   return row;
 }
-//입출차 로그
+// 입출차 로그
 (() => {
   const MIN_ROWS = 10;
 
-  const parkinglog = [
-    { carNumber: '555허 5556', requester: '소지섭' },
-    { carNumber: '444월 4444', requester: '이정재' },
-    { carNumber: '777럭 7777', requester: '강민호' },
-    { carNumber: '888가 8888', requester: '김영희' },
-    { carNumber: '999나 9999', requester: '박철수' },
-  ];
-
-  function getRandomParkingType() {
-    return Math.random() > 0.5 ? '월주차' : '일주차';
-  }
-
-  function getFormattedDate(date) {
+  // 📌 날짜 포맷 함수
+  function getFormattedDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
     const yyyy = date.getFullYear();
     const MM = String(date.getMonth() + 1).padStart(2, '0');
     const dd = String(date.getDate()).padStart(2, '0');
@@ -671,64 +677,60 @@ function createParkingTableRow(item) {
     return `${yyyy}-${MM}-${dd} ${hh}:${mm}`;
   }
 
-  function getRandomEntryTime() {
-    const now = new Date();
-    const hour = Math.floor(Math.random() * 10) + 8;
-    const minute = Math.floor(Math.random() * 60);
-    now.setHours(hour, minute, 0, 0);
-    return new Date(now);
-  }
-
-  function getRandomExitTime(entryTime) {
-    const exit = new Date(entryTime);
-    const extraHours = Math.floor(Math.random() * 5) + 1;
-    exit.setHours(exit.getHours() + extraHours);
-    return exit;
-  }
-
+  // 📌 테이블 렌더링
   function renderParkingTable(data) {
     const tbody = document.getElementById('parkinglog');
-    tbody.innerHTML = ''; // 기존 내용 초기화
+    if (!tbody) return;
+    tbody.innerHTML = '';
 
     data.forEach((item, index) => {
       const row = document.createElement('tr');
-      const parkingType = getRandomParkingType();
-      const entryTime = getRandomEntryTime();
-      const exitTime = getRandomExitTime(entryTime);
-      const formattedEntry = getFormattedDate(entryTime);
-      const formattedExit = getFormattedDate(exitTime);
+      const entryTime = getFormattedDate(item.entryTime);
+      const exitTime = getFormattedDate(item.exitTime);
+      const parkingType = item.parkingType || '일반';
+      const requester = item.memberName || '비회원';
 
       row.innerHTML = `
         <td>${index + 1}</td>
         <td>${item.carNumber}</td>
-        <td>${item.requester}</td>
+        <td>${requester}</td>
         <td>${parkingType}</td>
-        <td>${formattedEntry}</td>
-        <td>${formattedExit}</td>
+        <td>${entryTime}</td>
+        <td>${exitTime}</td>
       `;
-
       tbody.appendChild(row);
     });
 
-    // 여백 채우기 (빈 줄 추가)
+    // 여백 채우기
     const emptyRows = MIN_ROWS - data.length;
     for (let i = 0; i < emptyRows; i++) {
       const emptyRow = document.createElement('tr');
-      emptyRow.innerHTML = `
-        <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
-      `;
-      emptyRow.classList.add('empty-row'); // 스타일 지정용
+      emptyRow.innerHTML = `<td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td>`;
+      emptyRow.classList.add('empty-row');
       tbody.appendChild(emptyRow);
     }
   }
 
-  // 페이지 로드 시 실행
+  // 📌 서버에서 데이터 요청
+  function fetchParkingLogs(callback) {
+    fetch('/api/parking-log/logs')
+        .then(res => {
+          if (!res.ok) throw new Error('서버 응답 오류');
+          return res.json();
+        })
+        .then(data => callback(data))
+        .catch(err => {
+          console.error('🚨 입출차 로그 불러오기 실패:', err);
+          alert('입출차 로그를 불러오지 못했습니다.');
+        });
+  }
+
+  // 📌 초기 로드 시 실행
   document.addEventListener('DOMContentLoaded', () => {
-    const tbody = document.getElementById('parkinglog');
-    if (!tbody) return;
-    renderParkingTable(parkinglog);
+    fetchParkingLogs(renderParkingTable);
   });
 })();
+
 
 document.addEventListener("DOMContentLoaded", function () {
   fetchMemberList(1);

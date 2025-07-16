@@ -30,6 +30,9 @@ public interface MemberMapper {
     //아이디로 조회
     Member findById(String id);
     
+    //차량넘버로 조회
+    Member findByCarNumber(String carNumber);
+    
     // 모든 멤버 조회
     List<Member> findAll();
     

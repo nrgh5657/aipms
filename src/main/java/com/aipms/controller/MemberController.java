@@ -4,6 +4,7 @@ import com.aipms.domain.Member;
 import com.aipms.dto.MemberDto;
 import com.aipms.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -25,12 +26,18 @@ public class MemberController {
     // ✅ 회원가입
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@RequestBody MemberDto memberDto) {
-        // ❌ 암호화하지 말고 그대로 넘긴다
-        memberService.register(memberDto);
-        Member registered = memberService.getMemberByEmail(memberDto.getEmail()); // 또는 반환 구조 수정
-        String memberCode = registered.getMemberCode(); //멤버 관리 멤버 코드 생성
+        memberService.register(memberDto); // 등록 + memberCode 생성까지 끝남
 
-        return ResponseEntity.ok(Map.of("message", "회원가입 완료"));
+        Member registered = memberService.getMemberByEmail(memberDto.getEmail());
+        if (registered == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "회원가입 실패: 등록된 회원 정보를 찾을 수 없습니다."));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "message", "회원가입 완료",
+                "memberCode", registered.getMemberCode()
+        ));
     }
 
     // ✅ 이메일로 회원 정보 조회

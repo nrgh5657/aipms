@@ -123,6 +123,10 @@
         SELECT COUNT(*) FROM member
     </select>
 
+    <select id="findByCarNumber" resultType="com.aipms.domain.Member" parameterType="string">
+        SELECT * FROM member WHERE car_number = #{carNumber}
+    </select>
+
 
 
 
