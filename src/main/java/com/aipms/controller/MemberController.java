@@ -21,19 +21,14 @@ public class MemberController {
     private final MemberService memberService;
     private final BCryptPasswordEncoder passwordEncoder; // ✅ 해결 포인트: passwordEncoder 주입
 
-    // ✅ 회원가입
-//    @PostMapping("/register")
-//    public ResponseEntity<Map<String, String>> register(@RequestBody MemberDto memberDto) {
-//        // ❌ 암호화하지 말고 그대로 넘긴다
-//        memberService.register(memberDto);
-//
-//        return ResponseEntity.ok(Map.of("message", "회원가입 완료"));
-    //}
 
+    // ✅ 회원가입
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@RequestBody MemberDto memberDto) {
         // ❌ 암호화하지 말고 그대로 넘긴다
         memberService.register(memberDto);
+        Member registered = memberService.getMemberByEmail(memberDto.getEmail()); // 또는 반환 구조 수정
+        String memberCode = registered.getMemberCode(); //멤버 관리 멤버 코드 생성
 
         return ResponseEntity.ok(Map.of("message", "회원가입 완료"));
     }
@@ -45,23 +40,72 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getMemberByEmail(email));
     }
 
+    //✅모든 정보 조회
     @GetMapping("/all")
     public ResponseEntity<List<Member>> getAllMembers() {
         return ResponseEntity.ok(memberService.findAllMembers());
     }
 
+    //✅멤버 리스트 페이징 처리
     @GetMapping("/list")
     @ResponseBody
-    public List<Member> getMemberList() {
-        return memberService.findAllMembers();
+    public Map<String, Object> getMemberList(
+            @RequestParam(defaultValue ="1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        int offset = (page - 1) * size;
+
+        List<Member> members = memberService.findPagedMembers(offset, size);
+        int totalCount = memberService.countAllMembers();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", members);
+        result.put("totalPages", (int) Math.ceil((double) totalCount / size));
+        result.put("totalElements", totalCount);
+        result.put("page", page);
+        result.put("size", size);
+
+        return result;
     }
 
+    //✅ 회원 정보 수정
+    @PutMapping("/modify/{id}")
+    public ResponseEntity<?> updateMember(
+            @PathVariable String id,
+            @RequestBody MemberDto dto
+    ) {
+        memberService.updateMember(id, dto);
+        return ResponseEntity.ok(Map.of("message", "회원 수정 완료"));
+    }
+    //✅ 회원 정보 완전 삭제 - 코드만 남아 있음
     @DeleteMapping("/delete/{memberCode}")
     @ResponseBody
     public ResponseEntity<String> deleteMember(@PathVariable String memberCode) {
         System.out.println("삭제 요청 수신: " + memberCode);
         memberService.deleteByMemberCode(memberCode); // memberCode 기준으로 삭제
         return ResponseEntity.ok("삭제 완료");
+    }
+
+    //✅회원 비활성화
+    @PutMapping("/deactivate/{memberCode}")
+    @ResponseBody
+    public ResponseEntity<String> deactivateMember(@PathVariable String memberCode) {
+        try {
+            memberService.deactivateMember(memberCode); // 서비스에서 status만 INACTIVE로 바꿈
+            return ResponseEntity.ok("회원이 비활성화되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("비활성화 중 오류 발생: " + e.getMessage());
+        }
+    }
+    //✅회원 활성화
+    @PutMapping("/activate/{memberCode}")
+    @ResponseBody
+    public ResponseEntity<String> activateMember(@PathVariable String memberCode) {
+        try {
+            memberService.activateMember(memberCode); // 서비스에서 status만 INACTIVE로 바꿈
+            return ResponseEntity.ok("회원이 활성화되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("활성화 중 오류 발생: " + e.getMessage());
+        }
     }
 
 

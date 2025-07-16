@@ -18,6 +18,7 @@ public class FireDetectionController {
     private final FireLogService fireLogService;
     private final CctvLogService cctvLogService;
 
+    //화재 감지 수신
     @PostMapping("/detected")
     public ResponseEntity<String> handleFireDetected(@RequestBody FireAlertDto dto) {
         System.out.println("🔥 수신된 DTO: " + dto);

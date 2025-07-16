@@ -17,8 +17,9 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+//cctv정기기록 5분마다 정기기록을 남기도록 하는 코드
 public class CctvLogScheduler {
-
+    
     private final CctvLogService cctvLogService;
     private final FireLogService fireLogService;
 

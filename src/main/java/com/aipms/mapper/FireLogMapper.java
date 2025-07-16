@@ -13,12 +13,16 @@ public interface FireLogMapper {
     void insertFireLog(FireLog fireLog);
     //화재 감지 로그 읽어오기
     List<FireLog> findAllFireLogs();
-
+        
+    //화재 감지 로그 수정
     void updateLogs(FireLog fireLog);
-
+    
+    //최신 로그 읽어오기
     FireAlertDto findLatestLog();
-
+    
+    //화재 감지 로그 페이징 처리
     List<FireLog> findFireLogsPaged(@Param("offset") int offset, @Param("limit") int limit);
-
+    
+    //페이징 처리를 위한 화재감지 로그 카운트 
     int countFireLogs();
 }

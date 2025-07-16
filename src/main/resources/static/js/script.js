@@ -311,7 +311,7 @@ function initializeFireManagement() {
 // 회원 관리 초기화
 function initializeMemberManagement() {
   console.log('회원 관리 초기화');
-  renderMemberTable();
+  refreshMemberData(false);
 }
 
 // 시스템 로그 초기화
@@ -322,7 +322,7 @@ function initializeSystemLogs() {
 
 // 샘플 데이터 로드
 function loadSampleData() {
-  fireDetectionData = [...sampleFireData];
+  //fireDetectionData = [...sampleFireData];
   parkingData = [...sampleParkingData];
   memberData = [...sampleMemberData];
   paymentData = [...samplePaymentData];
@@ -355,6 +355,7 @@ function setupEventListeners() {
   }
 
   // 키보드 단축키
+
   document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.key === 's') {
       e.preventDefault();
@@ -584,6 +585,8 @@ function createFireTableRow(item) {
   return row;
 }
 
+
+
 // 주차 관리 테이블 렌더링
 function renderParkingTable() {
   const tableBody = document.getElementById('parkingTable');
@@ -643,7 +646,6 @@ function createParkingTableRow(item) {
   
   return row;
 }
-
 //입출차 로그
 (() => {
   const MIN_ROWS = 10;
@@ -722,42 +724,14 @@ function createParkingTableRow(item) {
 
   // 페이지 로드 시 실행
   document.addEventListener('DOMContentLoaded', () => {
+    const tbody = document.getElementById('parkinglog');
+    if (!tbody) return;
     renderParkingTable(parkinglog);
   });
 })();
 
 document.addEventListener("DOMContentLoaded", function () {
-  fetch('/api/members/list') // 실제 Spring Controller 경로
-      .then(res => res.json())
-      .then(data => {
-        memberData = data.map(member => ({
-          id: member.memberCode || '-',  // ✅ id는 memberCode 사용
-          name: member.name || '-',
-          carNumber: member.carNumber || '-',
-          carModel: member.carModel || '-',
-          phone: member.phone || '-',
-          email: member.email || '-',
-          joinDate: formatDate(member.regDate),
-          status: member.status === 'ACTIVE' ? '활성' : '비활성',
-          membership: member.subscription ? '월주차' : '일반'
-        }));
-
-        const savedFilter = localStorage.getItem('memberFilter') || 'all';
-        const savedKeyword = localStorage.getItem('memberSearch') || '';
-        const savedStatus = localStorage.getItem('memberStatus') || '';
-
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-          btn.classList.remove('active');
-          if (btn.dataset.filter === savedFilter) {
-            btn.classList.add('active');
-          }
-        });
-        document.getElementById('memberSearchInput').value = savedKeyword;
-        document.getElementById('memberStatusFilter').value = savedStatus;
-
-        applyMemberFilters(savedFilter);
-      })
-      .catch(err => console.error("회원 데이터 불러오기 실패", err));
+  fetchMemberList(1);
 });
 
 function formatDate(dateStr) {
@@ -793,8 +767,17 @@ function renderMemberTable(data = memberData) {
 // 회원 테이블 행 생성
 function createMemberTableRow(item) {
   const row = document.createElement('tr');
-  
-  const statusClass = item.status === '활성' ? 'status-approved' : 'status-waiting';
+  console.log(`[DEBUG] ${item.name} 상태값:`, item.status);
+
+  const isActive = item.status ==='활성';
+  const statusClass = isActive ? 'status-approved' : 'status-waiting';
+
+  // ✅ 한글 상태 표시 라벨
+  const statusLabel = isActive ? '활성' : '비활성';
+
+  const actionLabel = isActive ? '비활성' : '활성화';
+  const actionBtnClass = isActive ? 'action-btn danger' : 'action-btn activate';
+  const actionFunction = isActive ? 'deactivateMember' : 'activateMember';
   
   row.innerHTML = `
     <td>${item.id}</td>
@@ -804,16 +787,145 @@ function createMemberTableRow(item) {
     <td>${item.phone}</td>
     <td>${item.email}</td>
     <td>${item.joinDate}</td>
-    <td><span class="${statusClass}">${item.status}</span></td>
+    <td><span class="${statusClass}">${statusLabel}</span></td> <!-- ✅ 여기 수정됨 -->
     <td>${item.membership}</td>
     <td>
       <button class="action-btn" onclick="editMember('${item.id}')">수정</button>
-      <button class="action-btn danger" onclick="deleteMember('${item.id}')">삭제</button>
+      <button class="${actionBtnClass}" onclick="${actionFunction}('${item.id}')">${actionLabel}</button>
     </td>
   `;
   
   return row;
 }
+
+let currentPage = 1;
+let pageSize = 5;
+let totalPages = 1;
+
+function fetchMemberList(page = 1) {
+  fetch(`/api/members/list?page=${page}&size=${pageSize}`)
+      .then(res => res.json())
+      .then(data => {
+        memberData = data.content.map(member => ({
+          id: member.memberCode || '-',
+          name: member.name || '-',
+          carNumber: member.carNumber || '-',
+          carModel: member.carModel || '-',
+          phone: member.phone || '-',
+          email: member.email || '-',
+          joinDate: formatDate(member.regDate),
+          status: member.status === 'ACTIVE' ? '활성' : '비활성',
+          membership: member.subscription ? '월주차' : '일반'
+        }));
+
+        currentPage = data.page;
+        totalPages = data.totalPages;
+
+        renderMemberTable(memberData);
+        renderPagination(currentPage, totalPages);
+      })
+      .catch(err => {
+        console.error('회원 목록 로딩 실패:', err);
+      });
+}
+
+function renderPagination(currentPage, totalPages) {
+    const pagination = document.getElementById('pagination');
+    if (!pagination) return;
+
+    pagination.innerHTML = '';
+
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '이전';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => fetchMemberList(currentPage - 1);
+    pagination.appendChild(prevBtn);
+
+    const maxButtons = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+    let end = Math.min(totalPages, start + maxButtons - 1);
+    if (end - start < maxButtons - 1) {
+      start = Math.max(1, end - maxButtons + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      if (i === currentPage) btn.classList.add('active');
+      btn.onclick = () => fetchMemberList(i);
+      pagination.appendChild(btn);
+    }
+
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = '다음';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => fetchMemberList(currentPage + 1);
+    pagination.appendChild(nextBtn);
+}
+
+
+function findMemberById(id) {
+  return memberData.find(m => m.id === id);
+}
+
+//회원 수정 모달
+function editMember(id) {
+  const member = findMemberById(id);
+  if (!member) return;
+
+  // 모달에 데이터 채우기
+  document.getElementById('editId').value = member.id;
+  document.getElementById('editName').value = member.name;
+  document.getElementById('editCarNumber').value = member.carNumber;
+  document.getElementById('editCarModel').value = member.carModel;
+  document.getElementById('editPhone').value = member.phone;
+  document.getElementById('editEmail').value = member.email;
+  document.getElementById('editStatus').value = member.status;
+  document.getElementById('editMembership').value = member.membership;
+
+  // 모달 열기
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+}
+
+
+document.getElementById('editForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const updatedMember = {
+    id: document.getElementById('editId').value,
+    name: document.getElementById('editName').value,
+    carNumber: document.getElementById('editCarNumber').value,
+    carModel: document.getElementById('editCarModel').value,
+    phone: document.getElementById('editPhone').value,
+    email: document.getElementById('editEmail').value,
+    status: document.getElementById('editStatus').value === '활성' ? 'ACTIVE' : 'INACTIVE',
+    subscription: document.getElementById('editMembership').value === '월주차'
+  };
+
+  fetch(`/api/members/modify/${updatedMember.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updatedMember)
+  })
+      .then(res => {
+        if (!res.ok) throw new Error('수정 실패');
+        return res.json();
+      })
+      .then(() => {
+        closeEditModal();
+        showAlert(`회원 ${updatedMember.id} 정보가 수정되었습니다.`);
+        refreshMemberData(false); // 최신 목록으로 갱신
+      })
+      .catch(err => {
+        console.error('회원 수정 실패:', err);
+        alert('회원 정보 수정 중 문제가 발생했습니다.');
+      });
+});
 
 
 // 결제 내역 테이블 렌더링
@@ -1400,74 +1512,70 @@ function addNewMember() {
   showAlert('새 회원 추가 기능입니다.');
 }
 
-function editMember(id) {
-  showAlert(`회원 ${id}를 수정합니다.`);
-}
-
-function deleteMember(id) {
-  if (confirm('정말 삭제하시겠습니까?')) {
-    fetch(`/api/members/delete/${id}`, {
-      method: 'DELETE'
+function activateMember(memberId) {
+  if (confirm('정말 해당 회원을 활성화 처리하시겠습니까?')) {
+    fetch(`/api/members/activate/${memberId}`, {
+      method: 'PUT'
     })
         .then(res => {
-          if (!res.ok) throw new Error('삭제 실패');
-          return res.text(); // 또는 res.json()
+          if (!res.ok) throw new Error('활성화 실패');
+          return res.text();
         })
         .then(() => {
-          showAlert(`회원 ${id}가 삭제되었습니다.`);
+          alert('회원이 활성화되었습니다.');
+          refreshMemberData(false);
 
-          // 삭제 후 목록 갱신
-          memberData = memberData.filter(m => m.id !== id);
+          // 👉 memberId 필드명 주의
+          const member = memberData.find(m => m.id === memberId);
+          if (member) member.status = 'ACTIVE';
+
+          // 👉 렌더링 함수가 status 기반 필터링을 하도록 구성돼 있어야 함
           renderMemberTable();
         })
         .catch(err => {
-          console.error('회원 삭제 오류', err);
-          alert('삭제 중 오류가 발생했습니다.');
+          console.error('활성화 오류', err);
+          alert('활성화 중 오류가 발생했습니다.');
         });
   }
 }
+
+function deactivateMember(memberId) {
+  if (confirm('정말 해당 회원을 비활성화(탈퇴) 처리하시겠습니까?')) {
+    fetch(`/api/members/deactivate/${memberId}`, {
+      method: 'PUT'
+    })
+        .then(res => {
+          if (!res.ok) throw new Error('비활성화 실패');
+          return res.text();
+        })
+        .then(() => {
+          alert('회원이 비활성화되었습니다.');
+
+          // 👉 memberId 필드명 주의
+          const member = memberData.find(m => m.id === memberId);
+          if (member) member.status = 'INACTIVE';
+
+          // 👉 렌더링 함수가 status 기반 필터링을 하도록 구성돼 있어야 함
+          renderMemberTable();
+        })
+        .catch(err => {
+          console.error('비활성화 오류', err);
+          alert('비활성화 중 오류가 발생했습니다.');
+        });
+  }
+}
+
 
 
 function exportMemberData() {
   showAlert('회원 데이터를 내보냅니다.');
 }
 
-function refreshMemberData() {
-  fetch('/api/members/list')
-      .then(res => res.json())
-      .then(data => {
-        // 서버 응답을 memberData로 초기화
-        memberData = data.map(member => ({
-          id: member.memberCode || '-',
-          name: member.name || '-',
-          carNumber: member.carNumber || '-',
-          carModel: member.carModel || '-',
-          phone: member.phone || '-',
-          email: member.email || '-',
-          joinDate: formatDate(member.regDate),
-          status: member.status === 'ACTIVE' ? '활성' : '비활성',
-          membership: member.subscription ? '월주차' : '일반'
-        }));
-
-        // 필터 조건 초기화
-        localStorage.removeItem('memberFilter');
-        localStorage.removeItem('memberSearch');
-        localStorage.removeItem('memberStatus');
-
-        document.getElementById('memberSearchInput').value = '';
-        document.getElementById('memberStatusFilter').value = '';
-
-        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector('[data-filter="all"]').classList.add('active');
-
-        // 전체 목록 그대로 렌더링
-        renderMemberTable(memberData);
-        showAlert('회원 데이터를 초기 상태로 새로고침했습니다.');
-      })
-      .catch(err => {
-        console.error("회원 데이터 새로고침 실패", err);
-        alert('데이터 새로고침 중 오류가 발생했습니다.');
-      });
+function refreshMemberData(showMessage = true) {
+  fetchMemberList(1); // 첫 페이지로 재요청
+  if (showMessage) {
+    showAlert('회원 데이터를 새로 불러왔습니다.');
+  }
 }
 
 function createNewPolicy() {

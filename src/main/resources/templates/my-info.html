@@ -27,7 +27,8 @@
 
     <div class="user-info">
       <span class="welcome">안녕하세요, <strong id="user-name">김고객</strong>님!</span>
-      <a href="index.html" class="logout-btn">로그아웃</a>
+      <a href="#" class="logout-btn" onclick="logout()">로그아웃</a>
+      <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
     </div>
   </div>
   <nav class="main-menu">

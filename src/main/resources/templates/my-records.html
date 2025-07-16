@@ -21,13 +21,14 @@
   <div class="top-bar">
     <div class="logo">
       <a href="customer-dashboard.html">
-        <img src="img/logo.png" alt="스마트파킹 로고" class="logo-img" >
+        <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img" >
       </a>
     </div>
 
     <div class="user-info">
       <span class="welcome">안녕하세요, <strong th:text="${member.name}">고객</strong>님!</span>
-      <a href="index.html" class="logout-btn">로그아웃</a>
+      <a href="#" class="logout-btn" onclick="logout()">로그아웃</a>
+      <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
     </div>
   </div>
   <nav class="main-menu">

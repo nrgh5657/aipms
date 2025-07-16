@@ -20,7 +20,7 @@ public class MemberServiceImpl implements MemberService {
     private final KakaoTokenMapper kakaoTokenMapper;
     private final BCryptPasswordEncoder passwordEncoder;
 
-
+    //회원 등록
     @Override
     public void register(MemberDto dto) {
         Member member = new Member();
@@ -48,23 +48,26 @@ public class MemberServiceImpl implements MemberService {
         memberMapper.updateMemberCode(member.getMemberId(), memberCode);
     }
 
+    //멤버 코드 업데이트
     @Override
     public void updateMemberCode(Long memberId, String memberCode) {
         memberMapper.updateMemberCode(memberId, memberCode);
 
     }
 
-
+    //이메일로 회원 조회
     @Override
     public Member getMemberByEmail(String email) {
         return memberMapper.findByEmail(email);
     }
 
+    //전체 회원 조회
     @Override
     public List<Member> findAllMembers() {
         return memberMapper.findAll();
     }
 
+    //멤버 코드로 멤버 삭제
     @Override
     @Transactional
     public void deleteByMemberCode(String memberCode) {
@@ -77,6 +80,51 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
+    //회원 계정 비활성화
+    @Override
+    public void deactivateMember(String memberCode) {
+        memberMapper.deactivateMember(memberCode);
+    }
+
+    //회원 계성 활성화
+    @Override
+    public void activateMember(String memberCode) {
+        memberMapper.activateMember(memberCode);
+    }
+    
+    //회원 정보 수정
+    @Override
+    public void updateMember(String id, MemberDto dto) {
+        Member member = memberMapper.findById(id);
+        if (member == null) {
+            throw new RuntimeException("존재하지 않는 회원입니다: " + id);
+        }
+
+        // DTO 값으로 덮어쓰기
+        member.setName(dto.getName());
+        member.setCarNumber(dto.getCarNumber());
+        member.setCarModel(dto.getCarModel());
+        member.setPhone(dto.getPhone());
+        member.setEmail(dto.getEmail());
+        member.setStatus(dto.getStatus());
+        member.setSubscription(dto.isSubscription());
+
+        memberMapper.update(member);
+
+    }
+    
+    //페이징 처리 적용 회원 조회
+    @Override
+    public List<Member> findPagedMembers(int offset, int size) {
+        return memberMapper.findPagedMembers(offset, size);
+    }
+    //페이징 처리를 위한 전체 회원수 카운트
+    @Override
+    public int countAllMembers() {
+        return memberMapper.countAllMembers();
+    }
+    
+    //로그인 확인
     @Override
     public boolean login(String email, String password) {
         Member member = memberMapper.findByEmail(email);

@@ -4,7 +4,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-
+//카카오 토큰 암호화 로직
 public class AES256Util {
 
     private final String secretKey;

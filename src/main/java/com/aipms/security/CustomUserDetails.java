@@ -54,7 +54,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override public boolean isCredentialsNonExpired() { return true; }
 
-    @Override public boolean isEnabled() { return true; }
+    @Override public boolean isEnabled() { return member.getStatus().equalsIgnoreCase("ACTIVE"); }
 
     // ✅ OAuth2User의 필수 구현
     @Override

@@ -23,6 +23,7 @@ public class FireLogServiceImpl implements FireLogService{
     private final KakaoMessageService kakaoMessageService;
 
     @Override
+    //화재 감지시 로그를 저장후 관리자에게 알림
     public void saveFireLogAndNotifyAdmins(FireAlertDto dto) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -52,11 +53,13 @@ public class FireLogServiceImpl implements FireLogService{
         }
     }
 
+    //화재 감지시 정기 로그에서 화재 감지 로그를 남김
     @Override
     public void saveFireLogFromScheduler(String cameraName, String location, String streamUrl) {
 
     }
 
+    //카메라 기반 위치 정보 생성
     private String mapCameraIdToLocation(String cameraId) {
         switch (cameraId) {
             case "1": return "1층 주차장";
@@ -66,21 +69,25 @@ public class FireLogServiceImpl implements FireLogService{
         }
     }
 
+    //모든 화재 기록 조회
     @Override
     public List<FireLog> getAllFireLogs() {
         return fireLogMapper.findAllFireLogs();
     }
 
+    //최신 화재 기록 읽어오기
     @Override
     public FireAlertDto getLatestFireLog() {
         return fireLogMapper.findLatestLog();
     }
 
+    //화재 감지 기록 정보 수정
     @Override
     public void updateLogs(FireLog fireLog) {
         fireLogMapper.updateLogs(fireLog);
     }
 
+    //화재 감지 기록 페이징 처리
     @Override
     public Page<FireLog> getPagedFireLogs(int page, int size) {
         int totalCount = fireLogMapper.countFireLogs();

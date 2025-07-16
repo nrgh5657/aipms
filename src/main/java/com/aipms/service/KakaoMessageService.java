@@ -24,6 +24,7 @@ public class KakaoMessageService {
     private final AES256Util aes256Util;
     private final FireLogMapper fireLogMapper;
 
+    //카카오 토큰을 활용해 나에게 메시지 보내기
     public void sendMessageToMe(String kakaoId, FireAlertDto fireAlertDto) {
         KakaoToken token = kakaoTokenMapper.findByKakaoId(kakaoId);
 

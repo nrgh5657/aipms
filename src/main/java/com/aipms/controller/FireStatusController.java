@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class FireStatusController {
     private final FireDetectionService fireDetectionService;
-
+    
+    
+    //화재 감지 후 카메라 상태 리셋
     @PostMapping("/reset")
     public ResponseEntity<String> resetFireStatus(@RequestParam String cameraId){
         boolean result = fireDetectionService.resetFireStatus(cameraId);

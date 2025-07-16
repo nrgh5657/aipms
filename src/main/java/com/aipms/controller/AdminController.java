@@ -42,6 +42,7 @@ public class AdminController {
     public String member(){
         return "member-management";
     }
+
     @GetMapping("systemLogs")
     public String systemLog(){
         return "system-logs";

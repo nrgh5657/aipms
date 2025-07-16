@@ -17,6 +17,7 @@ public class FireLogController {
 
     private final FireLogService fireLogService;
 
+    //화재 감지 로그 페이징 처리
     @GetMapping("/logs/paged")
     @ResponseBody
     public Page<FireLog> getFireLogsPaged(
@@ -25,7 +26,7 @@ public class FireLogController {
     {
         return fireLogService.getPagedFireLogs(page, size);
     }
-
+    //화재 감지 관리자 코멘트 수정
     @PostMapping("/update-note")
     @ResponseBody
     public String updateLogs(@RequestBody FireLog log) {

@@ -50,6 +50,7 @@
         FROM member
     </select>
 
+    <!-- 카카오 연동을 위한 Kakao ID 업데이트 (이메일 기준) -->
     <update id="updateMemberKakaoId" parameterType="com.aipms.domain.Member">
         UPDATE member
         SET kakao_id = #{kakaoId}
@@ -81,6 +82,45 @@
         SELECT *
         FROM member
         WHERE kakao_id = #{kakaoId}
+    </select>
+
+    <update id="deactivateMember" parameterType="String">
+        UPDATE member
+        SET status = 'INACTIVE'
+        WHERE member_code = #{memberCode}
+    </update>
+
+    <update id="activateMember" parameterType="String">
+        UPDATE member
+        SET status = 'ACTIVE'
+        WHERE member_code = #{memberCode}
+    </update>
+
+    <select id="findById" parameterType="string" resultType="com.aipms.domain.Member">
+        SELECT * FROM member WHERE member_code = #{id}
+    </select>
+
+    <update id="update" parameterType="com.aipms.domain.Member">
+        UPDATE member
+        SET name = #{name},
+            car_number = #{carNumber},
+            car_model = #{carModel},
+            phone = #{phone},
+            email = #{email},
+            status = #{status},
+            subscription = #{subscription}
+        WHERE member_code = #{memberCode}
+    </update>
+
+    <select id="findPagedMembers" resultType="com.aipms.domain.Member">
+        SELECT *
+        FROM member
+        ORDER BY reg_date DESC
+            LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAllMembers" resultType="int">
+        SELECT COUNT(*) FROM member
     </select>
 
 
