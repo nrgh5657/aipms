@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface ParkingLogService {
     void insertLog(ParkingLog log);
-    List<ParkingLogWithMemberDto> getAllLogs();
+    List<ParkingLogWithMemberDto> getPagedLogs(int page, int size);
+    int getTotalLogCount();
 }

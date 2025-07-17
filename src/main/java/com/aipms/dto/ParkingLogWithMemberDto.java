@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 public class ParkingLogWithMemberDto {
     private Long id;
     private String carNumber;
+    private Long memberId;
+    private Integer subscription;  // 추가해야 함
     private String parkingType;
     private LocalDateTime entryTime;
     private LocalDateTime exitTime;

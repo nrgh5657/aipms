@@ -20,7 +20,10 @@ public class ParkingLogServiceImpl implements ParkingLogService {
 
     @Override
     public void insertLog(ParkingLog log) {
+        System.out.println("🚗 차량번호: [" + log.getCarNumber() + "]");
+
         Member member = memberMapper.findByCarNumber(log.getCarNumber());
+        System.out.println("🔍 조회된 member: " + (member != null ? member.getName() + "/" + member.getMemberId() : "❌ 없음"));
 
         if (member != null) {
             log.setMemberId(member.getMemberId());
@@ -29,13 +32,8 @@ public class ParkingLogServiceImpl implements ParkingLogService {
         }
 
         if (log.getCameraId() == 1) {
-            // ✅ 입차 시간 자동 설정
             if (log.getEntryTime() == null) {
                 log.setEntryTime(LocalDateTime.now());
-            }
-
-            if (log.getParkingType() == null || log.getParkingType().isBlank()) {
-                log.setParkingType("일반");
             }
 
             parkingLogMapper.insertLog(log);
@@ -43,7 +41,6 @@ public class ParkingLogServiceImpl implements ParkingLogService {
         } else if (log.getCameraId() == 2) {
             ParkingLog existing = parkingLogMapper.findLatestUnexitedLog(log.getCarNumber());
             if (existing != null) {
-                // 출차 시간으로 사용
                 LocalDateTime exitTime = log.getEntryTime() != null ? log.getEntryTime() : LocalDateTime.now();
                 existing.setExitTime(exitTime);
                 parkingLogMapper.updateExitTime(existing);
@@ -57,7 +54,24 @@ public class ParkingLogServiceImpl implements ParkingLogService {
     }
 
     @Override
-    public List<ParkingLogWithMemberDto> getAllLogs() {
-        return parkingLogMapper.selectAllWithMember();
+    public List<ParkingLogWithMemberDto> getPagedLogs(int page, int size) {
+        int offset = (page - 1) * size;
+        List<ParkingLogWithMemberDto> logs = parkingLogMapper.selectPagedLogs(size, offset);
+
+        // 주차 유형 결정 로직 유지
+        for (ParkingLogWithMemberDto dto : logs) {
+            String type = "일반";
+            if (dto.getMemberId() != null && dto.getSubscription() == 1) {
+                type = "월주차";
+            }
+            dto.setParkingType(type);
+        }
+
+        return logs;
+    }
+
+    @Override
+    public int getTotalLogCount() {
+        return parkingLogMapper.countAllLogs();
     }
 }

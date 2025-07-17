@@ -664,6 +664,10 @@ function createParkingTableRow(item) {
 // 입출차 로그
 (() => {
   const MIN_ROWS = 10;
+  let parkingData = []; // 🔸 전체 데이터를 저장할 전역 변수
+  let currentPage = 1;
+  const pageSize = 4;
+  let totalLogs = 0;
 
   // 📌 날짜 포맷 함수
   function getFormattedDate(dateStr) {
@@ -712,24 +716,123 @@ function createParkingTableRow(item) {
   }
 
   // 📌 서버에서 데이터 요청
-  function fetchParkingLogs(callback) {
-    fetch('/api/parking-log/logs')
+  function fetchParkingLogs(page = 1) {
+    fetch(`/api/parking-log/logs?page=${page}&size=${pageSize}`)
         .then(res => {
           if (!res.ok) throw new Error('서버 응답 오류');
           return res.json();
         })
-        .then(data => callback(data))
+        .then(data => {
+          parkingData = data.logs;
+          totalLogs = data.totalCount;
+          renderParkingTable(parkingData);
+          renderParkingPagination();
+        })
         .catch(err => {
           console.error('🚨 입출차 로그 불러오기 실패:', err);
           alert('입출차 로그를 불러오지 못했습니다.');
         });
   }
 
-  // 📌 초기 로드 시 실행
+  function renderParkingPagination() {
+    const totalPages = Math.ceil(totalLogs / pageSize);
+    const container = document.getElementById('parkingPagination');
+    if (!container) return;
+
+    container.innerHTML = '';
+    // ◀ 이전 버튼
+    // 항상 표시되는 이전 버튼 (비활성 조건만 추가)
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '이전';
+    if (currentPage === 1) {
+      prevBtn.disabled = true;
+    }
+    prevBtn.classList.add('pagination-nav');
+    prevBtn.onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        fetchParkingLogs(currentPage);
+      }
+    };
+    container.appendChild(prevBtn);
+
+    // 숫자 페이지 버튼들
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.className = i === currentPage ? 'active' : '';
+      btn.onclick = () => {
+        currentPage = i;
+        fetchParkingLogs(currentPage);
+      };
+      container.appendChild(btn);
+    }
+
+    // 항상 표시되는 다음 버튼 (비활성 조건만 추가)
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = '다음';
+    if (currentPage === totalPages || totalPages === 0) {
+      nextBtn.disabled = true;
+    }
+    nextBtn.classList.add('pagination-nav');
+    nextBtn.onclick = () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        fetchParkingLogs(currentPage);
+      }
+    };
+    container.appendChild(nextBtn);
+  }
+
+
+  // 🔍 필터 적용 함수
+  function applyParkingFilters() {
+    const carKeyword = document.getElementById('searchInput').value.trim();
+    const nameKeyword = document.getElementById('requesterSearch').value.trim();
+
+    const selectedFilter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
+
+    const filtered = parkingData.filter(item => {
+      const carMatch = carKeyword === '' || item.carNumber.includes(carKeyword);
+      const nameMatch =
+          nameKeyword === '' ||
+          (item.memberId === null && nameKeyword === '비회원') ||
+          (item.memberName && item.memberName.includes(nameKeyword));
+
+      let typeMatch = true;
+      if (selectedFilter === 'monthly') {
+        typeMatch = item.subscription === 1;
+      } else if (selectedFilter === 'daily') {
+        typeMatch = item.subscription !== 1;
+      }
+
+      return carMatch && nameMatch && typeMatch;
+    });
+
+    renderParkingTable(filtered);
+  }
+
+  // ✅ DOM 로드 시점 초기화
   document.addEventListener('DOMContentLoaded', () => {
-    fetchParkingLogs(renderParkingTable);
+    fetchParkingLogs(currentPage);
+
+    // 🔍 검색 버튼 이벤트
+    const searchBtn = document.querySelector('.search-btn');
+    if (searchBtn) {
+      searchBtn.addEventListener('click', applyParkingFilters);
+    }
+
+    // 🧭 필터 버튼 이벤트
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        applyParkingFilters();
+      });
+    });
   });
 })();
+
 
 
 document.addEventListener("DOMContentLoaded", function () {

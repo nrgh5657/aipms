@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/parking-log")
@@ -25,7 +27,17 @@ public class ParkingLogController {
 
     // 🔹 GET: 전체 로그 + 신청자 이름 포함 조회
     @GetMapping("/logs")
-    public ResponseEntity<List<ParkingLogWithMemberDto>> getLogs() {
-        return ResponseEntity.ok(parkingLogService.getAllLogs());
+    public ResponseEntity<Map<String, Object>> getPagedLogs(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "4") int size) {
+
+        List<ParkingLogWithMemberDto> logs = parkingLogService.getPagedLogs(page, size);
+        int total = parkingLogService.getTotalLogCount();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("logs", logs);
+        result.put("totalCount", total);
+
+        return ResponseEntity.ok(result);
     }
 }

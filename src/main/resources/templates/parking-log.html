@@ -27,6 +27,7 @@
         <div class="system-title">🅿 AI 주차 관리 시스템</div>
        </div>
       <div class="header-actions">
+        <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
         <button class="header-btn" onclick="showNotifications()">🔔 알림</button>
         <button class="header-btn" onclick="showSettings()">⚙️ 설정</button>
         <button class="header-btn" onclick="showAdminRegister()">👥 관리자 등록</button>
@@ -146,12 +147,8 @@
       
 
       <!--페이징:기능은 없음-->
-      <div class="pagination">
-        <button onclick="changePage('prev')">이전</button>
-        <button class="active">1</button>
-        <button>2</button>
-        <button>3</button>
-        <button onclick="changePage('next')">다음</button>
+      <div class="pagination" id="parkingPagination">
+
       </div>
     </section>
   </main>

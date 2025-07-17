@@ -7,24 +7,40 @@
 
     <!-- INSERT: 차량 로그 저장 -->
     <insert id="insertLog" parameterType="com.aipms.domain.ParkingLog">
-        INSERT INTO parking_log (car_number, member_id, parking_type, entry_time, exit_time, camera_id)
-        VALUES (#{carNumber}, #{memberId}, #{parkingType}, #{entryTime}, #{exitTime}, #{cameraId})
+        INSERT INTO parking_log (car_number, member_id, entry_time, exit_time, camera_id)
+        VALUES (#{carNumber}, #{memberId}, #{entryTime}, #{exitTime}, #{cameraId})
     </insert>
 
     <!-- SELECT: 차량 로그 + 신청자 이름 포함 -->
-    <select id="selectAllWithMember" resultType="com.aipms.dto.ParkingLogWithMemberDto">
+    <!-- ResultMap 정의 -->
+    <resultMap id="ParkingLogWithMemberMap" type="com.aipms.dto.ParkingLogWithMemberDto">
+        <id property="id" column="id" />
+        <result property="carNumber" column="car_number" />
+        <result property="memberId" column="member_id" />
+        <result property="entryTime" column="entry_time" />
+        <result property="exitTime" column="exit_time" />
+        <result property="cameraId" column="camera_id" />
+        <result property="createdAt" column="created_at" />
+        <result property="memberName" column="member_name"/> <!-- ✅ 이거 추가 -->
+
+        <!-- 회원 정보 추가 -->
+        <result property="subscription" column="subscription" />
+    </resultMap>
+
+    <!-- 전체 주차 로그 + 회원 정보 조회 -->
+    <select id="selectPagedLogs" resultMap="ParkingLogWithMemberMap">
         SELECT
-            p.id,
-            p.car_number,
-            p.parking_type,
-            p.entry_time,
-            p.exit_time,
-            p.camera_id,
-            p.created_at,
+            pl.*,
+            m.subscription,
             m.name AS member_name
-        FROM parking_log p
-                 LEFT JOIN member m ON p.member_id = m.member_id
-        ORDER BY p.entry_time DESC
+        FROM parking_log pl
+                 LEFT JOIN member m ON pl.member_id = m.member_id
+        ORDER BY pl.entry_time DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countAllLogs" resultType="int">
+        SELECT COUNT(*) FROM parking_log
     </select>
 
     <select id="findLatestUnexitedLog" resultType="com.aipms.domain.ParkingLog" parameterType="string">
