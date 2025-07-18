@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public class Subscription {
     private Long subscriptionId;
     private Long memberId;
+    private String customerUid;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Boolean active;

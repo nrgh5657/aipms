@@ -3,8 +3,7 @@ package com.aipms.service;
 import com.aipms.domain.FireLog;
 import com.aipms.domain.Member;
 import com.aipms.dto.FireAlertDto;
-import com.aipms.dto.FireAlertTargetDto;
-import com.aipms.dto.Page;
+import com.aipms.dto.PageDto;
 import com.aipms.mapper.FireLogMapper;
 import com.aipms.mapper.MemberMapper;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -89,12 +87,12 @@ public class FireLogServiceImpl implements FireLogService{
 
     //화재 감지 기록 페이징 처리
     @Override
-    public Page<FireLog> getPagedFireLogs(int page, int size) {
+    public PageDto<FireLog> getPagedFireLogs(int page, int size) {
         int totalCount = fireLogMapper.countFireLogs();
         int offset = page * size;
         List<FireLog> logs = fireLogMapper.findFireLogsPaged(offset, size);
 
-        return new Page<>(logs, totalCount, page, size);
+        return new PageDto<>(logs, totalCount, page, size);
 
     }
 

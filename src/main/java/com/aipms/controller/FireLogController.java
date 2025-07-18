@@ -1,14 +1,11 @@
 package com.aipms.controller;
 
 import com.aipms.domain.FireLog;
-import com.aipms.dto.FireAlertTargetDto;
-import com.aipms.dto.Page;
+import com.aipms.dto.PageDto;
 import com.aipms.service.FireLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Controller
 @RequestMapping("/fire")
@@ -20,7 +17,7 @@ public class FireLogController {
     //화재 감지 로그 페이징 처리
     @GetMapping("/logs/paged")
     @ResponseBody
-    public Page<FireLog> getFireLogsPaged(
+    public PageDto<FireLog> getFireLogsPaged(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size)
     {

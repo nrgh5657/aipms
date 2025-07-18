@@ -1,20 +1,25 @@
 package com.aipms.service;
 
+import com.aipms.domain.ParkingLog;
 import com.aipms.domain.Payment;
-import com.aipms.dto.AccountInfoResponseDto;
-import com.aipms.dto.PaymentRequestDto;
-import com.aipms.dto.PaymentResultDto;
+import com.aipms.dto.*;
+import com.aipms.mapper.ParkingLogMapper;
 import com.aipms.mapper.PaymentMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentMapper paymentMapper;
+    private final ParkingLogMapper parkingLogMapper;
+    private final ParkingLogService parkingLogService;
 
     @Override
     public PaymentResultDto processPayment(PaymentRequestDto requestDto) {
@@ -41,4 +46,83 @@ public class PaymentServiceImpl implements PaymentService {
     public AccountInfoResponseDto getAccountInfo(Long memberId) {
         return paymentMapper.getAccountInfo(memberId);
     }
+
+    @Override
+    public PaymentHistoryResponseDto getPaymentHistory(PaymentHistoryRequestDto req) {
+        int page = req.getPage() != null ? req.getPage() : 1;
+        int limit = req.getLimit() != null ? req.getLimit() : 20;
+        int offset = (page - 1) * limit;
+
+        List<Payment> payments = paymentMapper.selectPayments(req, offset, limit);
+        int totalCount = paymentMapper.countPayments(req);
+
+        PageDto<Payment> pageDto = new PageDto<>(
+                payments,     // ✅ 첫 번째: List<T> → content
+                totalCount,   // 두 번째: totalElements
+                page,         // 현재 페이지
+                limit         // 페이지당 수
+        );
+
+
+        return new PaymentHistoryResponseDto(payments, pageDto);
+    }
+
+    @Override
+    public boolean verifyAndRecord(PaymentVerifyRequestDto dto, Long memberId) {
+        Long entryId = dto.getEntryId();
+
+        // 1. 주차 정보 조회
+        ParkingLog parkingLog = parkingLogMapper.selectById(entryId);
+        if (parkingLog == null) {
+            log.warn("❌ 해당 entryId에 대한 주차 로그가 없습니다: {}", entryId);
+            return false;
+        }
+
+        // 2. ✅ 중복 결제 방지
+        Payment existing = paymentMapper.selectPaymentByEntryId(entryId);
+        if (existing != null && existing.isPaid()) {
+            log.warn("⚠️ 이미 결제가 완료된 entryId: {}", entryId);
+            return false;
+        }
+
+        // 3. 요금 계산
+        int fee = parkingLogService.calculateFee(parkingLog.getEntryTime());
+            if (fee < 100) {
+                log.warn("🚨 요금이 너무 작아 최소 결제금액 100원으로 보정됨 (계산된 값: {})", fee);
+                fee = 100;
+            }
+
+        // 4. 결제 정보 생성
+        Payment payment = new Payment();
+        payment.setEntryId(entryId);
+        payment.setTransactionId(dto.getImpUid());
+        payment.setMerchantUid(dto.getMerchantUid());
+        payment.setImpUid(dto.getImpUid());
+        payment.setPaid(true);
+        payment.setCancelled(false);
+        payment.setPaymentMethod(dto.getMethod() != null ? dto.getMethod() : "card");
+        payment.setGateway(dto.getGateway() != null ? dto.getGateway() : "html5_inicis");
+        payment.setPaymentTime(LocalDateTime.now());
+        payment.setTotalFee(fee);
+        payment.setMemberId(memberId);
+        payment.setStatus("결제 완료");
+
+        // 5. 저장 및 로그 연결
+        paymentMapper.insertPayment(payment);
+        parkingLogMapper.updatePaymentAndExitInfo(
+                entryId,
+                payment.getPaymentId(),
+                LocalDateTime.now(),           // exit_time
+                true,                          // is_paid
+                LocalDateTime.now(),           // paid_at
+                payment.getPaymentMethod(),
+                payment.getTotalFee());
+        return true;
+    }
+
+    @Override
+    public void markAsPaid(Long paymentId) {
+        paymentMapper.updatePaidStatus(paymentId, 1);
+    }
+
 }

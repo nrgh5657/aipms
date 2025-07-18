@@ -13,13 +13,13 @@ let isSubmitting = false;
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM 로드 완료');
-    
+
     // 페이지 애니메이션
     animatePageLoad();
-    
+
     // 이벤트 리스너 설정
     setupEventListeners();
-    
+
     // 아이디 입력 필드에 포커스
     setTimeout(() => {
         const idInput = document.getElementById('username');
@@ -28,10 +28,10 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('🎯 아이디 필드에 포커스 설정');
         }
     }, 500);
-    
+
     // URL 파라미터 체크 (로그인 실패/성공 처리)
     checkUrlParams();
-    
+
     console.log('✅ 초기화 완료');
 });
 
@@ -40,14 +40,14 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========================================
 function setupEventListeners() {
     console.log('🔗 이벤트 리스너 설정 중...');
-    
+
     // 로그인 폼 이벤트 - Spring Security 처리
     const loginForm = document.querySelector('.login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', handleSpringSecurityLogin);
         console.log('📝 로그인 폼 이벤트 연결 (Spring Security)');
     }
-    
+
     // 아이디 입력 이벤트
     const idInput = document.getElementById('username');
     if (idInput) {
@@ -56,17 +56,17 @@ function setupEventListeners() {
         });
         console.log('👤 아이디 입력 이벤트 연결');
     }
-    
+
     // 비밀번호 토글 이벤트
     const passwordToggle = document.querySelector('.password-toggle');
     if (passwordToggle) {
         passwordToggle.addEventListener('click', togglePassword);
         console.log('👁️ 비밀번호 토글 이벤트 연결');
     }
-    
+
     // 소셜 로그인 처리
     setupSocialLogin();
-    
+
     // 아이디/비밀번호 찾기 링크
     const forgotLink = document.getElementById('forgot-link');
     if (forgotLink) {
@@ -76,7 +76,7 @@ function setupEventListeners() {
         });
         console.log('🔍 아이디/비밀번호 찾기 이벤트 연결');
     }
-    
+
     // 관리자 회원가입 문의 버튼
     const adminSignupBtn = document.getElementById('admin-signup-btn');
     if (adminSignupBtn) {
@@ -86,7 +86,7 @@ function setupEventListeners() {
         });
         console.log('🛡️ 관리자 회원가입 문의 이벤트 연결');
     }
-    
+
     // 키보드 단축키
     document.addEventListener('keydown', function(e) {
         if (e.key === 'F1') {
@@ -97,7 +97,7 @@ function setupEventListeners() {
             showDebugInfo();
         }
     });
-    
+
     console.log('⌨️ 키보드 단축키 연결');
 }
 
@@ -107,51 +107,51 @@ function setupEventListeners() {
 function handleSpringSecurityLogin(event) {
     event.preventDefault(); // 폼 기본 제출 막기
     console.log('🔐 AJAX 로그인 처리 시작');
-    
+
     // 중복 제출 방지
     if (isSubmitting) {
         console.log('⚠️ 이미 제출 중입니다');
         return false;
     }
-    
+
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-    
+
     console.log('📝 입력 정보:', { username, password: '***', userType: currentUserType });
-    
+
     // 클라이언트 사이드 기본 검증
     if (!username) {
         showMessage('아이디를 입력해주세요.', 'error');
         document.getElementById('username').focus();
         return false;
     }
-    
+
     if (!password) {
         showMessage('비밀번호를 입력해주세요.', 'error');
         document.getElementById('password').focus();
         return false;
     }
-    
+
     // 관리자 로그인 시 확인
     if (currentUserType === 'admin') {
         const confirmAdmin = confirm(
             '🛡️ 관리자 계정으로 로그인하시겠습니까?\n\n' +
             '관리자 권한으로 접근됩니다.'
         );
-        
+
         if (!confirmAdmin) {
             console.log('❌ 관리자 로그인 취소됨');
             return false;
         }
     }
-    
+
     // 로딩 상태 설정
     setLoadingState(true);
     isSubmitting = true;
-    
+
     // AJAX 로그인 요청
     performAjaxLogin(username, password);
-    
+
     return false;
 }
 
@@ -161,64 +161,64 @@ function performAjaxLogin(username, password) {
     const formData = new FormData();
     formData.append('username', username);
     formData.append('password', password);
-    
+
     // Remember-me 체크박스 값
     const rememberMe = document.getElementById('remember-me').checked;
     if (rememberMe) {
         formData.append('remember-me', 'on');
     }
-    
+
     // 사용자 타입 추가
     formData.append('userType', currentUserType || 'customer');
-    
+
     console.log('📤 AJAX 로그인 요청 전송');
-    
+
     fetch('/login', {
         method: 'POST',
         body: formData,
         credentials: 'same-origin'
     })
-    .then(response => {
-        console.log('📥 서버 응답 수신:', response.status);
-        
-        if (response.ok) {
-            // 로그인 성공
-            showLoginSuccess();
-            
-            // 성공 시 리다이렉트 URL 확인
-            const redirectUrl = response.url;
-            if (redirectUrl && !redirectUrl.includes('/login')) {
-                setTimeout(() => {
-                    window.location.href = redirectUrl;
-                }, 1500);
+        .then(response => {
+            console.log('📥 서버 응답 수신:', response.status);
+
+            if (response.ok) {
+                // 로그인 성공
+                showLoginSuccess();
+
+                // 성공 시 리다이렉트 URL 확인
+                const redirectUrl = response.url;
+                if (redirectUrl && !redirectUrl.includes('/login')) {
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 1500);
+                } else {
+                    // 기본 대시보드로 이동
+                    setTimeout(() => {
+                        window.location.href = currentUserType === 'admin' ? '/admin/dashboard' : '/dashboard';
+                    }, 1500);
+                }
+            } else if (response.status === 401) {
+                // 로그인 실패
+                showLoginError();
             } else {
-                // 기본 대시보드로 이동
-                setTimeout(() => {
-                    window.location.href = currentUserType === 'admin' ? '/admin/dashboard' : '/dashboard';
-                }, 1500);
+                // 기타 오류
+                showMessage('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
             }
-        } else if (response.status === 401) {
-            // 로그인 실패
+        })
+        .catch(error => {
+            console.error('❌ AJAX 로그인 오류:', error);
             showLoginError();
-        } else {
-            // 기타 오류
-            showMessage('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('❌ AJAX 로그인 오류:', error);
-        showLoginError();
-    })
-    .finally(() => {
-        setLoadingState(false);
-        isSubmitting = false;
-    });
+        })
+        .finally(() => {
+            setLoadingState(false);
+            isSubmitting = false;
+        });
 }
 
 // 로그인 성공 처리
 function showLoginSuccess() {
     console.log('✅ 로그인 성공');
-    
+
     // 성공 메시지 표시
     const successMessage = document.getElementById('logout-message');
     if (successMessage) {
@@ -226,10 +226,10 @@ function showLoginSuccess() {
         successMessage.className = 'success-message';
         successMessage.style.display = 'block';
     }
-    
+
     // 토스트 메시지
     showMessage('로그인 성공! 대시보드로 이동합니다...', 'success');
-    
+
     // 에러 메시지 숨김
     const errorMessage = document.getElementById('error-message');
     if (errorMessage) {
@@ -240,7 +240,7 @@ function showLoginSuccess() {
 // 로그인 실패 처리
 function showLoginError() {
     console.log('❌ 로그인 실패');
-    
+
     // 에러 메시지 표시
     const errorMessage = document.getElementById('error-message');
     if (errorMessage) {
@@ -250,16 +250,16 @@ function showLoginError() {
             errorMessage.style.display = 'none';
         }, 5000);
     }
-    
+
     // 토스트 메시지
     showMessage('로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.', 'error');
-    
+
     // 성공 메시지 숨김
     const successMessage = document.getElementById('logout-message');
     if (successMessage) {
         successMessage.style.display = 'none';
     }
-    
+
     // 비밀번호 필드 초기화 및 포커스
     const passwordField = document.getElementById('password');
     if (passwordField) {
@@ -268,16 +268,12 @@ function showLoginError() {
     }
 }
 
-document.getElementById('kakao-btn').addEventListener('click', () => {
-    window.location.href = '/oauth2/authorization/kakao';
-});
-
 // ========================================
 // 4. 사용자 타입 감지
 // ========================================
 function detectUserType(userId) {
     console.log('🔍 사용자 타입 감지:', userId);
-    
+
     const indicator = document.getElementById('user-type-indicator');
     const loginCard = document.getElementById('login-card');
     const servicePreview = document.getElementById('service-preview');
@@ -285,58 +281,58 @@ function detectUserType(userId) {
     const customerPreview = document.getElementById('customer-preview');
     const adminPreview = document.getElementById('admin-preview');
     const idInput = document.getElementById('username');
-    
+
     // 초기화
     if (indicator) indicator.classList.remove('show', 'customer', 'admin');
     if (loginCard) loginCard.classList.remove('customer-mode', 'admin-mode');
     if (servicePreview) servicePreview.classList.remove('customer-mode', 'admin-mode');
     if (loginBtn) loginBtn.classList.remove('customer-mode', 'admin-mode');
     if (idInput) idInput.classList.remove('customer-mode', 'admin-mode');
-    
+
     currentUserType = null;
-    
+
     if (!userId || !userId.trim()) {
         if (customerPreview) customerPreview.style.display = 'block';
         if (adminPreview) adminPreview.style.display = 'none';
         return;
     }
-    
+
     // 관리자 계정 체크
     const adminAccounts = ['admin', 'manager', 'supervisor', 'security', 'system', 'operator'];
     const isAdmin = adminAccounts.includes(userId.toLowerCase());
-    
+
     console.log('🎭 사용자 타입 결정:', isAdmin ? 'admin' : 'customer');
-    
+
     if (isAdmin) {
         currentUserType = 'admin';
         if (indicator) {
             indicator.textContent = '🛡️ 관리자 계정으로 감지되었습니다';
             indicator.classList.add('show', 'admin');
         }
-        
+
         // 스타일 적용
         if (loginCard) loginCard.classList.add('admin-mode');
         if (servicePreview) servicePreview.classList.add('admin-mode');
         if (loginBtn) loginBtn.classList.add('admin-mode');
         if (idInput) idInput.classList.add('admin-mode');
-        
+
         // 미리보기 전환
         if (customerPreview) customerPreview.style.display = 'none';
         if (adminPreview) adminPreview.style.display = 'block';
-        
+
     } else {
         currentUserType = 'customer';
         if (indicator) {
             indicator.textContent = '👤 고객 계정으로 감지되었습니다';
             indicator.classList.add('show', 'customer');
         }
-        
+
         // 스타일 적용
         if (loginCard) loginCard.classList.add('customer-mode');
         if (servicePreview) servicePreview.classList.add('customer-mode');
         if (loginBtn) loginBtn.classList.add('customer-mode');
         if (idInput) idInput.classList.add('customer-mode');
-        
+
         // 미리보기 전환
         if (customerPreview) customerPreview.style.display = 'block';
         if (adminPreview) adminPreview.style.display = 'none';
@@ -349,7 +345,7 @@ function detectUserType(userId) {
 function setupSocialLogin() {
     const kakaoBtn = document.getElementById('kakao-btn');
     const naverBtn = document.getElementById('naver-btn');
-    
+
     if (kakaoBtn) {
         kakaoBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -360,7 +356,7 @@ function setupSocialLogin() {
         });
         console.log('💛 카카오 버튼 이벤트 연결');
     }
-    
+
     if (naverBtn) {
         naverBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -380,9 +376,9 @@ function setLoadingState(isLoading) {
     const btn = document.getElementById('login-btn');
     const btnText = btn?.querySelector('.btn-text');
     const btnLoading = btn?.querySelector('.btn-loading');
-    
+
     if (!btn) return;
-    
+
     if (isLoading) {
         if (btnText) btnText.style.display = 'none';
         if (btnLoading) btnLoading.style.display = 'flex';
@@ -400,33 +396,33 @@ function setLoadingState(isLoading) {
 
 function showMessage(text, type = 'info') {
     console.log(`📢 메시지 표시 (${type}):`, text);
-    
+
     // 기존 토스트 제거
     const existingToasts = document.querySelectorAll('.toast-message');
     existingToasts.forEach(toast => toast.remove());
-    
+
     const toast = document.createElement('div');
     toast.className = 'toast-message';
-    
+
     const colors = {
         success: '#10b981',
         error: '#ef4444',
         warning: '#f59e0b',
         info: '#3b82f6'
     };
-    
+
     const icons = {
         success: '✅',
         error: '❌',
         warning: '⚠️',
         info: 'ℹ️'
     };
-    
+
     toast.innerHTML = `
         <span style="margin-right: 0.5rem;">${icons[type] || icons.info}</span>
         ${text}
     `;
-    
+
     toast.style.cssText = `
         position: fixed;
         top: 20px;
@@ -443,9 +439,9 @@ function showMessage(text, type = 'info') {
         display: flex;
         align-items: center;
     `;
-    
+
     document.body.appendChild(toast);
-    
+
     // 3초 후 제거
     setTimeout(() => {
         toast.style.animation = 'slideOutToRight 0.3s ease-out';
@@ -456,9 +452,9 @@ function showMessage(text, type = 'info') {
 function togglePassword() {
     const input = document.getElementById('password');
     const icon = document.getElementById('password-icon');
-    
+
     if (!input || !icon) return;
-    
+
     if (input.type === 'password') {
         input.type = 'text';
         icon.textContent = '🙈';
@@ -474,7 +470,7 @@ function animatePageLoad() {
         if (el) {
             el.style.opacity = '0';
             el.style.transform = index === 0 ? 'translateX(-30px)' : 'translateX(30px)';
-            
+
             setTimeout(() => {
                 el.style.transition = 'all 0.6s ease';
                 el.style.opacity = '1';
@@ -489,7 +485,7 @@ function animatePageLoad() {
 // ========================================
 function checkUrlParams() {
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     if (urlParams.has('error')) {
         console.log('❌ URL에서 로그인 실패 감지 (기존 Spring Security 방식)');
         showLoginError();
@@ -498,7 +494,7 @@ function checkUrlParams() {
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
-    
+
     if (urlParams.has('logout')) {
         console.log('✅ URL에서 로그아웃 성공 감지');
         const logoutMessage = document.getElementById('logout-message');
@@ -522,7 +518,7 @@ function checkUrlParams() {
 function showFindAccount() {
     console.log('🔍 아이디/비밀번호 찾기 요청');
     showMessage('아이디/비밀번호 찾기 기능을 준비 중입니다.', 'info');
-    
+
     setTimeout(() => {
         const confirm = window.confirm('고객센터로 연결하시겠습니까?\n📞 1588-1234');
         if (confirm) {
@@ -534,7 +530,7 @@ function showFindAccount() {
 function showAdminSignupInfo() {
     console.log('🛡️ 관리자 회원가입 문의');
     showMessage('관리자 계정은 시스템 관리자에게 문의해주세요.', 'info');
-    
+
     setTimeout(() => {
         const confirm = window.confirm(
             '관리자 계정 신청 안내\n\n' +
@@ -604,7 +600,7 @@ window.debugSpringLogin = function() {
     console.log('테스트 모드:', isTestMode());
     console.log('username 값:', document.getElementById('username')?.value);
     console.log('remember-me 체크:', document.getElementById('remember-me')?.checked);
-    
+
     const form = document.querySelector('.login-form');
     if (form) {
         console.log('폼 데이터:');
@@ -631,7 +627,7 @@ window.testLogin = function(username = 'test', password = 'test') {
     document.getElementById('username').value = username;
     document.getElementById('password').value = password;
     detectUserType(username);
-    
+
     setTimeout(() => {
         document.querySelector('.login-form').dispatchEvent(new Event('submit'));
     }, 500);
@@ -659,9 +655,3 @@ console.log('  - showDebugInfo() : 디버그 정보');
 console.log('  - showHelp() : 도움말');
 console.log('');
 console.log('💡 테스트 계정: test/test, admin/admin, customer/customer, manager/manager');
-
-function logout() {
-    if (confirm('로그아웃 하시겠습니까?')) {
-        document.getElementById('logoutForm').submit();
-    }
-}

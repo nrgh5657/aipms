@@ -4,32 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>스마트파킹 - 고객 대시보드</title>
-  <link rel="stylesheet" href="customer-style.css">
+  <link rel="stylesheet" href="/css/customer-style.css">
 
-  <!-- 서버 사용자 정보를 JavaScript로 전달 (Thymeleaf) -->
-  <script th:if="${#authentication.principal != 'anonymousUser'}" th:inline="javascript">
-    /*<![CDATA[*/
-    window.serverUserData = {
-      user: {
-        id: /*[[${#authentication.principal.id}]]*/ 1,
-        name: /*[[${#authentication.principal.username}]]*/ '김고객',
-        email: /*[[${#authentication.principal.email}]]*/ 'customer@example.com'
-      },
-      role: /*[[${#authentication.principal.authorities[0].authority}]]*/ 'CUSTOMER'
-    };
-    /*]]>*/
+  <script th:inline="javascript">
+    const serverUserData = /*[[${userDataJson}]]*/ null;
   </script>
 
-  <!-- 비로그인 상태 처리 -->
-  <script th:unless="${#authentication.principal != 'anonymousUser'}">
-    // 비로그인 상태에서는 serverUserData를 정의하지 않음
-  </script>
 </head>
 <body>
 <header>
   <div class="top-bar">
     <div class="logo">
-      <a href="customer-dashboard.html">
+      <a href="/">
         <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img" >
       </a>
     </div>
@@ -37,17 +23,16 @@
     <div class="user-info">
       <span class="welcome">안녕하세요, <strong id="user-name">김고객</strong>님!</span>
       <span class="user-grade" id="membership-grade">골드 멤버</span>
-      <a href="#" class="logout-btn" onclick="logout()">로그아웃</a>
-      <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
+      <a href="/logout" class="logout-btn">로그아웃</a>
     </div>
   </div>
   <nav class="main-menu">
     <ul>
-      <li><a href="reservation.html">🅿️ 주차 예약</a></li>
-      <li><a href="payment.html">💳 요금 결제</a></li>
-      <li><a href="my-records.html">📊 이용 내역</a></li>
-      <li><a href="my-info.html">⚙️ 내 정보</a></li>
-      <li><a href="support.html">🎧 고객지원</a></li>
+      <li><a href="/reservation">🅿️ 주차 예약</a></li>
+      <li><a href="/payment">💳 요금 결제</a></li>
+      <li><a href="/my-records">📊 이용 내역</a></li>
+      <li><a href="/my-info">⚙️ 내 정보</a></li>
+      <li><a href="/support">🎧 고객지원</a></li>
     </ul>
   </nav>
 </header>
@@ -58,73 +43,9 @@
     <p>편리하고 안전한 주차 서비스를 이용해보세요!</p>
   </section>
 
-  <!-- 내 계정 정보 -->
-  <section class="account-overview">
-    <h3>내 계정 현황</h3>
-    <div class="account-grid">
-      <div class="account-card">
-        <div class="account-icon">💎</div>
-        <div class="account-info">
-          <span class="account-label">적립 포인트</span>
-          <span class="account-value" id="point">-P</span>
-          <small class="expire-point">다음달 소멸 예정: -P</small>
-        </div>
-      </div>
 
-      <div class="account-card">
-        <div class="account-icon">💳</div>
-        <div class="account-info">
-          <span class="account-label">선불 잔액</span>
-          <span class="account-value" id="prepaid-balance">₩-</span>
-          <small>최종충전: <span id="last-charged">-</span></small>
-        </div>
-      </div>
 
-      <div class="account-card">
-        <div class="account-icon">📊</div>
-        <div class="account-info">
-          <span class="account-label">이번달 사용액</span>
-          <span class="account-value monthly-usage">₩-</span>
-          <small class="savings-rate">전월 대비: -</small>
-        </div>
-      </div>
 
-      <div class="account-card">
-        <div class="account-icon">🏆</div>
-        <div class="account-info">
-          <span class="account-label">멤버십 혜택</span>
-          <span class="account-value discount-rate">-%</span>
-          <small>할인율</small>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 빠른 액션 버튼들 -->
-  <section class="quick-actions">
-    <div class="action-grid">
-      <a href="reservation.html" class="action-card primary">
-        <div class="action-icon">🅿️</div>
-        <h3>지금 예약하기</h3>
-        <p>월/일 주차 예약</p>
-      </a>
-      <a href="payment.html" class="action-card">
-        <div class="action-icon">💳</div>
-        <h3>결제하기</h3>
-        <p>간편 결제 서비스</p>
-      </a>
-      <a href="my-records.html" class="action-card">
-        <div class="action-icon">📊</div>
-        <h3>이용내역</h3>
-        <p>입출차 및 결제기록</p>
-      </a>
-      <a href="#" onclick="showQR()" class="action-card">
-        <div class="action-icon">📱</div>
-        <h3>QR 입차</h3>
-        <p>빠른 입차 코드</p>
-      </a>
-    </div>
-  </section>
 
   <!-- 현재 상태 -->
   <section class="current-status">
@@ -278,8 +199,8 @@
 </footer>
 
 <!-- 공통 라이브러리 먼저 로드 -->
-<script src="common/utils.js"></script>
-<script src="common/api.js"></script>
-<script src="dashboard.js"></script>
+<script src="/common/utils.js"></script>
+<script src="/common/api.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

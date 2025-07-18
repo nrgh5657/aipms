@@ -6,21 +6,14 @@
   <title>스마트파킹 - 고객지원</title>
   <link rel="stylesheet" href="/css/customer-style.css">
   <script th:inline="javascript">
-    /*<![CDATA[*/
-    let serverUserData = {
-      user: {
-        name: /*[[${member.name}]]*/ "비로그인"
-      },
-      role: /*[[${member.role}]]*/ "GUEST"
-    };
-    /*]]>*/
+    const serverUserData = /*[[${userDataJson}]]*/ null;
   </script>
 </head>
 <body>
 <header>
   <div class="top-bar">
     <div class="logo">
-      <a href="customer-dashboard.html">
+      <a href="/">
         <img src="img/logo.png" alt="스마트파킹 로고" class="logo-img" >
       </a>
     </div>
@@ -34,7 +27,7 @@
   <nav class="main-menu">
     <ul>
       <li><a href="/reservation">🅿️ 주차 예약</a></li>
-      <li><a href="/payment">💳 요금 결제</a></li>
+      <li><a href="/payment">💳 결제 서비스</a></li>
       <li><a href="/my-records">📊 이용 내역</a></li>
       <li><a href="/my-info">⚙️ 내 정보</a></li>
       <li><a href="/support" class="active">🎧 고객지원</a></li>
@@ -298,139 +291,13 @@
       </div>
     </div>
   </section>
+  <footer>
+    <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
+  </footer>
 
-  <!-- 문의하기 폼 -->
-  <section class="inquiry-section">
-    <h3>1:1 문의하기</h3>
-    <div class="inquiry-card">
-      <form class="inquiry-form" id="inquiry-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="inquiry-type">문의 유형</label>
-            <select id="inquiry-type" required>
-              <option value="">선택해주세요</option>
-              <option value="reservation">예약 관련</option>
-              <option value="payment">결제 관련</option>
-              <option value="service">서비스 이용</option>
-              <option value="account">계정 관리</option>
-              <option value="complaint">불만/건의</option>
-              <option value="other">기타</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="inquiry-urgent">긴급도</label>
-            <select id="inquiry-urgent">
-              <option value="normal">일반</option>
-              <option value="urgent">긴급</option>
-              <option value="very-urgent">매우 긴급</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="inquiry-title">제목</label>
-          <input type="text" id="inquiry-title" placeholder="문의 제목을 입력해주세요" required>
-        </div>
-
-        <div class="form-group">
-          <label for="inquiry-content">내용</label>
-          <textarea id="inquiry-content" rows="6" placeholder="문의 내용을 자세히 입력해주세요" required></textarea>
-          <small>최소 10자 이상 입력해주세요</small>
-        </div>
-
-        <div class="form-group">
-          <label for="inquiry-file">첨부파일</label>
-          <input type="file" id="inquiry-file" accept="image/*,.pdf,.doc,.docx" multiple>
-          <small>이미지, PDF, 문서 파일만 가능 (최대 5MB, 3개까지)</small>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="reply-email">답변 받을 이메일</label>
-            <input type="email" id="reply-email" value="kim.customer@email.com">
-          </div>
-          <div class="form-group">
-            <label for="reply-phone">답변 받을 휴대폰</label>
-            <input type="tel" id="reply-phone" value="010-1234-5678">
-          </div>
-        </div>
-
-        <div class="agreement-section">
-          <label class="agreement-item">
-            <input type="checkbox" id="privacy-agreement" required>
-            <span class="checkmark"></span>
-            <span>개인정보 수집 및 이용에 동의합니다</span>
-            <a href="#" class="agreement-link">[자세히보기]</a>
-          </label>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" class="cancel-btn" onclick="resetInquiryForm()">취소</button>
-          <button type="submit" class="submit-btn">문의하기</button>
-        </div>
-      </form>
-    </div>
-  </section>
-
-  <!-- 공지사항 -->
-  <section class="notice-section">
-    <h3>공지사항</h3>
-    <div class="notice-list">
-      <div class="notice-item important">
-        <div class="notice-badge">중요</div>
-        <div class="notice-title">시스템 정기 점검 안내 (7월 10일 02:00-04:00)</div>
-        <div class="notice-date">2025-07-07</div>
-      </div>
-
-      <div class="notice-item">
-        <div class="notice-title">여름휴가철 주차장 이용 안내</div>
-        <div class="notice-date">2025-07-05</div>
-      </div>
-
-      <div class="notice-item">
-        <div class="notice-title">새로운 결제 수단 추가 안내 (페이코, 토스페이)</div>
-        <div class="notice-date">2025-07-03</div>
-      </div>
-
-      <div class="notice-item">
-        <div class="notice-title">전기차 충전소 확대 설치 완료</div>
-        <div class="notice-date">2025-07-01</div>
-      </div>
-    </div>
-    <a href="#" class="view-all-notice">공지사항 전체보기 →</a>
-  </section>
-</main>
-
-<!-- 실시간 채팅 모달 -->
-<div id="chat-modal" class="modal" style="display: none;">
-  <div class="chat-container">
-    <div class="chat-header">
-      <h3>실시간 상담</h3>
-      <button class="close-chat" onclick="closeChat()">×</button>
-    </div>
-    <div class="chat-messages" id="chat-messages">
-      <div class="message system">
-        <div class="message-content">
-          안녕하세요! 스마트파킹 고객센터입니다.<br>
-          무엇을 도와드릴까요?
-        </div>
-        <div class="message-time">14:32</div>
-      </div>
-    </div>
-    <div class="chat-input">
-      <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." onkeypress="handleChatEnter(event)">
-      <button onclick="sendChatMessage()">전송</button>
-    </div>
-  </div>
-</div>
-
-<footer>
-  <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
-</footer>
-
-<!-- 공통 라이브러리 먼저 로드 -->
-<script src="/common/utils.js"></script>
-<script src="/common/api.js"></script>
-<script src="/js/support.js"></script>
+  <!-- 공통 라이브러리 먼저 로드 -->
+  <script src="/common/utils.js"></script>
+  <script src="/common/api.js"></script>
+  <script src="/js/support.js"></script>
 </body>
 </html>

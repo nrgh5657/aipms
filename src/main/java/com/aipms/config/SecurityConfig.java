@@ -49,6 +49,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/fireDetect/detected","/fire/update-note").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/payment/verify").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/parking-log/current").authenticated()
                         .requestMatchers(
                                 "/", "/favicon.ico", "/oauth/**",
                                 "/css/**", "/js/**", "/images/**", "/img/**",

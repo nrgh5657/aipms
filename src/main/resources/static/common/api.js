@@ -11,13 +11,24 @@ let isLoggedIn = false;
 // 로그인 상태 확인 및 검증
 // ========================================
 function checkAndValidateLogin() {
-  // Thymeleaf에서 전달된 사용자 정보 확인
-  if (typeof serverUserData !== 'undefined' && serverUserData.user) {
-    currentUserFromSession = serverUserData.user;
-    userRoleFromSession = serverUserData.role;
+  let parsedUserData = null;
+
+  try {
+    if (typeof serverUserData === 'string') {
+      parsedUserData = JSON.parse(serverUserData);
+    } else if (typeof serverUserData === 'object') {
+      parsedUserData = serverUserData;
+    }
+  } catch (e) {
+    console.warn('❌ serverUserData 파싱 실패:', e);
+    parsedUserData = null;
+  }
+
+  if (parsedUserData && parsedUserData.user) {
+    currentUserFromSession = parsedUserData.user;
+    userRoleFromSession = parsedUserData.role;
     isLoggedIn = true;
-    
-    // 고객 역할 확인
+
     if (userRoleFromSession !== 'USER') {
       console.warn('⚠️ 고객 전용 서비스입니다. 현재 역할:', userRoleFromSession);
       showToast('고객 전용 서비스입니다.', 'warning');
@@ -26,19 +37,19 @@ function checkAndValidateLogin() {
       }, 2000);
       return false;
     }
-    
-    console.log('👤 로그인된 고객:', { 
-      user: currentUserFromSession?.name, 
-      role: userRoleFromSession 
+
+    console.log('👤 로그인된 고객:', {
+      user: currentUserFromSession,
+      role: userRoleFromSession
     });
     return true;
   } else {
-    // 비로그인 상태
-    console.warn('🔒 로그인이 필요한 서비스입니다');
+    console.warn('🔒 로그인이 필요한 서비스입니다 (user 정보 없음)');
     showLoginRequiredModal();
     return false;
   }
 }
+
 
 function showLoginRequiredModal() {
   // 로그인 필요 안내 모달 표시
@@ -58,7 +69,7 @@ function showLoginRequiredModal() {
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   `;
-  
+
   modal.innerHTML = `
     <div style="
       background: white;
@@ -97,14 +108,14 @@ function showLoginRequiredModal() {
       </div>
     </div>
   `;
-  
+
   document.body.appendChild(modal);
-  
+
   // 전역 함수 정의
   window.goToLogin = function() {
     window.location.href = '/login';
   };
-  
+
   window.goToHome = function() {
     window.location.href = '/';
   };
@@ -121,7 +132,7 @@ async function apiRequest(url, options = {}) {
     setTimeout(() => window.location.href = '/login', 1000);
     return null;
   }
-  
+
   const defaultOptions = {
     method: 'GET',
     headers: {
@@ -129,7 +140,7 @@ async function apiRequest(url, options = {}) {
     },
     credentials: 'include' // 세션 쿠키를 자동으로 포함
   };
-  
+
   const config = {
     ...defaultOptions,
     ...options,
@@ -138,11 +149,11 @@ async function apiRequest(url, options = {}) {
       ...options.headers
     }
   };
-  
+
   try {
     console.log(`🌐 API 요청: ${url}`);
     const response = await fetch(url, config);
-    
+
     if (!response.ok) {
       if (response.status === 401) {
         console.error('🔒 인증 실패 - 세션 만료');
@@ -157,14 +168,14 @@ async function apiRequest(url, options = {}) {
       }
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     console.log(`✅ API 응답 성공: ${url}`);
     return data;
-    
+
   } catch (error) {
     console.error(`❌ API 요청 실패 [${url}]:`, error);
-    
+
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
       showToast('네트워크 연결을 확인해주세요.', 'error');
     } else {
@@ -187,29 +198,29 @@ function updateElement(id, value) {
 function showToast(message, type = 'info') {
   const existingToasts = document.querySelectorAll('.toast');
   existingToasts.forEach(toast => toast.remove());
-  
+
   const toast = document.createElement('div');
   toast.className = `toast show ${type}`;
-  
+
   const colors = {
     success: '#10b981',
     error: '#ef4444',
     warning: '#f59e0b',
     info: '#3b82f6'
   };
-  
+
   const icons = {
     success: '✅',
     error: '❌',
     warning: '⚠️',
     info: 'ℹ️'
   };
-  
+
   toast.innerHTML = `
     <span style="margin-right: 0.5rem;">${icons[type] || icons.info}</span>
     ${message.replace(/\n/g, '<br>')}
   `;
-  
+
   toast.style.cssText = `
     position: fixed;
     top: 20px;
@@ -225,7 +236,7 @@ function showToast(message, type = 'info') {
     max-width: 400px;
     line-height: 1.4;
   `;
-  
+
   if (!document.getElementById('toast-styles')) {
     const style = document.createElement('style');
     style.id = 'toast-styles';
@@ -241,9 +252,9 @@ function showToast(message, type = 'info') {
     `;
     document.head.appendChild(style);
   }
-  
+
   document.body.appendChild(toast);
-  
+
   setTimeout(() => {
     toast.style.animation = 'slideOutToRight 0.3s ease-out';
     setTimeout(() => {
@@ -252,14 +263,14 @@ function showToast(message, type = 'info') {
       }
     }, 300);
   }, 4000);
-  
+
   console.log('📢 토스트:', message);
 }
 
 function showLoading(message = '처리중...') {
   const existing = document.querySelector('.loading-overlay');
   if (existing) existing.remove();
-  
+
   const loading = document.createElement('div');
   loading.className = 'loading-overlay';
   loading.style.cssText = `
@@ -277,14 +288,14 @@ function showLoading(message = '처리중...') {
     font-size: 1.2rem;
     backdrop-filter: blur(2px);
   `;
-  
+
   loading.innerHTML = `
     <div style="text-align: center;">
       <div style="margin-bottom: 1rem; font-size: 2rem;">⏳</div>
       <div>${message}</div>
     </div>
   `;
-  
+
   document.body.appendChild(loading);
 }
 
@@ -297,10 +308,10 @@ function hideLoading() {
 
 function showQR() {
   showLoading('QR 코드를 생성중입니다...');
-  
+
   setTimeout(() => {
     hideLoading();
-    
+
     // QR 코드 모달 생성
     const qrModal = document.createElement('div');
     qrModal.className = 'qr-modal';
@@ -316,7 +327,7 @@ function showQR() {
       justify-content: center;
       z-index: 10000;
     `;
-    
+
     qrModal.innerHTML = `
       <div style="
         background: white;
@@ -350,14 +361,14 @@ function showQR() {
         ">닫기</button>
       </div>
     `;
-    
+
     document.body.appendChild(qrModal);
-    
+
     window.closeQRModal = function() {
       document.body.removeChild(qrModal);
       delete window.closeQRModal;
     };
-    
+
     // 모달 외부 클릭시 닫기
     qrModal.addEventListener('click', function(e) {
       if (e.target === qrModal) {
@@ -372,59 +383,59 @@ function showQR() {
 // ========================================
 function enhanceAccessibility() {
   const interactiveElements = document.querySelectorAll(
-    'button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])'
   );
-  
+
   interactiveElements.forEach(element => {
     element.addEventListener('focus', function() {
       this.style.outline = '3px solid #60a5fa';
       this.style.outlineOffset = '2px';
     });
-    
+
     element.addEventListener('blur', function() {
       this.style.outline = 'none';
     });
   });
-  
+
   // ARIA 라벨 추가
   const statusElements = document.querySelectorAll('.status-number');
   statusElements.forEach((element, index) => {
     const labels = ['전체 주차면', '사용중', '빈공간', '이용률'];
     element.setAttribute('aria-label', labels[index]);
   });
-  
+
   console.log('♿ 접근성 개선 완료');
 }
 
 function setupErrorHandling() {
   window.addEventListener('error', function(e) {
     console.error('JavaScript 오류:', e.error);
-    
+
     const errorMessages = {
       'TypeError': '일시적인 시스템 오류가 발생했습니다.',
       'ReferenceError': '페이지를 새로고침해 주세요.',
       'NetworkError': '인터넷 연결을 확인해주세요.',
       'SyntaxError': '데이터 처리 중 오류가 발생했습니다.'
     };
-    
+
     const errorType = e.error?.constructor.name || 'Error';
     const message = errorMessages[errorType] || '알 수 없는 오류가 발생했습니다.';
-    
+
     showToast(message, 'error');
   });
-  
+
   window.addEventListener('unhandledrejection', function(e) {
     console.error('처리되지 않은 Promise 거부:', e.reason);
-    
+
     if (e.reason?.message?.includes('fetch')) {
       showToast('서버 연결을 확인해주세요.', 'error');
     } else {
       showToast('요청 처리 중 오류가 발생했습니다.', 'error');
     }
-    
+
     e.preventDefault();
   });
-  
+
   console.log('🛡️ 에러 처리 설정 완료');
 }
 
@@ -440,7 +451,7 @@ function setupKeyboardShortcuts() {
       showToast('홈으로 이동합니다.', 'info');
       return;
     }
-    
+
     // 고객 전용 단축키
     if (event.ctrlKey) {
       switch(event.key) {
@@ -474,7 +485,7 @@ function setupKeyboardShortcuts() {
       }
     }
   });
-  
+
   console.log('⌨️ 고객 전용 키보드 단축키 활성화');
   console.log('   Ctrl + H: 홈, Ctrl + R: 예약, Ctrl + P: 결제');
   console.log('   Ctrl + L: 이용내역, Ctrl + Q: QR코드, Ctrl + E: 출차');
@@ -523,7 +534,7 @@ function setupPageEvents() {
     if (event.target.type === 'text' && event.target.id === 'car-number') {
       const value = event.target.value;
       const pattern = /^\d{2,3}[가-힣]\d{4}$/;
-      
+
       if (value && !pattern.test(value)) {
         event.target.style.borderColor = '#e53e3e';
         event.target.style.background = '#fef2f2';
@@ -532,29 +543,29 @@ function setupPageEvents() {
         event.target.style.background = 'white';
       }
     }
-    
+
     // 이메일 패턴 검사
     if (event.target.type === 'email') {
       const value = event.target.value;
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      
+
       if (value && !emailPattern.test(value)) {
         event.target.style.borderColor = '#e53e3e';
       } else {
         event.target.style.borderColor = '#e2e8f0';
       }
     }
-    
+
     // 전화번호 자동 포맷팅
     if (event.target.type === 'tel') {
       let value = event.target.value.replace(/[^0-9]/g, '');
-      
+
       if (value.length >= 3 && value.length <= 7) {
         value = value.replace(/(\d{3})(\d{1,4})/, '$1-$2');
       } else if (value.length >= 8) {
         value = value.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
       }
-      
+
       event.target.value = value;
     }
   });
@@ -565,7 +576,7 @@ function setupPageEvents() {
       const value = parseInt(event.target.value);
       const min = parseInt(event.target.min);
       const max = parseInt(event.target.max);
-      
+
       if (min && value < min) {
         event.target.value = min;
       }
@@ -581,18 +592,18 @@ function setupPageEvents() {
 // ========================================
 function initializeCommon() {
   console.log('🚗 스마트파킹 공통 라이브러리 로드됨');
-  
+
   // 로그인 상태 확인
   if (!checkAndValidateLogin()) {
     return false;
   }
-  
+
   // 공통 기능 초기화
   enhanceAccessibility();
   setupErrorHandling();
   setupKeyboardShortcuts();
   setupPageEvents();
-  
+
   console.log('✅ 공통 라이브러리 초기화 완료');
   return true;
 }

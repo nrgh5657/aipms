@@ -14,14 +14,14 @@
  */
 function formatDate(date, format = 'YYYY-MM-DD') {
   if (!date) return '-';
-  
+
   const d = new Date(date);
   if (isNaN(d.getTime())) return '-';
-  
+
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  
+
   switch (format) {
     case 'YYYY.MM.DD':
       return `${year}.${month}.${day}`;
@@ -41,16 +41,16 @@ function formatDate(date, format = 'YYYY-MM-DD') {
  */
 function formatDateTime(datetime) {
   if (!datetime) return '-';
-  
+
   const d = new Date(datetime);
   if (isNaN(d.getTime())) return '-';
-  
+
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   const hours = String(d.getHours()).padStart(2, '0');
   const minutes = String(d.getMinutes()).padStart(2, '0');
-  
+
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
@@ -61,16 +61,16 @@ function formatDateTime(datetime) {
  */
 function getRelativeTime(date) {
   if (!date) return '-';
-  
+
   const d = new Date(date);
   const now = new Date();
   const diff = now - d;
-  
+
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-  
+
   if (days > 0) return `${days}일 전`;
   if (hours > 0) return `${hours}시간 전`;
   if (minutes > 0) return `${minutes}분 전`;
@@ -89,7 +89,7 @@ function getRelativeTime(date) {
  */
 function formatCurrency(amount, showCurrency = true) {
   if (amount === null || amount === undefined || isNaN(amount)) return '-';
-  
+
   const formatted = new Intl.NumberFormat('ko-KR').format(amount);
   return showCurrency ? `₩${formatted}` : formatted;
 }
@@ -111,10 +111,10 @@ function formatNumber(number) {
  */
 function formatFileSize(bytes) {
   if (bytes === 0) return '0 B';
-  
+
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  
+
   return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
 }
 
@@ -140,15 +140,15 @@ function truncateString(str, length = 20) {
  */
 function formatPhoneNumber(phone) {
   if (!phone) return '';
-  
+
   // 숫자만 추출
   const numbers = phone.replace(/\D/g, '');
-  
+
   // 010-1234-5678 형식으로 포맷팅
   if (numbers.length === 11) {
     return numbers.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
   }
-  
+
   return phone;
 }
 
@@ -159,7 +159,7 @@ function formatPhoneNumber(phone) {
  */
 function formatCarNumber(carNumber) {
   if (!carNumber) return '';
-  
+
   // 기본적으로 입력된 값 그대로 반환 (유효성 검사는 별도)
   return carNumber.replace(/\s/g, '');
 }
@@ -171,11 +171,11 @@ function formatCarNumber(carNumber) {
  */
 function maskName(name) {
   if (!name || name.length < 2) return name;
-  
+
   if (name.length === 2) {
     return name.charAt(0) + '*';
   }
-  
+
   return name.charAt(0) + '*'.repeat(name.length - 2) + name.charAt(name.length - 1);
 }
 
@@ -186,12 +186,12 @@ function maskName(name) {
  */
 function maskEmail(email) {
   if (!email || !email.includes('@')) return email;
-  
+
   const [local, domain] = email.split('@');
-  const maskedLocal = local.length > 2 
-    ? local.charAt(0) + '*'.repeat(local.length - 2) + local.charAt(local.length - 1)
-    : local.charAt(0) + '*';
-    
+  const maskedLocal = local.length > 2
+      ? local.charAt(0) + '*'.repeat(local.length - 2) + local.charAt(local.length - 1)
+      : local.charAt(0) + '*';
+
   return `${maskedLocal}@${domain}`;
 }
 
@@ -247,12 +247,12 @@ function validatePassword(password) {
       special: /[@$!%*?&]/.test(password)
     }
   };
-  
+
   // 점수 계산
   Object.values(result.requirements).forEach(req => {
     if (req) result.score++;
   });
-  
+
   // 메시지 생성
   if (result.score < 3) {
     result.message = '약함';
@@ -263,12 +263,12 @@ function validatePassword(password) {
   } else {
     result.message = '매우 강함';
   }
-  
-  result.isValid = result.requirements.length && 
-                   result.requirements.lowercase && 
-                   result.requirements.number && 
-                   result.requirements.special;
-  
+
+  result.isValid = result.requirements.length &&
+      result.requirements.lowercase &&
+      result.requirements.number &&
+      result.requirements.special;
+
   return result;
 }
 
@@ -284,7 +284,7 @@ function validatePassword(password) {
 function updateElement(id, value) {
   const element = document.getElementById(id);
   if (!element) return;
-  
+
   if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
     element.value = value || '';
   } else {
@@ -300,11 +300,11 @@ function updateElement(id, value) {
 function getElementValue(id) {
   const element = document.getElementById(id);
   if (!element) return '';
-  
+
   if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
     return element.value.trim();
   }
-  
+
   return element.textContent.trim();
 }
 
@@ -325,11 +325,11 @@ function updateElements(ids, value) {
 function formToObject(form) {
   const formData = new FormData(form);
   const object = {};
-  
+
   for (let [key, value] of formData.entries()) {
     object[key] = value;
   }
-  
+
   return object;
 }
 
@@ -373,12 +373,12 @@ function deepClone(obj) {
   if (obj === null || typeof obj !== 'object') return obj;
   if (obj instanceof Date) return new Date(obj.getTime());
   if (obj instanceof Array) return obj.map(item => deepClone(item));
-  
+
   const cloned = {};
   Object.keys(obj).forEach(key => {
     cloned[key] = deepClone(obj[key]);
   });
-  
+
   return cloned;
 }
 
@@ -472,6 +472,16 @@ function getUrlParams() {
   return params;
 }
 
+//로그아웃
+function logout() {
+  const logoutForm = document.getElementById('logoutForm');
+  if (logoutForm) {
+    logoutForm.submit();
+  } else {
+    console.error('로그아웃 폼이 존재하지 않습니다.');
+  }
+}
+
 /**
  * 클립보드에 텍스트 복사
  * @param {string} text - 복사할 텍스트
@@ -501,37 +511,37 @@ window.utils = {
   formatDate,
   formatDateTime,
   getRelativeTime,
-  
+
   // 숫자/통화
   formatCurrency,
   formatNumber,
   formatFileSize,
-  
+
   // 문자열
   truncateString,
   formatPhoneNumber,
   formatCarNumber,
   maskName,
   maskEmail,
-  
+
   // 유효성 검사
   validateEmail,
   validatePhone,
   validateCarNumber,
   validatePassword,
-  
+
   // DOM
   updateElement,
   getElementValue,
   updateElements,
   formToObject,
   objectToForm,
-  
+
   // 배열/객체
   uniqueArray,
   deepClone,
   isEmpty,
-  
+
   // 기타
   delay,
   debounce,

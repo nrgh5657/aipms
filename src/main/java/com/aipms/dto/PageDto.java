@@ -7,14 +7,14 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class Page<T> {
+public class PageDto<T> {
     private List<T> content;
     private int totalElements;
     private int currentPage;
     private int pageSize;
     private int totalPages;
 
-    public Page(List<T> content, int totalElements, int currentPage, int pageSize) {
+    public PageDto(List<T> content, int totalElements, int currentPage, int pageSize) {
         this.content = content;
         this.totalElements = totalElements;
         this.currentPage = currentPage;

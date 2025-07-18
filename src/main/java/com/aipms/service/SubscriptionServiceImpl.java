@@ -55,4 +55,20 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             return dto;
         }).collect(Collectors.toList());
     }
+
+    @Override
+    public void registerSubscription(Long memberId, String customerUid) {
+        Subscription sub = new Subscription();
+        sub.setMemberId(memberId);
+        sub.setCustomerUid(customerUid);
+        sub.setActive(true); // 기본값
+
+        if (subscriptionMapper.existsByMemberId(memberId)) {
+            subscriptionMapper.updateSubscription(sub);
+        } else {
+            subscriptionMapper.insertSubscription(sub);
+        }
+    }
+
+
 }

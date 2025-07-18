@@ -8,6 +8,7 @@ import com.aipms.mapper.ParkingLogMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -73,5 +74,17 @@ public class ParkingLogServiceImpl implements ParkingLogService {
     @Override
     public int getTotalLogCount() {
         return parkingLogMapper.countAllLogs();
+    }
+
+    @Override
+    public ParkingLog getCurrentUnpaidLog(Long memberId) {
+        return parkingLogMapper.findLatestUnpaidByMemberId(memberId);
+    }
+
+    @Override
+    public int calculateFee(LocalDateTime entryTime) {
+        if (entryTime == null) return 0;
+        long minutes = Duration.between(entryTime, LocalDateTime.now()).toMinutes();
+        return (int) Math.ceil(minutes / 30.0) * 1000; // 30분당 1000원 예시
     }
 }

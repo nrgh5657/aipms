@@ -19,6 +19,7 @@ let maxReconnectAttempts = 5;
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🎧 고객지원 모듈 로드됨');
 
+  initializeCommon()
   // 고객지원 페이지 초기화
   initializeSupportPage();
 
@@ -245,7 +246,7 @@ async function searchFAQ() {
     // 클라이언트 사이드 검색으로 대체
     const results = faqData.filter(faq => {
       const matchesSearch = faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
+          faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = currentFAQCategory === 'all' || faq.category === currentFAQCategory;
       return matchesSearch && matchesCategory;
     });
@@ -1675,9 +1676,9 @@ function createTicketItem(ticket) {
     </div>
     <div class="ticket-actions">
       <button onclick="showTicketDetail('${ticket.id}')" class="btn-ticket-detail">상세보기</button>
-      ${ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS' ? 
-        `<button onclick="addTicketReply('${ticket.id}')" class="btn-ticket-reply">답글</button>` : ''
-      }
+      ${ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS' ?
+      `<button onclick="addTicketReply('${ticket.id}')" class="btn-ticket-reply">답글</button>` : ''
+  }
     </div>
   `;
 
@@ -1994,12 +1995,6 @@ function showToast(message, type = 'info', duration = 3000) {
     window.showToast(message, type, duration);
   } else {
     alert(message);
-  }
-}
-
-function logout() {
-  if (confirm('로그아웃 하시겠습니까?')) {
-    document.getElementById('logoutForm').submit();
   }
 }
 

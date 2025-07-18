@@ -9,4 +9,6 @@ public interface SubscriptionService {
     SubscriptionDto getSubscriptionByMember(Long memberId);
     void cancelSubscription(Long subscriptionId);
     List<SubscriptionDto> getAllSubscriptions();
+
+    void registerSubscription(Long memberId, String customerUid);
 }

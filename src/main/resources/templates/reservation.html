@@ -6,22 +6,15 @@
   <title>스마트파킹 - 주차 예약</title>
   <link rel="stylesheet" href="/css/customer-style.css">
   <script th:inline="javascript">
-    /*<![CDATA[*/
-    let serverUserData = {
-      user: {
-        name: /*[[${member.name}]]*/ "비로그인"
-      },
-      role: /*[[${member.role}]]*/ "GUEST"
-    };
-    /*]]>*/
+    const serverUserData = /*[[${userDataJson}]]*/ null;
   </script>
 </head>
 <body>
 <header>
   <div class="top-bar">
     <div class="logo">
-      <a href="customer-dashboard.html">
-        <img src="img/logo.png" alt="스마트파킹 로고" class="logo-img" >
+      <a href="/">
+        <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img" >
       </a>
     </div>
     <div class="user-info">
@@ -34,7 +27,7 @@
     <ul>
 
       <li><a href="/reservation" class="active">🅿️ 주차 예약</a></li>
-      <li><a href="/payment">💳 요금 결제</a></li>
+      <li><a href="/payment">💳 결제 서비스</a></li>
       <li><a href="/my-records">📊 이용 내역</a></li>
       <li><a href="/my-info">⚙️ 내 정보</a></li>
       <li><a href="/support">🎧 고객지원</a></li>
@@ -53,148 +46,94 @@
     <section class="reservation-type">
       <h3>예약 유형 선택</h3>
       <div class="type-tabs">
-        <button class="tab-btn active" onclick="switchTab('hourly')">시간 주차</button>
-        <button class="tab-btn" onclick="switchTab('daily')">일일 주차</button>
+        <button class="tab-btn active" onclick="switchTab('daily')">일일 주차</button>
         <button class="tab-btn" onclick="switchTab('monthly')">월 주차</button>
       </div>
+    </section>
+
+    <!-- 일일 주차 폼 (기본 노출) -->
+    <section id="daily-form" class="reservation-form active">
+      <form class="booking-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="daily-start">시작 날짜</label>
+            <input type="date" id="daily-start" required>
+          </div>
+          <div class="form-group">
+            <label for="daily-end">종료 날짜</label>
+            <input type="date" id="daily-end" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="daily-car">차량번호</label>
+            <input type="text" id="daily-car" placeholder="예: 12가3456" required>
+          </div>
+        </div>
+
+        <div class="price-estimate">
+          <h4>예상 요금</h4>
+          <div class="price-breakdown">
+            <span>일수: <strong id="daily-days">0일</strong></span>
+            <span>일일 요금: <strong>₩20,000</strong></span>
+            <span class="total">총 요금: <strong id="daily-total">₩0</strong></span>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" onclick="submitDailyReservation()">일일 주차 신청</button>
+      </form>
+    </section>
+
+    <!-- 월 주차 폼 (기본 숨김) -->
+    <section id="monthly-form" class="reservation-form">
+      <form class="booking-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="monthly-start">시작 월</label>
+            <input type="month" id="monthly-start" required>
+          </div>
+          <div class="form-group">
+            <label for="monthly-period">이용 기간</label>
+            <select id="monthly-period" required>
+              <option value="">선택하세요</option>
+              <option value="1">1개월</option>
+              <option value="3">3개월</option>
+              <option value="6">6개월</option>
+              <option value="12">12개월</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="monthly-car">차량번호</label>
+            <input type="text" id="monthly-car" placeholder="예: 12가3456" required>
+          </div>
+          <div class="form-group">
+            <label for="fixed-spot">고정 자리</label>
+            <select id="fixed-spot">
+              <option value="random">랜덤 배정</option>
+              <option value="fixed">고정 자리 (+₩10,000)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="price-estimate">
+          <h4>예상 요금</h4>
+          <div class="price-breakdown">
+            <span>월 요금: <strong>₩150,000</strong></span>
+            <span>기간: <strong id="monthly-months">0개월</strong></span>
+            <span>고정자리: <strong id="fixed-price">₩0</strong></span>
+            <span class="total">총 요금: <strong id="monthly-total">₩0</strong></span>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" onclick="submitMonthlyReservation()">월 주차 신청</button>
+      </form>
+    </section>
   </div>
 
-  <!-- 시간 주차 폼 -->
-  <section id="hourly-form" class="reservation-form active">
-    <form class="booking-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="date">이용 날짜</label>
-          <input type="date" id="date" required>
-        </div>
-        <div class="form-group">
-          <label for="start-time">시작 시간</label>
-          <input type="time" id="start-time" required>
-        </div>
-        <div class="form-group">
-          <label for="duration">이용 시간</label>
-          <select id="duration" required>
-            <option value="">선택하세요</option>
-            <option value="1">1시간</option>
-            <option value="2">2시간</option>
-            <option value="3">3시간</option>
-            <option value="4">4시간</option>
-            <option value="6">6시간</option>
-            <option value="8">8시간</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="car-number">차량번호</label>
-          <input type="text" id="car-number" placeholder="예: 12가3456" required>
-        </div>
-        <div class="form-group">
-          <label for="zone-preference">구역 선호도</label>
-          <select id="zone-preference">
-            <option value="any">상관없음</option>
-            <option value="A">A구역 (입구 근처)</option>
-            <option value="B">B구역 (중앙)</option>
-            <option value="C">C구역 (지하)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="price-estimate">
-        <h4>예상 요금</h4>
-        <div class="price-breakdown">
-          <span>기본 요금: <strong id="base-price">₩0</strong></span>
-          <span>부가세: <strong id="tax">₩0</strong></span>
-          <span class="total">총 요금: <strong id="total-price">₩0</strong></span>
-        </div>
-      </div>
-
-      <button type="submit" class="submit-btn" onclick="submitReservation()">예약 신청하기</button>
-    </form>
-  </section>
-
-  <!-- 일일 주차 폼 -->
-  <section id="daily-form" class="reservation-form">
-    <form class="booking-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="daily-start">시작 날짜</label>
-          <input type="date" id="daily-start" required>
-        </div>
-        <div class="form-group">
-          <label for="daily-end">종료 날짜</label>
-          <input type="date" id="daily-end" required>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group full-width">
-          <label for="daily-car">차량번호</label>
-          <input type="text" id="daily-car" placeholder="예: 12가3456" required>
-        </div>
-      </div>
-
-      <div class="price-estimate">
-        <h4>예상 요금</h4>
-        <div class="price-breakdown">
-          <span>일수: <strong id="daily-days">0일</strong></span>
-          <span>일일 요금: <strong>₩20,000</strong></span>
-          <span class="total">총 요금: <strong id="daily-total">₩0</strong></span>
-        </div>
-      </div>
-
-      <button type="submit" class="submit-btn" onclick="submitDailyReservation()">일일 주차 신청</button>
-    </form>
-  </section>
-
-  <!-- 월 주차 폼 -->
-  <section id="monthly-form" class="reservation-form">
-    <form class="booking-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="monthly-start">시작 월</label>
-          <input type="month" id="monthly-start" required>
-        </div>
-        <div class="form-group">
-          <label for="monthly-period">이용 기간</label>
-          <select id="monthly-period" required>
-            <option value="">선택하세요</option>
-            <option value="1">1개월</option>
-            <option value="3">3개월</option>
-            <option value="6">6개월</option>
-            <option value="12">12개월</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="monthly-car">차량번호</label>
-          <input type="text" id="monthly-car" placeholder="예: 12가3456" required>
-        </div>
-        <div class="form-group">
-          <label for="fixed-spot">고정 자리</label>
-          <select id="fixed-spot">
-            <option value="random">랜덤 배정</option>
-            <option value="fixed">고정 자리 (+₩10,000)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="price-estimate">
-        <h4>예상 요금</h4>
-        <div class="price-breakdown">
-          <span>월 요금: <strong>₩150,000</strong></span>
-          <span>기간: <strong id="monthly-months">0개월</strong></span>
-          <span>고정자리: <strong id="fixed-price">₩0</strong></span>
-          <span class="total">총 요금: <strong id="monthly-total">₩0</strong></span>
-        </div>
-      </div>
-
-      <button type="submit" class="submit-btn" onclick="submitMonthlyReservation()">월 주차 신청</button>
-    </form>
-  </section>
 
   <!-- 실시간 주차장 현황 -->
   <section class="parking-status">

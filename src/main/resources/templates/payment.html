@@ -6,21 +6,14 @@
   <title>스마트파킹 - 결제 서비스</title>
   <link rel="stylesheet" href="/css/customer-style.css">
   <script th:inline="javascript">
-    /*<![CDATA[*/
-    let serverUserData = {
-      user: {
-        name: /*[[${member.name}]]*/ "비로그인"
-      },
-      role: /*[[${member.role}]]*/ "GUEST"
-    };
-    /*]]>*/
+    const serverUserData = /*[(${userDataJson})]*/ null;
   </script>
 </head>
 <body>
 <header>
   <div class="top-bar">
     <div class="logo">
-      <a href="customer-dashboard.html">
+      <a href="/">
         <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img" >
       </a>
     </div>
@@ -33,7 +26,7 @@
   <nav class="main-menu">
     <ul>
       <li><a href="/reservation">🅿️ 주차 예약</a></li>
-      <li><a href="/payment" class="active">💳 요금 결제</a></li>
+      <li><a href="/payment" class="active">💳 결제 서비스</a></li>
       <li><a href="/my-records">📊 이용 내역</a></li>
       <li><a href="/my-info">⚙️ 내 정보</a></li>
       <li><a href="/support">🎧 고객지원</a></li>
@@ -56,14 +49,15 @@
           <div class="service-icon">🚗</div>
           <h4>현재 주차 결제</h4>
           <p>지금 주차중인 차량의 요금을 결제합니다</p>
-          <button class="service-btn" onclick="payCurrentParking()">현재 주차 결제</button>
+          <button class="service-btn" data-action="current-parking">현재 주차 결제</button>
+
         </div>
 
         <div class="service-card">
           <div class="service-icon">🎫</div>
           <h4>정기권 구매</h4>
           <p>월/년 정기 주차권을 구매하여 할인 혜택을 받으세요</p>
-          <button class="service-btn" onclick="buySubscription()">정기권 구매</button>
+          <button class="service-btn" id="subscribe-btn" >정기권 구매</button>
         </div>
 
         <div class="service-card">
@@ -361,7 +355,10 @@
 <!-- 공통 라이브러리 먼저 로드 -->
 <script src="/common/utils.js"></script>
 <script src="/common/api.js"></script>
+<script src="https://cdn.iamport.kr/v1/iamport.js"></script>
 <script src="/js/payment.js"></script>
+<script src="/js/currentParkingPay.js"></script>
+<script src="/js/subscriptionPay.js"></script>
 </body>
 </html>
 

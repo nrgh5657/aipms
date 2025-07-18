@@ -7,10 +7,15 @@
 
     <!-- INSERT: 차량 로그 저장 -->
     <insert id="insertLog" parameterType="com.aipms.domain.ParkingLog">
-        INSERT INTO parking_log (car_number, member_id, entry_time, exit_time, camera_id)
-        VALUES (#{carNumber}, #{memberId}, #{entryTime}, #{exitTime}, #{cameraId})
+        INSERT INTO parking_log (
+            car_number, member_id, entry_time, exit_time, camera_id,
+            is_paid, paid_at, payment_method, fee
+        )
+        VALUES (
+                   #{carNumber}, #{memberId}, #{entryTime}, #{exitTime}, #{cameraId},
+                   #{isPaid}, #{paidAt}, #{paymentMethod}, #{fee}
+               )
     </insert>
-
     <!-- SELECT: 차량 로그 + 신청자 이름 포함 -->
     <!-- ResultMap 정의 -->
     <resultMap id="ParkingLogWithMemberMap" type="com.aipms.dto.ParkingLogWithMemberDto">
@@ -43,6 +48,10 @@
         SELECT COUNT(*) FROM parking_log
     </select>
 
+    <select id="selectById" resultType="com.aipms.domain.ParkingLog">
+        SELECT * FROM parking_log WHERE id = #{entryId}
+    </select>
+
     <select id="findLatestUnexitedLog" resultType="com.aipms.domain.ParkingLog" parameterType="string">
         SELECT *
         FROM parking_log
@@ -52,10 +61,48 @@
             LIMIT 1
     </select>
 
+    <update id="updatePaymentInfo" parameterType="com.aipms.domain.ParkingLog">
+        UPDATE parking_log
+        SET
+            is_paid = TRUE,
+            paid_at = #{paidAt},
+            payment_method = #{paymentMethod},
+            fee = #{fee},
+            exit_time = #{exitTime}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updatePaymentId">
+        UPDATE parking_log
+        SET payment_id = #{paymentId}
+        WHERE id = #{id}
+    </update>
+
     <update id="updateExitTime" parameterType="com.aipms.domain.ParkingLog">
         UPDATE parking_log
         SET exit_time = #{exitTime}
         WHERE id = #{id}
+    </update>
+
+    <select id="findLatestUnpaidByMemberId" parameterType="long" resultType="com.aipms.domain.ParkingLog">
+        SELECT *
+        FROM parking_log
+        WHERE member_id = #{memberId}
+          AND exit_time IS NULL
+        ORDER BY entry_time DESC
+            LIMIT 1
+    </select>
+
+    <update id="updatePaymentAndExitInfo">
+        UPDATE parking_log
+        SET
+            payment_id = #{paymentId},
+            exit_time = #{exitTime},
+            is_paid = #{isPaid},
+            paid_at = #{paidAt},
+            payment_method = #{paymentMethod},
+            fee = #{fee}
+        WHERE id = #{entryId}
     </update>
 
 </mapper>

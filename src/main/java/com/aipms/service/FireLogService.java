@@ -2,8 +2,7 @@ package com.aipms.service;
 
 import com.aipms.domain.FireLog;
 import com.aipms.dto.FireAlertDto;
-import com.aipms.dto.FireAlertTargetDto;
-import com.aipms.dto.Page;
+import com.aipms.dto.PageDto;
 
 import java.util.List;
 
@@ -24,7 +23,7 @@ public interface FireLogService {
     void updateLogs(FireLog fireLog);
     
     //화재 감지 기록 페이징 처리
-    Page<FireLog> getPagedFireLogs(int page, int size);
+    PageDto<FireLog> getPagedFireLogs(int page, int size);
 
 
 

@@ -6,21 +6,14 @@
   <title>스마트파킹 - 내 정보</title>
   <link rel="stylesheet" href="/css/customer-style.css">
   <script th:inline="javascript">
-    /*<![CDATA[*/
-    let serverUserData = {
-      user: {
-        name: /*[[${member.name}]]*/ "비로그인"
-      },
-      role: /*[[${member.role}]]*/ "GUEST"
-    };
-    /*]]>*/
+    const serverUserData = /*[[${userDataJson}]]*/ null;
   </script>
 </head>
 <body>
 <header>
   <div class="top-bar">
     <div class="logo">
-      <a href="customer-dashboard.html">
+      <a href="/">
         <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img" >
       </a>
     </div>
@@ -34,7 +27,7 @@
   <nav class="main-menu">
     <ul>
       <li><a href="/reservation">🅿️ 주차 예약</a></li>
-      <li><a href="/payment">💳 요금 결제</a></li>
+      <li><a href="/payment">💳 결제 서비스</a></li>
       <li><a href="/my-records">📊 이용 내역</a></li>
       <li><a href="/my-info" class="active">⚙️ 내 정보</a></li>
       <li><a href="/support">🎧 고객지원</a></li>
@@ -45,21 +38,11 @@
 <main>
   <div class="page-header">
     <h2>내 정보 관리</h2>
-    <p>개인정보, 차량정보, 알림설정을 관리할 수 있습니다</p>
+    <p>개인정보와 차량정보를 관리할 수 있습니다</p>
   </div>
 
-  <!-- 정보 탭 메뉴 -->
-  <section class="info-tabs">
-    <div class="tab-buttons">
-      <button class="tab-btn active" data-tab="personal">개인정보</button>
-      <button class="tab-btn" data-tab="vehicle">차량정보</button>
-      <button class="tab-btn" data-tab="notification">알림설정</button>
-      <button class="tab-btn" data-tab="security">보안설정</button>
-    </div>
-  </section>
-
-  <!-- 개인정보 탭 -->
-  <section id="personal-info" class="info-content active">
+  <!-- 기본 정보 섹션 -->
+  <section class="info-section">
     <!-- 프로필 카드 -->
     <div class="info-card">
       <div class="profile-header">
@@ -112,12 +95,12 @@
       <h3>멤버십 정보</h3>
       <div class="membership-info">
         <div class="membership-card">
-          <div class="membership-badge">🌟 <span class="membership-grade">골드 멤버</span></div>
+          <div class="membership-badge">🌟 <span id="membership-grade" class="membership-grade">골드 멤버</span></div>
           <div class="membership-details">
-            <p><strong>가입일:</strong> <span class="joined-date">2024-01-15</span></p>
-            <p><strong>총 이용횟수:</strong> <span class="total-usage">156회</span></p>
-            <p><strong>누적 결제금액:</strong> <span class="total-payment">₩2,450,000</span></p>
-            <p><strong>할인율:</strong> <span class="discount-rate">5%</span></p>
+            <p><strong>가입일:</strong> <span id="joined-date" class="joined-date">2024-01-15</span></p>
+            <p><strong>총 이용횟수:</strong> <span id="total-usage-count" class="total-usage">156회</span></p>
+            <p><strong>누적 결제금액:</strong> <span id="total-payment" class="total-payment">₩2,450,000</span></p>
+            <p><strong>할인율:</strong> <span id="discount-rate" class="discount-rate">5%</span></p>
           </div>
         </div>
         <div class="benefit-list">
@@ -138,26 +121,34 @@
       <div class="account-summary">
         <div class="account-item">
           <span class="account-label">보유 포인트:</span>
-          <span class="point-amount" id="point">15,420P</span>
+          <span id="point-amount" class="point-amount">15,420P</span>
         </div>
         <div class="account-item">
           <span class="account-label">선불 잔액:</span>
-          <span class="balance-amount" id="prepaid-balance">₩50,000</span>
+          <span id="prepaid-balance" class="balance-amount">₩50,000</span>
         </div>
         <div class="account-item">
           <span class="account-label">이번달 사용액:</span>
-          <span class="monthly-usage">₩125,000</span>
+          <span id="monthly-usage" class="monthly-usage">₩125,000</span>
+        </div>
+        <div class="account-item">
+          <span class="account-label">다음달 소멸 포인트:</span>
+          <span id="point-expire-next-month">2,000P</span>
         </div>
         <div class="account-item">
           <span class="account-label">마지막 충전일:</span>
-          <span id="last-charged">2025-07-01</span>
+          <span id="last-charged-at">2025-07-01</span>
+        </div>
+        <div class="account-item">
+          <span class="account-label">지난달 대비:</span>
+          <span id="compare-last-month" class="savings-rate">↓15%</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 차량정보 탭 -->
-  <section id="vehicle-info" class="info-content">
+  <!-- 차량정보 섹션 -->
+  <section class="info-section">
     <div class="info-card">
       <div class="card-header">
         <h3>등록된 차량</h3>
@@ -165,111 +156,7 @@
       </div>
 
       <div class="vehicle-list">
-        <!-- 차량 목록이 JavaScript로 동적 생성됩니다 -->
-      </div>
-    </div>
-  </section>
-
-  <!-- 알림설정 탭 -->
-  <section id="notification-info" class="info-content">
-    <div class="info-card">
-      <h3>알림 설정</h3>
-      <div class="notification-settings">
-        <div class="notification-item">
-          <div class="notification-details">
-            <strong>이메일 알림</strong>
-            <p>예약 확인, 결제 완료 등의 알림을 이메일로 받습니다</p>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="email-notification" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="notification-item">
-          <div class="notification-details">
-            <strong>SMS 알림</strong>
-            <p>중요한 알림을 문자메시지로 받습니다</p>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="sms-notification" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="notification-item">
-          <div class="notification-details">
-            <strong>앱 푸시 알림</strong>
-            <p>모바일 앱을 통해 실시간 알림을 받습니다</p>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="push-notification" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="notification-item">
-          <div class="notification-details">
-            <strong>마케팅 정보 수신 동의</strong>
-            <p>할인 이벤트 및 신규 서비스 정보를 받습니다</p>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="marketing-consent">
-            <span class="slider"></span>
-          </label>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 보안설정 탭 -->
-  <section id="security-info" class="info-content">
-    <div class="info-card">
-      <h3>비밀번호 변경</h3>
-      <form id="password-form">
-        <div class="form-group">
-          <label for="current-password">현재 비밀번호</label>
-          <input type="password" id="current-password" placeholder="현재 비밀번호를 입력하세요" required>
-        </div>
-
-        <div class="form-group">
-          <label for="new-password">새 비밀번호</label>
-          <input type="password" id="new-password" placeholder="새 비밀번호를 입력하세요" required>
-          <small>8자 이상, 영문 대소문자+숫자+특수문자 조합</small>
-        </div>
-
-        <div class="form-group">
-          <label for="confirm-password">새 비밀번호 확인</label>
-          <input type="password" id="confirm-password" placeholder="새 비밀번호를 다시 입력하세요" required>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="save-btn">비밀번호 변경</button>
-        </div>
-      </form>
-    </div>
-
-    <div class="info-card">
-      <h3>2단계 인증</h3>
-      <div class="two-factor-section">
-        <div class="two-factor-status">
-          <span class="status-indicator disabled">비활성화</span>
-          <p>계정 보안을 강화하기 위해 2단계 인증을 설정하세요</p>
-        </div>
-        <button class="enable-btn">2단계 인증 설정</button>
-      </div>
-    </div>
-
-    <div class="info-card danger-zone">
-      <h3>계정 관리</h3>
-      <div class="danger-actions">
-        <div class="danger-item">
-          <div class="danger-info">
-            <strong>회원 탈퇴</strong>
-            <p>계정을 완전히 삭제합니다. 이 작업은 되돌릴 수 없습니다.</p>
-          </div>
-          <button class="danger-btn" onclick="requestAccountDeletion()">회원 탈퇴</button>
-        </div>
+        <!-- 차량 목록이 여기에 동적으로 추가됩니다 -->
       </div>
     </div>
   </section>
@@ -333,6 +220,12 @@
           </select>
         </div>
 
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="is-primary"> 주차용으로 설정
+          </label>
+        </div>
+
         <div class="form-actions">
           <button type="button" class="cancel-btn" onclick="cancelVehicleForm()">취소</button>
           <button type="submit" class="save-btn">저장</button>
@@ -350,6 +243,6 @@
 <script src="/common/utils.js"></script>
 <script src="/common/api.js"></script>
 <!-- 계정 관리 스크립트 -->
-<script src="/js/account.js"></script>
+<script src="/js/my-info.js"></script>
 </body>
 </html>
