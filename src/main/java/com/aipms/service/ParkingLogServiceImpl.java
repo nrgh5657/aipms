@@ -18,6 +18,7 @@ public class ParkingLogServiceImpl implements ParkingLogService {
 
     private final ParkingLogMapper parkingLogMapper;
     private final MemberMapper memberMapper;
+    private final SubscriptionService subscriptionService;
 
     @Override
     public void insertLog(ParkingLog log) {
@@ -28,8 +29,13 @@ public class ParkingLogServiceImpl implements ParkingLogService {
 
         if (member != null) {
             log.setMemberId(member.getMemberId());
+
+            // 정기권 보유 여부 확인 후 parkingType 세팅
+            boolean hasSubscription = subscriptionService.isActiveSubscription(member.getMemberId());
+            log.setParkingType(hasSubscription ? "정기권" : "일반");
         } else {
             log.setMemberId(null);
+            log.setParkingType("일반"); // 비회원은 일반 처리
         }
 
         if (log.getCameraId() == 1) {
@@ -53,6 +59,7 @@ public class ParkingLogServiceImpl implements ParkingLogService {
             throw new IllegalArgumentException("유효하지 않은 카메라 ID입니다.");
         }
     }
+
 
     @Override
     public List<ParkingLogWithMemberDto> getPagedLogs(int page, int size) {

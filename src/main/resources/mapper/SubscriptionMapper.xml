@@ -5,11 +5,20 @@
 
 <mapper namespace="com.aipms.mapper.SubscriptionMapper">
 
-    <update id="updateSubscription" parameterType="com.aipms.domain.Subscription">
+<!--    <update id="updateSubscription" parameterType="com.aipms.domain.Subscription">-->
+<!--        UPDATE subscription-->
+<!--        SET customer_uid = #{customerUid},-->
+<!--            start_date = NOW(),-->
+<!--            end_date = DATE_ADD(NOW(), INTERVAL 1 MONTH),-->
+<!--            active = #{active}-->
+<!--        WHERE member_id = #{memberId}-->
+<!--    </update>-->
+
+    <update id="updateSubscription" parameterType="Subscription">
         UPDATE subscription
         SET customer_uid = #{customerUid},
-            start_date = NOW(),
-            end_date = DATE_ADD(NOW(), INTERVAL 1 MONTH),
+            start_date = #{startDate},
+            end_date = #{endDate},
             active = #{active}
         WHERE member_id = #{memberId}
     </update>
@@ -34,6 +43,34 @@
         INSERT INTO subscription (member_id, customer_uid, start_date, end_date, active)
         VALUES (#{memberId}, #{customerUid}, NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH), true)
     </insert>
+
+    <select id="findCustomerUidByMemberId" resultType="string" parameterType="long">
+        SELECT customer_uid
+        FROM subscription
+        WHERE member_id = #{memberId}
+        ORDER BY subscription_id DESC
+            LIMIT 1
+    </select>
+
+    <select id="findActiveByMemberId" resultType="Subscription" parameterType="long">
+        SELECT *
+        FROM subscription
+        WHERE member_id = #{memberId}
+          AND active = 1
+            LIMIT 1
+    </select>
+
+
+
+    <update id="updateSubscriptionDates" parameterType="map">
+        UPDATE subscription
+        SET start_date = #{startDate},
+            end_date = #{endDate}
+        WHERE member_id = #{memberId}
+          AND active = 1
+    </update>
+
+
 
 
 

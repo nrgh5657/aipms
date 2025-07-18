@@ -9,11 +9,11 @@
     <insert id="insertLog" parameterType="com.aipms.domain.ParkingLog">
         INSERT INTO parking_log (
             car_number, member_id, entry_time, exit_time, camera_id,
-            is_paid, paid_at, payment_method, fee
+            is_paid, paid_at, payment_method, fee, parking_type
         )
         VALUES (
                    #{carNumber}, #{memberId}, #{entryTime}, #{exitTime}, #{cameraId},
-                   #{isPaid}, #{paidAt}, #{paymentMethod}, #{fee}
+                   #{isPaid}, #{paidAt}, #{paymentMethod}, #{fee}, #{parkingType}
                )
     </insert>
     <!-- SELECT: 차량 로그 + 신청자 이름 포함 -->

@@ -2,6 +2,7 @@ package com.aipms.controller;
 
 import com.aipms.domain.Member;
 import com.aipms.security.CustomUserDetails;
+import com.aipms.service.SubscriptionService;
 import com.google.gson.Gson;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
@@ -15,6 +16,12 @@ import java.util.Map;
 @Controller
 public class PageController {
 
+    private final SubscriptionService subscriptionService;
+
+    public PageController(SubscriptionService subscriptionService) {
+        this.subscriptionService = subscriptionService;
+    }
+
     // 공통 유저 JSON 처리
     private void addUserDataToModel(CustomUserDetails userDetails, Model model) {
         Member member = userDetails.getMember();
@@ -26,6 +33,7 @@ public class PageController {
         userData.put("role", member.getRole());
         userData.put("email", member.getEmail());
         userData.put("phone", member.getPhone());
+        userData.put("customerUid", subscriptionService.getCustomerUid(member.getMemberId()));
 
         String userDataJson = new Gson().toJson(userData);
         model.addAttribute("userDataJson", userDataJson);

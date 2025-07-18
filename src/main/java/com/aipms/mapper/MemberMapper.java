@@ -65,4 +65,6 @@ public interface MemberMapper {
 
     //페이징 처리를 위한 전체 회원수 조회
     int countAllMembers();
+
+    void updateSubscriptionStatus(@Param("memberId") Long memberId, @Param("status") boolean status);
 }

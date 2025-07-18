@@ -127,6 +127,15 @@
         SELECT * FROM member WHERE car_number = #{carNumber}
     </select>
 
+    <update id="updateSubscriptionStatus">
+        UPDATE member
+        SET subscription = <choose>
+        <when test="status">1</when>
+        <otherwise>0</otherwise>
+    </choose>
+        WHERE member_id = #{memberId}
+    </update>
+
 
 
 

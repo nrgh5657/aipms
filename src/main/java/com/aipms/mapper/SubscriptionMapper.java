@@ -4,12 +4,15 @@ import com.aipms.domain.Subscription;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface SubscriptionMapper {
     void insertSubscription(Subscription subscription);
     Subscription findByMemberId(Long memberId);
+
     void cancelSubscription(Long subscriptionId);
     List<Subscription> findAll();
 
@@ -21,4 +24,9 @@ public interface SubscriptionMapper {
     void updateSubscription(Subscription subscription);
 
 
+    String findCustomerUidByMemberId(Long memberId);
+
+    Subscription findActiveByMemberId(Long memberId);
+
+    void updateSubscriptionDates(Map<String, Object> paramMap);
 }

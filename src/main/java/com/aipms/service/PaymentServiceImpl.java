@@ -20,6 +20,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentMapper paymentMapper;
     private final ParkingLogMapper parkingLogMapper;
     private final ParkingLogService parkingLogService;
+    private final SubscriptionService subscriptionService;
 
     @Override
     public PaymentResultDto processPayment(PaymentRequestDto requestDto) {
@@ -124,5 +125,40 @@ public class PaymentServiceImpl implements PaymentService {
     public void markAsPaid(Long paymentId) {
         paymentMapper.updatePaidStatus(paymentId, 1);
     }
+
+    @Override
+    public boolean requestSubscriptionPayment(Long memberId, String customerUid, Integer amount) {
+        return false;
+    }
+
+    @Override
+    public boolean recordSubscriptionPayment(Long memberId, String customerUid, String merchantUid, String impUid, Integer amount, String paymentType, String carNumber) {
+        try {
+            Payment payment = new Payment();
+            payment.setMemberId(memberId);
+            payment.setCustomerUid(customerUid);
+            payment.setMerchantUid(merchantUid);
+            payment.setImpUid(impUid);
+            payment.setTotalFee(amount);
+            payment.setPaymentType(paymentType);
+            payment.setCarNumber(carNumber);
+            payment.setPaymentMethod("CARD"); // 또는 나중에 paymentType 따라 구분 가능
+            payment.setPaid(true);
+            payment.setPaymentTime(LocalDateTime.now());
+
+            paymentMapper.insertPayment(payment);
+
+            // 정기권일 경우 구독 기간 연장
+            if ("정기권".equals(paymentType)) {
+                subscriptionService.extendSubscription(memberId);
+            }
+
+            return true;
+        } catch (Exception e) {
+            log.error("정기결제 저장 중 오류", e);
+            return false;
+        }
+    }
+
 
 }

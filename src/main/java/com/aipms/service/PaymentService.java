@@ -11,4 +11,8 @@ public interface PaymentService {
     boolean verifyAndRecord(PaymentVerifyRequestDto dto, Long memberId);
 
     void markAsPaid(Long paymentId);
+
+    boolean requestSubscriptionPayment(Long memberId, String customerUid, Integer amount);
+
+    boolean recordSubscriptionPayment(Long memberId, String customerUid, String merchantUid, String impUid, Integer amount, String paymentType, String carNumber);
 }

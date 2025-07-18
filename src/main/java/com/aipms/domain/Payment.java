@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class Payment {
     private Long paymentId;
+    private String customerUid;
     private Long memberId;
     private Long entryId;
     private Integer totalFee;
@@ -19,4 +20,6 @@ public class Payment {
     private String status;
     private String merchantUid;
     private String impUid;
+    private String paymentType;
+    private String carNumber;
 }

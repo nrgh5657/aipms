@@ -54,4 +54,28 @@ public class PaymentController {
             return ResponseEntity.badRequest().body(Map.of("status", "결제 실패"));
         }
     }
+
+    @PostMapping("/record")
+    public ResponseEntity<?> recordPayment(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                           @RequestBody Map<String, Object> payload) {
+        try {
+            Long memberId = userDetails.getMember().getMemberId();
+            String customerUid = (String) payload.get("customerUid");
+            String merchantUid = (String) payload.get("merchantUid");
+            String impUid = (String) payload.get("impUid");
+            Integer amount = (Integer) payload.get("amount");
+            String paymentType = (String) payload.get("paymentType");
+            String carNumber = (String) payload.get("carNumber");
+
+            boolean result = paymentService.recordSubscriptionPayment(memberId, customerUid, merchantUid, impUid, amount, paymentType, carNumber);
+
+            return ResponseEntity.ok(Map.of("success", result));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "결제 저장 실패: " + e.getMessage()
+            ));
+        }
+    }
 }
