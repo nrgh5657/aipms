@@ -8,18 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     IMP.init('imp18655565'); // 테스트 가맹점 코드
 
-    const payBtn = document.querySelector('.service-btn[data-action="current-parking"]');
+    const payBtn = document.querySelector('.service-btn[data-action="quickPay"]');
     if (payBtn) {
         payBtn.addEventListener('click', async () => {
             const entryInfo = await fetchCurrentEntryInfo(); // ✅ 동적 조회 구현
             if (!entryInfo) return alert("결제 대상 주차 정보가 없습니다.");
 
             const { entryId, amount } = entryInfo;
-            payCurrentParking(entryId, amount, IMP); // IMP를 넘겨줌
+            quickPay(entryId, amount, IMP); // IMP를 넘겨줌
         });
     }
 
-    async function payCurrentParking(entryId, amount, IMP) {
+    async function quickPay(entryId, amount, IMP) {
         if (!serverUserData || !serverUserData.user) {
             alert("로그인 정보가 없습니다.");
             return;
@@ -32,10 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         IMP.request_pay({
-            pg: 'kakaopay',
+            pg: 'tosspay',
             pay_method: 'card',
             merchant_uid: 'order_' + Date.now(),
-            name: '현재 주차 요금 결제',
+            name: '빠른 결제',
             amount: amount,
             buyer_name: buyer.name,
             buyer_email: buyer.email,
