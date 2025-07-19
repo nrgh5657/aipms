@@ -93,7 +93,18 @@
             LIMIT 1
     </select>
 
-    <update id="updatePaymentAndExitInfo">
+    <update id="updatePaymentInfoOnly">
+        UPDATE parking_log
+        SET
+            payment_id = #{paymentId},
+            is_paid = #{isPaid},
+            paid_at = #{paidAt},
+            payment_method = #{paymentMethod},
+            fee = #{fee}
+        WHERE id = #{entryId}
+    </update>
+
+    <update id="updatePaymentAndExitInfo" parameterType="map">
         UPDATE parking_log
         SET
             payment_id = #{paymentId},

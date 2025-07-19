@@ -69,6 +69,7 @@ public class HomeController {
         userDataMap.put("role", member.getRole());
         userDataMap.put("email", member.getEmail());
         userDataMap.put("phone", member.getPhone());
+        userDataMap.put("carNumber", member.getCarNumber());
 
         // ✅ 문자열(JSON)로 변환하지 말고 객체 그대로 넘김
         model.addAttribute("userDataJson", userDataMap);

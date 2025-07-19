@@ -110,10 +110,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         // 5. 저장 및 로그 연결
         paymentMapper.insertPayment(payment);
-        parkingLogMapper.updatePaymentAndExitInfo(
+        parkingLogMapper.updatePaymentInfoOnly(
                 entryId,
                 payment.getPaymentId(),
-                LocalDateTime.now(),           // exit_time
                 true,                          // is_paid
                 LocalDateTime.now(),           // paid_at
                 payment.getPaymentMethod(),

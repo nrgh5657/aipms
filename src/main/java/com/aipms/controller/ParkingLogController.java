@@ -1,7 +1,12 @@
 package com.aipms.controller;
 
 import com.aipms.domain.ParkingLog;
+import com.aipms.domain.Payment;
+import com.aipms.dto.ExitRequestDto;
+import com.aipms.dto.ExitResponseDto;
 import com.aipms.dto.ParkingLogWithMemberDto;
+import com.aipms.mapper.ParkingLogMapper;
+import com.aipms.mapper.PaymentMapper;
 import com.aipms.security.CustomUserDetails;
 import com.aipms.service.ParkingLogService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,12 +25,14 @@ import java.util.Map;
 public class ParkingLogController {
 
     private final ParkingLogService parkingLogService;
+    private final ParkingLogMapper parkingLogMapper;
+    private final PaymentMapper paymentMapper;
 
     // 🔸 POST: 로그 저장 (AI 또는 Postman에서 호출)
     @PostMapping("/logs")
-    public ResponseEntity<String> insertLog(@RequestBody ParkingLog log) {
-        parkingLogService.insertLog(log);
-        return ResponseEntity.ok("입출차 로그 저장 완료");
+    public ResponseEntity<ExitResponseDto> insertLog(@RequestBody ParkingLog log) {
+        ExitResponseDto result = parkingLogService.insertLog(log);
+        return ResponseEntity.ok(result);
     }
 
     // 🔹 GET: 전체 로그 + 신청자 이름 포함 조회
@@ -70,6 +78,77 @@ public class ParkingLogController {
 
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping("/exit")
+    public ResponseEntity<ExitResponseDto> handleExit(@RequestBody ExitRequestDto dto) {
+        if (dto.getCarNumber() == null || dto.getCarNumber().isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(new ExitResponseDto(false, "차량 번호가 없습니다.", false, 0));
+        }
+
+        ExitResponseDto response = parkingLogService.processExit(dto.getCarNumber());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/confirm-exit")
+    public ResponseEntity<Map<String, Object>> confirmExitAfterPayment(@RequestBody Map<String, Object> payload) {
+        Long entryId = null;
+        if (payload.get("entryId") != null) {
+            entryId = Long.valueOf(payload.get("entryId").toString());
+        }
+
+        String carNumber = (String) payload.get("carNumber");
+        String impUid = (String) payload.get("impUid");
+        String merchantUid = (String) payload.get("merchantUid");
+        int amount = (int) payload.get("amount");
+
+        ParkingLog log = null;
+
+        // ✅ entryId 우선 조회, 없을 경우 carNumber로 fallback
+        if (entryId != null) {
+            log = parkingLogMapper.selectById(entryId);
+        } else if (carNumber != null) {
+            log = parkingLogMapper.findLatestUnexitedLog(carNumber);
+        }
+
+        if (log == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "출차 대상 로그가 없습니다."
+            ));
+        }
+
+        // 💳 결제 정보 생성
+        Payment payment = new Payment();
+        payment.setEntryId(log.getId());
+        payment.setTransactionId(impUid);
+        payment.setImpUid(impUid);
+        payment.setMerchantUid(merchantUid);
+        payment.setPaid(true);
+        payment.setCancelled(false);
+        payment.setPaymentTime(LocalDateTime.now());
+        payment.setTotalFee(amount);
+        payment.setPaymentMethod("card");
+        payment.setStatus("출차 결제");
+
+        paymentMapper.insertPayment(payment);
+
+        // 🚪 로그에 결제정보 및 출차시간 업데이트
+        parkingLogMapper.updatePaymentAndExitInfo(Map.of(
+                "entryId", log.getId(),
+                "paymentId", payment.getPaymentId(),
+                "isPaid", true,
+                "paidAt", LocalDateTime.now(),
+                "paymentMethod", "card",
+                "fee", amount,
+                "exitTime", LocalDateTime.now()
+        ));
+
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+
+
 
 }
 

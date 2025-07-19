@@ -5,8 +5,10 @@ import com.aipms.dto.ParkingLogWithMemberDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface ParkingLogMapper {
@@ -22,9 +24,8 @@ public interface ParkingLogMapper {
 
     ParkingLog findLatestUnpaidByMemberId(Long memberId);
 
-    void updatePaymentAndExitInfo(@Param("entryId") Long entryId,
+    void updatePaymentInfoOnly(@Param("entryId") Long entryId,
                                   @Param("paymentId") Long paymentId,
-                                  @Param("exitTime") LocalDateTime exitTime,
                                   @Param("isPaid") boolean isPaid,
                                   @Param("paidAt") LocalDateTime paidAt,
                                   @Param("paymentMethod") String paymentMethod,
@@ -33,4 +34,6 @@ public interface ParkingLogMapper {
     Long selectPaymentIdByEntryId(Long entryId);
 
     ParkingLog selectById(Long entryId);
+
+    void updatePaymentAndExitInfo(Map<String,? extends Serializable> entryId);
 }

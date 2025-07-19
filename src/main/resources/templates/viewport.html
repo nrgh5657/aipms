@@ -61,7 +61,7 @@
           <p><strong>경과시간:</strong> <span id="elapsed-time">2시간 30분</span></p>
           <p><strong>예상요금:</strong> <span class="estimated-fee">₩5,000</span></p>
         </div>
-        <button class="exit-btn" onclick="requestExit()">출차 요청</button>
+        <button class="exit-btn" id="exitBtn">출차 요청</button>
       </div>
 
       <div class="status-card">
@@ -201,6 +201,8 @@
 <!-- 공통 라이브러리 먼저 로드 -->
 <script src="/common/utils.js"></script>
 <script src="/common/api.js"></script>
+<script src="https://cdn.iamport.kr/v1/iamport.js"></script>
 <script src="/js/dashboard.js"></script>
+<script src="/js/exit.js"></script>
 </body>
 </html>

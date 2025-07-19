@@ -355,6 +355,12 @@
   </div>
 </main>
 
+<div id="paymentModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%, -30%); background:#fff; padding:20px; box-shadow:0 0 10px rgba(0,0,0,0.3); z-index:1000;">
+  <p id="carNumberField" style="margin-bottom: 5px;"></p>
+  <p id="extraFeeText"></p>
+  <button id="confirmPaymentBtn">결제하기</button>
+</div>
+
 <footer>
   <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
 </footer>
@@ -367,6 +373,7 @@
 <script src="/js/currentParkingPay.js"></script>
 <script src="/js/quickPay.js"></script>
 <script src="/js/subscriptionPay.js"></script>
+<script src="/js/exit.js"></script>
 </body>
 </html>
 
