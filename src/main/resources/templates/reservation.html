@@ -13,8 +13,8 @@
 <header>
   <div class="top-bar">
     <div class="logo">
-      <a href="/">
-        <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img" >
+      <a href="/dashboard">
+        <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img">
       </a>
     </div>
     <div class="user-info">
@@ -25,7 +25,6 @@
   </div>
   <nav class="main-menu">
     <ul>
-
       <li><a href="/reservation" class="active">🅿️ 주차 예약</a></li>
       <li><a href="/payment">💳 결제 서비스</a></li>
       <li><a href="/my-records">📊 이용 내역</a></li>
@@ -51,7 +50,7 @@
       </div>
     </section>
 
-    <!-- 일일 주차 폼 (기본 노출) -->
+    <!-- 일일 주차 폼 -->
     <section id="daily-form" class="reservation-form active">
       <form class="booking-form">
         <div class="form-row">
@@ -81,11 +80,11 @@
           </div>
         </div>
 
-        <button type="submit" class="submit-btn" onclick="submitDailyReservation()">일일 주차 신청</button>
+        <button type="submit" class="submit-btn" onclick="submitDailyReservation(event)">일일 주차 신청</button>
       </form>
     </section>
 
-    <!-- 월 주차 폼 (기본 숨김) -->
+    <!-- 월 주차 폼 -->
     <section id="monthly-form" class="reservation-form">
       <form class="booking-form">
         <div class="form-row">
@@ -106,16 +105,9 @@
         </div>
 
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group full-width">
             <label for="monthly-car">차량번호</label>
             <input type="text" id="monthly-car" placeholder="예: 12가3456" required>
-          </div>
-          <div class="form-group">
-            <label for="fixed-spot">고정 자리</label>
-            <select id="fixed-spot">
-              <option value="random">랜덤 배정</option>
-              <option value="fixed">고정 자리 (+₩10,000)</option>
-            </select>
           </div>
         </div>
 
@@ -124,16 +116,14 @@
           <div class="price-breakdown">
             <span>월 요금: <strong>₩150,000</strong></span>
             <span>기간: <strong id="monthly-months">0개월</strong></span>
-            <span>고정자리: <strong id="fixed-price">₩0</strong></span>
             <span class="total">총 요금: <strong id="monthly-total">₩0</strong></span>
           </div>
         </div>
 
-        <button type="submit" class="submit-btn" onclick="submitMonthlyReservation()">월 주차 신청</button>
+        <button type="submit" class="submit-btn" onclick="submitMonthlyReservation(event)">월 주차 신청</button>
       </form>
     </section>
   </div>
-
 
   <!-- 실시간 주차장 현황 -->
   <section class="parking-status">
@@ -144,45 +134,33 @@
         <div class="availability">
           <span class="available">15</span>/<span class="total">50</span>
         </div>
-        <div class="zone-rate">
-          가용률: 30%
-          <div class="rate-progress"></div>
-        </div>
+        <div class="zone-rate">가용률: 30%</div>
       </div>
       <div class="zone-status">
         <h4>B구역</h4>
         <div class="availability">
           <span class="available">8</span>/<span class="total">60</span>
         </div>
-        <div class="zone-rate">
-          가용률: 13%
-          <div class="rate-progress"></div>
-        </div>
+        <div class="zone-rate">가용률: 13%</div>
       </div>
       <div class="zone-status">
         <h4>C구역</h4>
         <div class="availability">
           <span class="available">25</span>/<span class="total">40</span>
         </div>
-        <div class="zone-rate">
-          가용률: 63%
-          <div class="rate-progress"></div>
-        </div>
+        <div class="zone-rate">가용률: 63%</div>
       </div>
     </div>
   </section>
-  </div>
 </main>
 
 <footer>
   <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
 </footer>
 
-<!-- 공통 라이브러리 먼저 로드 -->
+<!-- 공통 라이브러리 로드 -->
 <script src="/common/utils.js"></script>
 <script src="/common/api.js"></script>
-<script src="https://cdn.iamport.kr/v1/iamport.js"></script>
 <script src="/js/reservation.js"></script>
-<script src="/js/exit.js"></script>
 </body>
 </html>

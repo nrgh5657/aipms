@@ -2,30 +2,22 @@
 // 예약 시스템 초기화
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
-  initializeCommon()
+  initializeCommon();
   initializeReservationPage();
 });
 
+// ========================================
+// 예약 페이지 초기화
+// ========================================
 function initializeReservationPage() {
-  setupDateInputs();              // 일일 주차 날짜 필드
+  setupDateInputs();              // 일일 날짜 설정
   setupMonthPicker();             // 월 주차 시작월
-  loadUserCars();                 // 차량 정보
-  loadRealtimeZoneStatus();       // 실시간 주차장 정보
-  addPriceCalculationListeners(); // 일일 계산 리스너
-  addMonthlyPriceListeners();     // 월 요금 계산 리스너
-  calculateDailyPrice();          // 초기 일일 요금
-  calculateMonthlyPrice();        // 초기 월 요금
-
-  // 탭 전환 버튼
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      switchTab(btn.textContent.includes('월') ? 'monthly' : 'daily');
-    });
-  });
-
-  // 예약 버튼
-  document.getElementById('daily-submit-btn')?.addEventListener('click', submitDailyReservation);
-  document.getElementById('monthly-submit-btn')?.addEventListener('click', submitMonthlyReservation);
+  loadUserCars();                 // 차량 번호 자동입력
+  loadRealtimeZoneStatus();       // 주차장 현황
+  addPriceCalculationListeners(); // 일일 계산
+  addMonthlyPriceListeners();     // 월 요금 계산
+  calculateDailyPrice();          // 기본 일일 요금 표시
+  calculateMonthlyPrice();        // 기본 월 요금 표시
 }
 
 // ========================================
@@ -33,19 +25,14 @@ function initializeReservationPage() {
 // ========================================
 function switchTab(tabName) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  const clicked = Array.from(document.querySelectorAll('.tab-btn'))
-      .find(btn => btn.getAttribute('onclick')?.includes(`switchTab('${tabName}')`));
-  if (clicked) clicked.classList.add('active');
+  document.querySelectorAll('.reservation-form').forEach(form => form.classList.remove('active'));
 
-  const forms = ['daily', 'monthly'];
-  forms.forEach(type => {
-    const section = document.getElementById(`${type}-form`);
-    if (section) section.style.display = (type === tabName) ? 'block' : 'none';
-  });
+  document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`)?.classList.add('active');
+  document.getElementById(`${tabName}-form`)?.classList.add('active');
 }
 
 // ========================================
-// 일일 날짜 선택
+// 일일 날짜 입력 필드 설정
 // ========================================
 function setupDateInputs() {
   const today = new Date().toISOString().split('T')[0];
@@ -63,50 +50,59 @@ function setupDateInputs() {
 }
 
 // ========================================
-// 월 주차 시작 월
+// 월 주차 시작 월 설정
 // ========================================
 function setupMonthPicker() {
   const now = new Date();
   const monthInput = document.getElementById('monthly-start');
   if (!monthInput) return;
-  monthInput.value = now.toISOString().slice(0, 7);
-  monthInput.min = now.toISOString().slice(0, 7);
+
+  const thisMonth = now.toISOString().slice(0, 7);
+  monthInput.value = thisMonth;
+  monthInput.min = thisMonth;
 }
 
 // ========================================
-// 차량 목록 불러오기
+// 차량 정보 자동입력 (비동기 통신)
 // ========================================
 async function loadUserCars() {
-  const data = await apiRequest('/api/user/cars');
-  if (!data?.cars) return;
-
-  const dailyCar = document.getElementById('daily-car');
-  const monthlyCar = document.getElementById('monthly-car');
-  if (dailyCar) dailyCar.value = data.cars[0]?.carNumber || '';
-  if (monthlyCar) monthlyCar.value = data.cars[0]?.carNumber || '';
+  const cars = await apiRequest('/api/user/cars');
+  if (cars?.length > 0) {
+    const firstCar = cars[0].carNumber;
+    document.getElementById('daily-car').value = firstCar;
+    document.getElementById('monthly-car').value = firstCar;
+  } else {
+    console.warn('🚫 등록된 차량 없음');
+  }
 }
 
 // ========================================
-// 실시간 구역 상태
+// 실시간 구역 현황 로딩
 // ========================================
 async function loadRealtimeZoneStatus() {
   const data = await apiRequest('/api/parking/realtime-status');
   if (!data?.zones) return;
 
-  const container = document.getElementById('zone-status-container');
-  if (!container) return;
+  const container = document.querySelector('.status-grid');
   container.innerHTML = '';
 
   data.zones.forEach(zone => {
-    const rate = zone.usageRate;
-    const status = rate > 80 ? 'high' : rate > 50 ? 'medium' : 'low';
+    const { zoneCode, used, total, usageRate } = zone;
+    const statusClass = usageRate > 80 ? 'high' : usageRate > 50 ? 'medium' : 'low';
 
     container.innerHTML += `
-      <div class="zone-card">
-        <div class="zone-header"><strong>${zone.zoneCode}</strong>구역</div>
-        <div class="zone-stats">${zone.used}/${zone.total} (가용률: ${rate}%)</div>
-        <div class="progress-bar">
-          <div class="progress-fill ${status}" style="width: ${rate}%;"></div>
+      <div class="zone-status">
+        <h4>${zoneCode}구역</h4>
+        <div class="availability">
+          <span class="available">${total - used}</span>/<span class="total">${total}</span>
+        </div>
+        <div class="zone-rate">
+          가용률: ${usageRate}%
+          <div class="rate-progress">
+            <div class="progress-fill ${statusClass}" style="width: ${usageRate}%; height: 8px; background: ${
+        statusClass === 'high' ? 'red' : statusClass === 'medium' ? 'orange' : 'green'
+    }"></div>
+          </div>
         </div>
       </div>
     `;
@@ -114,7 +110,7 @@ async function loadRealtimeZoneStatus() {
 }
 
 // ========================================
-// 일일 요금 계산
+// 요금 계산
 // ========================================
 function calculateDailyPrice() {
   const start = new Date(document.getElementById('daily-start')?.value);
@@ -122,26 +118,18 @@ function calculateDailyPrice() {
   if (isNaN(start) || isNaN(end)) return;
 
   const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-  const rate = 20000;
-  const total = days * rate;
+  const total = days * 20000;
 
-  updateElement('daily-days', `${days}일`);
-  updateElement('daily-total', `₩${total.toLocaleString()}`);
+  document.getElementById('daily-days').textContent = `${days}일`;
+  document.getElementById('daily-total').textContent = `₩${total.toLocaleString()}`;
 }
 
-// ========================================
-// 월 주차 요금 계산
-// ========================================
 function calculateMonthlyPrice() {
-  const months = parseInt(document.getElementById('monthly-period')?.value || 0);
-  const fixed = document.getElementById('fixed-spot')?.value;
-  const base = 150000;
-  const fixedFee = fixed === 'fixed' ? 10000 : 0;
-  const total = (base + fixedFee) * months;
+  const months = parseInt(document.getElementById('monthly-period')?.value || '0');
+  const total = months * 150000;
 
-  updateElement('monthly-months', `${months}개월`);
-  updateElement('fixed-price', `₩${fixedFee.toLocaleString()}`);
-  updateElement('monthly-total', `₩${total.toLocaleString()}`);
+  document.getElementById('monthly-months').textContent = `${months}개월`;
+  document.getElementById('monthly-total').textContent = `₩${total.toLocaleString()}`;
 }
 
 // ========================================
@@ -154,51 +142,115 @@ function addPriceCalculationListeners() {
 
 function addMonthlyPriceListeners() {
   document.getElementById('monthly-period')?.addEventListener('change', calculateMonthlyPrice);
-  document.getElementById('fixed-spot')?.addEventListener('change', calculateMonthlyPrice);
 }
 
 // ========================================
-// 예약 제출
+// 예약 제출 - 일일
 // ========================================
-function submitDailyReservation() {
+async function submitDailyReservation(event) {
+  event.preventDefault();
+  let userData = null;
+  try {
+    userData = JSON.parse(serverUserData);
+  } catch {
+    alert("⚠️ 로그인 정보를 불러올 수 없습니다.");
+    return;
+  }
+
+  const memberId = userData?.memberId;
   const start = document.getElementById('daily-start')?.value;
   const end = document.getElementById('daily-end')?.value;
   const car = document.getElementById('daily-car')?.value;
 
-  if (!start || !end || !car) {
-    alert('❗ 일일 주차 정보를 모두 입력하세요.');
+  if (!memberId || !start || !end || !car) {
+    alert('❗ 정보를 모두 입력하세요.');
     return;
   }
-  alert(`✅ ${start} ~ ${end} 일일 주차 신청 완료!`);
+
+  const payload = {
+    memberId,
+    vehicleNumber: car,
+    reservationStart: `${start}T00:00:00`,
+    reservationEnd: `${end}T23:59:59`,
+    status: "WAITING"
+  };
+
+  const response = await apiPost('/api/reservations/apply', payload);
+  if (response?.success) {
+    alert("✅ 일일 주차 신청 완료!");
+  } else {
+    alert("❌ 예약 실패: " + (response?.message || "서버 오류"));
+  }
 }
 
-function submitMonthlyReservation() {
-  const month = document.getElementById('monthly-start')?.value;
-  const period = document.getElementById('monthly-period')?.value;
+// ========================================
+// 예약 제출 - 월 주차
+// ========================================
+async function submitMonthlyReservation(event) {
+  event.preventDefault();
+  let userData = null;
+  try {
+    userData = JSON.parse(serverUserData);
+  } catch {
+    alert("⚠️ 로그인 정보를 불러올 수 없습니다.");
+    return;
+  }
+
+  const memberId = userData?.memberId;
+  const startMonth = document.getElementById('monthly-start')?.value;
+  const period = parseInt(document.getElementById('monthly-period')?.value);
   const car = document.getElementById('monthly-car')?.value;
 
-  if (!month || !period || !car) {
-    alert('❗ 월 주차 정보를 모두 입력하세요.');
+  if (!memberId || !startMonth || !period || !car) {
+    alert('❗ 정보를 모두 입력하세요.');
     return;
   }
-  alert(`✅ ${month}부터 ${period}개월 월 주차 신청 완료!`);
+
+  const startDate = `${startMonth}-01T00:00:00`;
+  const endDate = new Date(startDate);
+  endDate.setMonth(endDate.getMonth() + period);
+  const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-01T00:00:00`;
+
+  const payload = {
+    memberId,
+    vehicleNumber: car,
+    reservationStart: startDate,
+    reservationEnd: endStr,
+    status: "WAITING"
+  };
+
+  const response = await apiPost('/api/reservations/apply', payload);
+  if (response?.success) {
+    alert("✅ 월 주차 신청 완료!");
+  } else {
+    alert("❌ 예약 실패: " + (response?.message || "서버 오류"));
+  }
 }
 
 // ========================================
-// 유틸
+// API 유틸
 // ========================================
-function updateElement(id, content) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = content;
-}
-
 async function apiRequest(url) {
   try {
     const res = await fetch(url);
-    if (!res.ok) throw new Error('서버 오류');
+    if (!res.ok) throw new Error('요청 실패');
     return await res.json();
   } catch (e) {
-    console.error('API 요청 실패:', e);
+    console.error('GET 요청 실패:', e);
+    return null;
+  }
+}
+
+async function apiPost(url, body) {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return await res.json();
+  } catch (e) {
+    console.error('POST 요청 실패:', e);
     return null;
   }
 }

@@ -1718,4 +1718,167 @@ body {
   }
 }
 
+/* 그냥 css창 아무곳에나 붙이세요*/
+/* 한도 수정 팝업 css */
+/* 모달 배경 */
+.modalP {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+}
+
+/* 모달 컨텐츠 */
+.modal-contentP {
+  background-color: white;
+  margin: 10% auto;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 닫기 버튼 */
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 28px;
+  font-weight: 300;
+  color: #999;
+  cursor: pointer;
+  background: none;
+  border: none;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+  color: #666;
+}
+
+/* 모달 제목 */
+.modal-contentP h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 25px;
+  color: #333;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 폼 스타일 */
+.modal-contentP form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 라벨 스타일 */
+.modal-contentP label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 사용량 표시 스타일 */
+.modal-contentP label span {
+  font-weight: 600;
+  color: #6366f1;
+}
+
+/* 입력 필드 스타일 */
+.modal-contentP input[type="number"] {
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  background-color: #fafafa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.modal-contentP input[type="number"]:focus {
+  outline: none;
+  border-color: #6366f1;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.modal-contentP input[type="number"]::placeholder {
+  color: #999;
+  font-size: 14px;
+}
+
+/* 줄바꿈 스타일 */
+.modal-contentP br {
+  margin-bottom: 10px;
+}
+
+/* 버튼 스타일 */
+.modal-contentP button[type="submit"] {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  margin-top: 10px;
+}
+
+.modal-contentP button[type="submit"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.modal-contentP button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+/* 반응형 스타일 */
+@media (max-width: 480px) {
+  .modal-contentP {
+    margin: 20px;
+    width: calc(100% - 40px);
+    padding: 20px;
+  }
+
+  .modal-contentP h3 {
+    font-size: 16px;
+    margin-bottom: 20px;
+  }
+
+  .close-btn {
+    font-size: 24px;
+    top: 10px;
+    right: 15px;
+  }
+}
+
 

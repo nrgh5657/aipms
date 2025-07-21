@@ -1,6 +1,7 @@
 package com.aipms.controller;
 
 import com.aipms.dto.SubscriptionDto;
+import com.aipms.dto.SubscriptionRegisterRequest;
 import com.aipms.security.CustomUserDetails;
 import com.aipms.service.PaymentService;
 import com.aipms.service.SubscriptionService;
@@ -30,16 +31,27 @@ public class SubscriptionController {
     @PostMapping("/register")
     public ResponseEntity<?> registerBillingKey(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody Map<String, String> payload
+            @RequestBody Map<String, Object> payload
     ) {
-        String customerUid = payload.get("customerUid");
-        String merchantUid = payload.get("merchantUid");
-
         Long memberId = userDetails.getMember().getMemberId();
-        subscriptionService.registerSubscription(memberId, customerUid);
+
+        String customerUid = (String) payload.get("customerUid");
+        String merchantUid = (String) payload.get("merchantUid");
+        String impUid = (String) payload.get("impUid");
+        Integer amount = (Integer) payload.get("amount");
+        String carNumber = (String) payload.get("carNumber");
+        String paymentMethod = (String) payload.getOrDefault("paymentMethod", "카드");
+        String gateway = (String) payload.getOrDefault("gateway", "kakaopay");
+        String paymentType = (String) payload.getOrDefault("paymentType", "정기권");
+
+        subscriptionService.registerSubscription(
+                memberId, customerUid, merchantUid, impUid, amount, carNumber,
+                paymentMethod, gateway, paymentType
+        );
 
         return ResponseEntity.ok(Map.of("success", true));
     }
+
 
     @PostMapping("/charge")
     public ResponseEntity<?> chargeSubscription(@RequestBody Map<String, Object> payload) {

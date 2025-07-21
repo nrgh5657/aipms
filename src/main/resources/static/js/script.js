@@ -25,6 +25,13 @@ let parkingStatus = {
   waitingDaily: 1
 };
 
+//결제 페이징, 필터
+let currentPaymentPage = 1;
+let paymentPageSize = 10;
+let totalPaymentPages = 1;
+let paymentFilterType = 'all'; // all | normal | monthly
+let paymentSearchKeyword = '';
+
 // 샘플 데이터
 const sampleFireData = [
   {
@@ -299,7 +306,9 @@ function initializeParkingManagement() {
 // 요금 관리 초기화
 function initializeFeeManagement() {
   console.log('요금 관리 초기화');
-  renderPaymentTable();
+  setupPaymentFilters();
+  setupPaymentSearch();
+  fetchPaymentList(1)
 }
 
 // 화재 관리 초기화
@@ -324,8 +333,8 @@ function initializeSystemLogs() {
 function loadSampleData() {
   //fireDetectionData = [...sampleFireData];
   parkingData = [...sampleParkingData];
-  memberData = [...sampleMemberData];
-  paymentData = [...samplePaymentData];
+  //memberData = [...sampleMemberData];
+  //paymentData = [...samplePaymentData];
   
   console.log('데이터 로드 완료:', {
     fire: fireDetectionData.length,
@@ -660,6 +669,77 @@ function createParkingTableRow(item) {
   `;
   
   return row;
+}
+
+const MAX_LIMITS = {
+  monthly: 16,
+  total: 50
+};
+
+function openLimitPopup(type) {
+  if (type !== 'monthly' && type !== 'total') return;
+
+  // 사용중 / 한도 텍스트 분리
+  const valueElement = document.getElementById(type === 'monthly' ? 'monthlyLimit' : 'totalLimit');
+  const [usedStr, limitStr] = valueElement.textContent.split('/');
+  const used = parseInt(usedStr, 10);
+  const limit = parseInt(limitStr, 10);
+
+  // 각 팝업 관련 요소 세팅
+  const popup = document.getElementById(type + 'Popup');
+  const usedSpan = document.getElementById(type + 'Used');
+  const input = document.getElementById(type + 'Input');
+
+  usedSpan.textContent = used;
+  input.min = 0;
+  input.max = MAX_LIMITS[type];
+  input.value = limit;
+
+  // 팝업 보여주기
+  popup.style.display = 'flex';
+  input.focus();
+}
+
+function closePopup(type) {
+  if (type !== 'monthly' && type !== 'total') return;
+  const popup = document.getElementById(type + 'Popup');
+  popup.style.display = 'none';
+}
+
+function saveLimit(type) {
+  if (type !== 'monthly' && type !== 'total') return;
+
+  const input = document.getElementById(type + 'Input');
+  const newLimit = parseInt(input.value, 10);
+  const used = parseInt(document.getElementById(type + 'Used').textContent, 10);
+  const maxLimit = MAX_LIMITS[type];
+
+  if (isNaN(newLimit)) {
+    alert('한도를 숫자로 입력해주세요.');
+    input.focus();
+    return;
+  }
+  if (newLimit < 0) {
+    alert('한도는 0 이상이어야 합니다.');
+    input.focus();
+    return;
+  }
+  if (newLimit > maxLimit) {
+    alert(`${type === 'monthly' ? '월주차' : '전체'} 한도는 최대 ${maxLimit}까지 설정할 수 있습니다.`);
+    input.focus();
+    return;
+  }
+  if (newLimit < used) {
+    alert('총 한도는 사용 중인 수보다 작을 수 없습니다.');
+    input.focus();
+    return;
+  }
+
+  // 값 업데이트
+  const valueElement = document.getElementById(type === 'monthly' ? 'monthlyLimit' : 'totalLimit');
+  valueElement.textContent = `${used}/${newLimit}`;
+
+  closePopup(type);
 }
 // 입출차 로그
 (() => {
@@ -1033,6 +1113,85 @@ document.getElementById('editForm').addEventListener('submit', function(e) {
 });
 
 
+
+
+//결제 리스트 불러오기
+function fetchPaymentList(page = 1) {
+  const typeParam = paymentFilterType === 'monthly'
+      ? '&subscription=1'
+      : paymentFilterType === 'normal'
+          ? '&subscription=0'
+          : '';
+
+  const keywordParam = paymentSearchKeyword ? `&keyword=${encodeURIComponent(paymentSearchKeyword)}` : '';
+
+  fetch(`/api/payment/list?page=${page}&size=${paymentPageSize}${typeParam}${keywordParam}`, {
+    credentials: 'include'
+  })
+      .then(res => res.json())
+      .then(data => {
+        paymentData = data.content || [];
+        totalPaymentPages = data.totalPages || 1;
+        currentPaymentPage = page;
+        renderPaymentTable();
+        renderPaymentPagination();
+      })
+      .catch(err => {
+        console.error('❌ 결제 내역 로딩 실패:', err);
+        showAlert('결제 내역을 불러오는 중 문제가 발생했습니다.');
+      });
+}
+
+function setupPaymentFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      paymentFilterType = e.target.dataset.filter || 'all';
+      fetchPaymentList(1);
+    });
+  });
+}
+
+function setupPaymentSearch() {
+  const searchBtn = document.querySelector('.search-btn');
+  const searchInput = document.getElementById('memberSearchInput');
+
+  if (searchBtn && searchInput) {
+    searchBtn.addEventListener('click', () => {
+      paymentSearchKeyword = searchInput.value.trim();
+      fetchPaymentList(1);
+    });
+  }
+}
+
+function renderPaymentPagination() {
+  const pagination = document.querySelector('.pagination');
+  if (!pagination) return;
+
+  pagination.innerHTML = '';
+
+  const prev = document.createElement('button');
+  prev.textContent = '이전';
+  prev.disabled = currentPaymentPage === 1;
+  prev.onclick = () => fetchPaymentList(currentPaymentPage - 1);
+  pagination.appendChild(prev);
+
+  for (let i = 1; i <= totalPaymentPages; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    if (i === currentPaymentPage) btn.classList.add('active');
+    btn.onclick = () => fetchPaymentList(i);
+    pagination.appendChild(btn);
+  }
+
+  const next = document.createElement('button');
+  next.textContent = '다음';
+  next.disabled = currentPaymentPage === totalPaymentPages;
+  next.onclick = () => fetchPaymentList(currentPaymentPage + 1);
+  pagination.appendChild(next);
+}
+
 // 결제 내역 테이블 렌더링
 function renderPaymentTable() {
   const tableBody = document.getElementById('paymentTable');
@@ -1062,15 +1221,15 @@ function createPaymentTableRow(item) {
   const row = document.createElement('tr');
   
   const statusClass = item.status === '완료' ? 'status-approved' : 'status-fire';
-  
+  console.log('🔍 결제 아이템:', item);
   row.innerHTML = `
     <td>${item.id}</td>
-    <td>${item.carNumber}</td>
-    <td>${item.payer}</td>
-    <td>${item.type}</td>
-    <td>${item.amount}</td>
-    <td>${item.method}</td>
-    <td>${item.time}</td>
+    <td>${item.carNumber || '-'}</td>
+    <td>${item.payer || '-'}</td>
+    <td>${item.paymentType || '-'}</td>       <!-- 수정됨 -->
+    <td>${item.amount?.toLocaleString() || '0'} 원</td>
+    <td>${item.paymentMethod || '-'}</td>     <!-- 수정됨 -->
+    <td>${item.paidAt ? formatDate(item.paidAt) : '-'}</td> <!-- 수정됨 -->
     <td><span class="${statusClass}">${item.status}</span></td>
     <td>
       <button class="action-btn" onclick="viewPaymentDetail('${item.id}')">상세</button>

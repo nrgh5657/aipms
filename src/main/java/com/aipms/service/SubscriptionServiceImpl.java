@@ -1,8 +1,10 @@
 package com.aipms.service;
 
+import com.aipms.domain.Payment;
 import com.aipms.domain.Subscription;
 import com.aipms.dto.SubscriptionDto;
 import com.aipms.mapper.MemberMapper;
+import com.aipms.mapper.PaymentMapper;
 import com.aipms.mapper.SubscriptionMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     private final SubscriptionMapper subscriptionMapper;
     private final MemberMapper memberMapper;
+    private final PaymentMapper paymentMapper;
 
     @Override
     public void applySubscription(SubscriptionDto dto) {
@@ -67,7 +70,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public void registerSubscription(Long memberId, String customerUid) {
+    public void registerSubscription(Long memberId, String customerUid, String merchantUid,
+                                     String impUid, int amount, String carNumber,
+                                     String paymentMethod, String gateway, String paymentType) {
         Subscription current = subscriptionMapper.findActiveByMemberId(memberId);
         LocalDateTime now = LocalDateTime.now();
 
@@ -76,12 +81,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         if (current != null && current.getEndDate().isAfter(now)) {
             newStart = current.getStartDate();  // 기존 시작일 유지
-            newEnd = current.getEndDate().plusMonths(1);  // 종료일만 연장
+            newEnd = current.getEndDate().plusMonths(1);  // 종료일 연장
         } else {
             newStart = now;
             newEnd = now.plusMonths(1);
         }
 
+        // 1. 정기권 정보 저장
         Subscription sub = new Subscription();
         sub.setMemberId(memberId);
         sub.setCustomerUid(customerUid);
@@ -96,7 +102,24 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
 
         memberMapper.updateSubscriptionStatus(memberId, true);
+
+        // ✅ 2. payment 테이블에도 결제 정보 저장
+        Payment payment = new Payment();
+        payment.setMemberId(memberId);
+        payment.setTotalFee(amount);
+        payment.setPaymentMethod(paymentMethod);
+        payment.setGateway(gateway);
+        payment.setPaid(true);
+        payment.setStatus("결제 완료");
+        payment.setPaymentType(paymentType);
+        payment.setMerchantUid(merchantUid);
+        payment.setImpUid(impUid);
+        payment.setPaymentTime(now);
+        payment.setCarNumber(carNumber);
+
+        paymentMapper.insertPayment(payment); // 기존 insert 구문 그대로 사용
     }
+
 
 
     @Override

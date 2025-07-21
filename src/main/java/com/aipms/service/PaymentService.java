@@ -15,4 +15,7 @@ public interface PaymentService {
     boolean requestSubscriptionPayment(Long memberId, String customerUid, Integer amount);
 
     boolean recordSubscriptionPayment(Long memberId, String customerUid, String merchantUid, String impUid, Integer amount, String paymentType, String carNumber);
+
+    PageDto<AdminPaymentDto> getAdminPaymentList(AdminPaymentHistoryRequestDto req);
+
 }

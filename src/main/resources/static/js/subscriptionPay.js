@@ -31,7 +31,7 @@ async function requestSubscriptionBillingKey() {
             merchant_uid: merchantUid,
             customer_uid: customerUid,
             name: "스마트파킹 1개월 정기권 등록",
-            amount: 150000, // 💡 0원 결제로 빌링키만 발급
+            amount: 150000,
             buyer_email: email,
             buyer_name: name,
             buyer_tel: phone
@@ -45,7 +45,13 @@ async function requestSubscriptionBillingKey() {
                     body: JSON.stringify({
                         memberId,
                         customerUid,
-                        merchantUid
+                        merchantUid: rsp.merchant_uid,
+                        impUid: rsp.imp_uid,
+                        amount: rsp.paid_amount,
+                        paymentMethod: rsp.pay_method || "card",
+                        gateway: rsp.pg_provider || "kakaopay",
+                        paymentType: "정기권",
+                        carNumber: serverUserData?.carNumber || null
                     })
                 });
 

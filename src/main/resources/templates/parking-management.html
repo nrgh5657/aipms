@@ -133,11 +133,12 @@
           <span class="stat-label">승인 완료</span>
           <span class="stat-value" id="approvedCount">13</span>
         </div>
-        <div class="approval-stat">
+        <div class="approval-stat" onclick="openLimitPopup('monthly')">
           <span class="stat-label">월주차 한도</span>
           <span class="stat-value" id="monthlyLimit">5/8</span>
         </div>
-        <div class="approval-stat">
+
+        <div class="approval-stat" onclick="openLimitPopup('total')">
           <span class="stat-label">전체 한도</span>
           <span class="stat-value" id="totalLimit">13/20</span>
         </div>
@@ -198,4 +199,63 @@
 
   <script src="/js/script.js"></script>
 </body>
+<!-- 한도 수정 팝업 -->
+<!-- 월 한도 수정 팝업 -->
+<div id="monthlyPopup" class="modal" style="display: none;">
+  <div class="modal-contentP">
+    <span class="close-btn" onclick="closePopup('monthly')">&times;</span>
+    <h3>월주차 한도 수정</h3>
+
+
+    <form id="monthlyForm" onsubmit="event.preventDefault(); saveLimit('monthly');">
+      <label>사용 중: <span id="monthlyUsed">0</span></label>
+
+      <br>
+
+      <label for="monthlyInput">월 총 한도:</label>
+      <input
+              type="number"
+              id="monthlyInput"
+              min="0"
+              max="16"
+              step="1"
+              placeholder="0 이상 16 이하 입력"
+              required
+      />
+
+      <br>
+
+      <button type="submit">저장</button>
+    </form>
+  </div>
+</div>
+
+<!-- 전체 한도 수정 팝업 -->
+<div id="totalPopup" class="modal" style="display: none;">
+  <div class="modal-contentP">
+    <span class="close-btn" onclick="closePopup('total')">&times;</span>
+    <h3>전체 한도 수정</h3>
+
+    <form id="totalForm" onsubmit="event.preventDefault(); saveLimit('total');">
+      <label>사용 중: <span id="totalUsed">0</span></label>
+
+      <br>
+
+      <label for="totalInput">전체 총 한도:</label>
+      <input
+              type="number"
+              id="totalInput"
+              min="0"
+              max="50"
+              step="1"
+              placeholder="0 이상 50 이하 입력"
+              required
+      />
+
+      <br>
+
+      <button type="submit">저장</button>
+    </form>
+  </div>
+</div>
 </html>

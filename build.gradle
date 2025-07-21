@@ -41,6 +41,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.json:json:20240303'
 }
 
 tasks.named('test') {

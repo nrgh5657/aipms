@@ -16,6 +16,7 @@
     <div class="auth-section" id="auth-section">
       <!-- 로그인 전 - Thymeleaf 조건 처리 -->
       <div class="login-buttons" id="login-buttons" th:if="${session.loginUser == null}">
+        <a th:href="@{/fast-payment}" class="signup-btn">빠른 결제</a>
         <a th:href="@{/member/login}" class="login-btn unified-login">로그인</a>
         <a th:href="@{/member/signup}" class="signup-btn">회원가입</a>
       </div>

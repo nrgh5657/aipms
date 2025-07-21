@@ -12,5 +12,6 @@ public class PaymentHistoryRequestDto {
     private String status;
     private String keyword;
 
+
     private Long memberId; // 로그인 사용자 필터용
 }

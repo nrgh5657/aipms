@@ -78,4 +78,11 @@ public class PaymentController {
             ));
         }
     }
+
+    @GetMapping("/list")
+    public PageDto<AdminPaymentDto> getAdminPayments(AdminPaymentHistoryRequestDto req) {
+        return paymentService.getAdminPaymentList(req);
+    }
+
+
 }

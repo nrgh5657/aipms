@@ -194,6 +194,24 @@
             <button class="action-btn primary" onclick="refreshPaymentData()">새로고침</button>
           </div>
         </div>
+
+        <div class="filter-section">
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">전체</button>
+            <button class="filter-btn" data-filter="normal">일반</button>
+            <button class="filter-btn" data-filter="monthly">월주차</button>
+          </div>
+
+          <div class="search-group">
+            <input type="text" class="search-input" placeholder="이름 또는 차량번호 검색" id="memberSearchInput">
+            <select class="search-select" id="memberStatusFilter">
+              <option value="">상태 선택</option>
+              <option value="noraml">일반</option>
+              <option value="monthly">월주차</option>
+            </select>
+            <button class="search-btn" onclick="applyMemberFilters()">검색</button>
+          </div>
+        </div>
         
         <div class="payment-stats">
           <div class="payment-stat">

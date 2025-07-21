@@ -12,10 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (payBtn) {
         payBtn.addEventListener('click', async () => {
             const entryInfo = await fetchCurrentEntryInfo(); // ✅ 동적 조회 구현
+
             if (!entryInfo) return alert("결제 대상 주차 정보가 없습니다.");
 
+            // 🔒 정기권 보유자 결제 차단
+            if (entryInfo.subscriptionActive) {
+                return alert(entryInfo.message || "정기권 이용자이므로 결제가 필요 없습니다.");
+            }
+
             const { entryId, amount } = entryInfo;
-            payCurrentParking(entryId, amount, IMP); // IMP를 넘겨줌
+            payCurrentParking(entryId, amount, IMP);
         });
     }
 
@@ -86,7 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return {
                 entryId: data.entryId,
-                amount: data.amount
+                amount: data.amount,
+                subscriptionActive: data.subscriptionActive, // ✅ 정기권 여부
+                message: data.message
             };
         } catch (err) {
             console.error("🚨 주차 정보 조회 실패:", err);

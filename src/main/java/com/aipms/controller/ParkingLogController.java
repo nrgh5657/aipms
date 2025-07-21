@@ -9,6 +9,7 @@ import com.aipms.mapper.ParkingLogMapper;
 import com.aipms.mapper.PaymentMapper;
 import com.aipms.security.CustomUserDetails;
 import com.aipms.service.ParkingLogService;
+import com.aipms.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +28,7 @@ public class ParkingLogController {
     private final ParkingLogService parkingLogService;
     private final ParkingLogMapper parkingLogMapper;
     private final PaymentMapper paymentMapper;
+    private final SubscriptionService subscriptionService;
 
     // 🔸 POST: 로그 저장 (AI 또는 Postman에서 호출)
     @PostMapping("/logs")
@@ -72,9 +74,16 @@ public class ParkingLogController {
 
         int amount = parkingLogService.calculateFee(currentLog.getEntryTime());
 
+        boolean hasSubscription = false;
+        if (memberId != null) {
+            hasSubscription = subscriptionService.isActiveSubscription(memberId);
+        }
+
         Map<String, Object> result = new HashMap<>();
         result.put("entryId", currentLog.getId());  // 주의: getId()는 null 가능성 있음
         result.put("amount", amount);
+        result.put("subscriptionActive", hasSubscription); // ✅ 추가
+
 
         return ResponseEntity.ok(result);
     }
