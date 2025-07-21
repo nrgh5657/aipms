@@ -26,7 +26,7 @@ async function requestSubscriptionBillingKey() {
 
         // ✅ IMP.request_pay 호출로 빌링키 발급
         IMP.request_pay({
-            channelKey:"channel-key-496491cb-0c2a-44f2-9156-12b62459e1f9",
+            channelKey:"channel-key-a1e4672f-4755-4957-80c6-152515cb79ab",
             pay_method: "card",
             merchant_uid: merchantUid,
             customer_uid: customerUid,
@@ -36,7 +36,9 @@ async function requestSubscriptionBillingKey() {
             buyer_name: name,
             buyer_tel: phone
         }, async function (rsp) {
+            console.log(rsp);
             if (rsp.success) {
+
                 // ✅ 서버에 customer_uid 등록 요청
                 const res = await fetch("/api/subscriptions/register", {
                     method: "POST",
@@ -93,13 +95,14 @@ async function requestRecurringPayment(customerUid, amount = 150000) {
         const merchantUid = `auto_${Date.now()}`; // 매번 고유 UID
 
         IMP.request_pay({
-            channelKey:"channel-key-496491cb-0c2a-44f2-9156-12b62459e1f9",
+            channelKey:"channel-key-a1e4672f-4755-4957-80c6-152515cb79ab",
             pay_method: "card",
             customer_uid: customerUid, // 저장된 빌링키 사용
             merchant_uid: merchantUid,
             name: "스마트파킹 정기권 자동결제",
             amount: amount
         }, async function (rsp) {
+            console.log(rsp);
             if (rsp.success) {
                 showToast("정기결제 성공");
 

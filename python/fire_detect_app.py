@@ -20,6 +20,9 @@ fire_status_map = {}
 # 📷 웹캠 스트리밍용 VideoCapture (공유용으로 한 번만 엶)
 stream_camera = cv2.VideoCapture(0)
 
+stream_camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+stream_camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
 # 📡 Spring <img src="/video_feed_pc"> 용 영상 송출
 def generate_pc_frames():
     while True:
@@ -35,8 +38,7 @@ def video_feed_pc():
     return Response(generate_pc_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# 🔥 YOLO 감지 함수
-def detect_fire_from_frames(frame_generator, callback_url, camera_id):
+def detect_fire_from_frames(frame_generator, callback_url, camera_id, video_url):
     names = model.names
     fire_status_map[camera_id] = False
 
@@ -67,15 +69,23 @@ def detect_fire_from_frames(frame_generator, callback_url, camera_id):
                     filepath = os.path.join(IMAGE_SAVE_DIR, filename)
                     cv2.imwrite(filepath, frame)
 
+                    detected_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
                     # Spring 서버에 POST
                     try:
+                        headers = {"Content-Type": "application/json"}
                         response = requests.post(callback_url, json={
+
                             "label": label,
                             "confidence": round(conf, 3),
-                            "video_url": str(camera_id),
-                            "image_path": filename
-                        })
+                            "camera_id": camera_id,
+                            "video_url": video_url if video_url and video_url.startswith("http") else "LOCAL",
+                            "image_path": filename,
+                            "detected_at": detected_time,
+                            "alert_time": detected_time
+                        }, headers=headers)
                         print("📡 POST 응답 상태:", response.status_code)
+                        print("📡 응답 내용:", response.text)
                     except Exception as e:
                         print(f"❌ Spring 전송 실패: {e}")
 
@@ -131,7 +141,7 @@ def start_detection():
 
     thread = threading.Thread(
         target=detect_fire_from_frames,
-        args=(frame_gen, callback_url, camera_id)
+        args=(frame_gen, callback_url, camera_id, video_url)
     )
     thread.start()
 

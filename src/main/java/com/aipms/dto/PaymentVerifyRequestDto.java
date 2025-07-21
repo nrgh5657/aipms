@@ -9,5 +9,6 @@ public class PaymentVerifyRequestDto {
     private Long entryId;
     private String method;
     private String gateway;
+    private String carNumber; // ✅ 추가
 
 }

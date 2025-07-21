@@ -56,7 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         body: JSON.stringify({
                             impUid: rsp.imp_uid,
                             merchantUid: rsp.merchant_uid,
-                            entryId: entryId
+                            entryId: entryId,
+                            carNumber: serverUserData?.carNumber || null
                         })
                     });
                     const data = await res.json();
