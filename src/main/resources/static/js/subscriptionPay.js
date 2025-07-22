@@ -15,14 +15,28 @@ async function requestSubscriptionBillingKey() {
         const email = serverUserData?.email || "test@example.com";
         const name = serverUserData?.user || "홍길동";
         const phone = serverUserData?.phone || "01012345678";
+        const carNumber = serverUserData?.carNumber || "12허1212"
 
         if (!memberId) {
             showToast("로그인이 필요합니다.", "error");
             return;
         }
 
+        // ✅ 1. 정기권 등록 가능 여부 확인
+        const checkRes = await fetch(`/api/subscriptions/check-availability?memberId=${memberId}`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        const checkResult = await checkRes.json();
+        if (!checkResult.available) {
+            showToast(`정기권 등록 불가: ${checkResult.message}`, 'error');
+            return; // ❌ 등록 중단
+        }
+
         const customerUid = `user_${memberId}`;
         const merchantUid = `subscribe_${Date.now()}`;
+
 
         // ✅ IMP.request_pay 호출로 빌링키 발급
         IMP.request_pay({
@@ -53,7 +67,7 @@ async function requestSubscriptionBillingKey() {
                         paymentMethod: rsp.pay_method || "card",
                         gateway: rsp.pg_provider || "kakaopay",
                         paymentType: "정기권",
-                        carNumber: serverUserData?.carNumber || null
+                        carNumber: carNumber
                     })
                 });
 
@@ -93,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
 async function requestRecurringPayment(customerUid, amount = 150000) {
     try {
         const merchantUid = `auto_${Date.now()}`; // 매번 고유 UID
+        const carNumber = serverUserData?.carNumber || "12허1212"
 
         IMP.request_pay({
             channelKey:"channel-key-a1e4672f-4755-4957-80c6-152515cb79ab",
@@ -120,7 +135,7 @@ async function requestRecurringPayment(customerUid, amount = 150000) {
                         impUid: rsp.imp_uid,
                         amount: rsp.paid_amount,
                         paymentType: "정기권",
-                        carNumber: serverUserData?.carNumber || null
+                        carNumber: carNumber
                     })
                 });
 

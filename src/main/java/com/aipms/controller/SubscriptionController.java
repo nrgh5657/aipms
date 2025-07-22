@@ -1,7 +1,10 @@
 package com.aipms.controller;
 
+import com.aipms.dto.ParkingConfigDto;
 import com.aipms.dto.SubscriptionDto;
 import com.aipms.dto.SubscriptionRegisterRequest;
+import com.aipms.mapper.ParkingConfigMapper;
+import com.aipms.mapper.SubscriptionMapper;
 import com.aipms.security.CustomUserDetails;
 import com.aipms.service.PaymentService;
 import com.aipms.service.SubscriptionService;
@@ -21,6 +24,8 @@ public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
     private final PaymentService paymentService;
+    private final ParkingConfigMapper parkingConfigMapper;
+    private final SubscriptionMapper subscriptionMapper;
 
     @PostMapping("/apply")
     public ResponseEntity<String> apply(@RequestBody SubscriptionDto dto) {
@@ -89,5 +94,18 @@ public class SubscriptionController {
     @GetMapping("/list")
     public ResponseEntity<List<SubscriptionDto>> list() {
         return ResponseEntity.ok(subscriptionService.getAllSubscriptions());
+    }
+
+    @GetMapping("/check-availability")
+    public ResponseEntity<?> checkSubscriptionAvailability() {
+        boolean available = subscriptionService.isMonthlySubscriptionAvailable();
+        if (!available) {
+            return ResponseEntity.ok(Map.of(
+                    "available", false,
+                    "message", "월주차 정원이 초과되어 정기권 구매가 불가능합니다."
+            ));
+        }
+
+        return ResponseEntity.ok(Map.of("available", true));
     }
 }

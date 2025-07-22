@@ -26,4 +26,12 @@
         SELECT * FROM reservation
     </select>
 
+    <select id="countPaidReservations" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE status = 'PAID'
+          AND reservation_start &lt;= NOW()
+          AND reservation_end &gt;= NOW()
+    </select>
+
 </mapper>

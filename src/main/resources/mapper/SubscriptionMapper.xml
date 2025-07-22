@@ -70,8 +70,13 @@
           AND active = 1
     </update>
 
-
-
+    <select id="countActiveMonthlySubscriptions" resultType="int">
+        SELECT COUNT(*)
+        FROM subscription
+        WHERE active = 1
+          AND start_date &lt;= NOW()
+          AND end_date &gt;= NOW()
+    </select>
 
 
 </mapper>

@@ -22,4 +22,6 @@ public interface SubscriptionService {
     void extendSubscription(Long memberId);
 
     boolean isActiveSubscription(Long memberId);
+
+    boolean isMonthlySubscriptionAvailable();
 }

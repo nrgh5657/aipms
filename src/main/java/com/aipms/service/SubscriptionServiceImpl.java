@@ -2,8 +2,10 @@ package com.aipms.service;
 
 import com.aipms.domain.Payment;
 import com.aipms.domain.Subscription;
+import com.aipms.dto.ParkingConfigDto;
 import com.aipms.dto.SubscriptionDto;
 import com.aipms.mapper.MemberMapper;
+import com.aipms.mapper.ParkingConfigMapper;
 import com.aipms.mapper.PaymentMapper;
 import com.aipms.mapper.SubscriptionMapper;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionMapper subscriptionMapper;
     private final MemberMapper memberMapper;
     private final PaymentMapper paymentMapper;
+    private final ParkingConfigMapper parkingConfigMapper;
 
     @Override
     public void applySubscription(SubscriptionDto dto) {
@@ -164,5 +167,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         // 현재 시간이 구독 기간 내에 있는지 확인
         return !now.isBefore(sub.getStartDate()) && !now.isAfter(sub.getEndDate());
 
+    }
+
+    @Override
+    public boolean isMonthlySubscriptionAvailable() {
+        ParkingConfigDto config = parkingConfigMapper.getConfig();
+        int current = subscriptionMapper.countActiveMonthlySubscriptions();
+        return current < config.getFixedSubscriptionSpaces();
     }
 }

@@ -4,6 +4,9 @@ import com.aipms.dto.LiveParkingStatusDto;
 import com.aipms.dto.ParkingDto;
 import com.aipms.dto.ParkingRealtimeStatusResponseDto;
 import com.aipms.dto.ParkingStatusResponseDto;
+import com.aipms.mapper.ParkingConfigMapper;
+import com.aipms.mapper.ParkingLogMapper;
+import com.aipms.service.ParkingAvailabilityService;
 import com.aipms.service.ParkingRealtimeStatusService;
 import com.aipms.service.ParkingService;
 import com.aipms.service.ParkingStatusService;
@@ -24,6 +27,9 @@ public class ParkingController {
     private final ParkingService parkingService;
     private final ParkingStatusService parkingStatusService;
     private final ParkingRealtimeStatusService realtimeStatusService;
+    private final ParkingAvailabilityService parkingAvailabilityService;
+    private final ParkingConfigMapper parkingConfigMapper;
+    private final ParkingLogMapper parkingLogMapper;
 
     @PostMapping
     public ResponseEntity<String> register(@RequestBody ParkingDto dto) {
@@ -85,5 +91,38 @@ public class ParkingController {
         response.put("zones", zones);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/check-availability")
+    public ResponseEntity<?> checkParkingAvailability() {
+        int available = parkingAvailabilityService.getAvailableNormalSpots();
+        if (available <= 0) {
+            return ResponseEntity.ok(Map.of(
+                    "available", false,
+                    "message", "현재 주차 공간이 부족하여 예약 또는 입차가 불가능합니다."
+            ));
+        }
+        return ResponseEntity.ok(Map.of(
+                "available", true,
+                "remaining", available
+        ));
+    }
+
+    @GetMapping("/space")
+    public ResponseEntity<?> getParkingStatus() {
+        var config = parkingConfigMapper.getConfig();
+
+        int total = config.getTotalSpaces();
+        int fixed = config.getFixedSubscriptionSpaces();
+        int used = parkingLogMapper.countCurrentlyParkedCars();
+        int available = parkingAvailabilityService.getAvailableNormalSpots();
+        int usageRate = (int) ((used / (double) total) * 100);
+
+        return ResponseEntity.ok(Map.of(
+                "total", total,
+                "used", used,
+                "available", available,
+                "usageRate", usageRate
+        ));
     }
 }

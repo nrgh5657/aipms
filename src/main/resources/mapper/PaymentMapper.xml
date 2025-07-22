@@ -143,11 +143,12 @@
         WHERE payment_id = #{paymentId}
     </update>
 
+
     <!-- 관리자 결제 내역 목록 조회 -->
     <select id="selectAdminPayments" resultType="com.aipms.dto.AdminPaymentDto">
         SELECT
         p.payment_id AS id,
-        pl.car_number AS carNumber,
+        p.car_number AS carNumber, <!-- ✅ 수정된 부분 -->
         m.name AS payer,
         CASE
         WHEN s.subscription_id IS NOT NULL THEN '월주차'
@@ -161,14 +162,13 @@
         ELSE '실패'
         END AS status
         FROM payment p
-        LEFT JOIN parking_log pl ON p.payment_id = pl.payment_id
         LEFT JOIN member m ON p.member_id = m.member_id
         LEFT JOIN subscription s ON s.member_id = m.member_id AND s.active = 1
         <where>
             <if test="req.keyword != null and req.keyword != ''">
                 AND (
                 m.name LIKE CONCAT('%', #{req.keyword}, '%') OR
-                pl.car_number LIKE CONCAT('%', #{req.keyword}, '%')
+                p.car_number LIKE CONCAT('%', #{req.keyword}, '%') <!-- ✅ 여기도 수정 -->
                 )
             </if>
             <if test="req.status != null and req.status != '' and req.status != 'all'">
@@ -182,6 +182,7 @@
         ORDER BY p.payment_time DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
+
 
     <!-- 관리자 결제 내역 총 건수 -->
     <select id="countAdminPayments" resultType="int">

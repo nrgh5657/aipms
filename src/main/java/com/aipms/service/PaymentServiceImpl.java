@@ -101,6 +101,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setImpUid(dto.getImpUid());
         payment.setPaid(true);
         payment.setCancelled(false);
+        payment.setCarNumber(parkingLog.getCarNumber());
         payment.setPaymentMethod(dto.getMethod() != null ? dto.getMethod() : "card");
         payment.setGateway(dto.getGateway() != null ? dto.getGateway() : "html5_inicis");
         payment.setPaymentTime(LocalDateTime.now());

@@ -29,4 +29,6 @@ public interface SubscriptionMapper {
     Subscription findActiveByMemberId(Long memberId);
 
     void updateSubscriptionDates(Map<String, Object> paramMap);
+
+    int countActiveMonthlySubscriptions();
 }

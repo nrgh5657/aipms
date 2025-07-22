@@ -12,4 +12,6 @@ public interface ReservationMapper {
     void cancelReservation(Long reservationId);
     void updateStatus(Long reservationId, String status);
     List<Reservation> findAll();
+
+    int countPaidReservations();
 }

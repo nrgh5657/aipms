@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.ParkingConfigMapper">
+
+    <insert id="setConfig" parameterType="com.aipms.dto.ParkingConfigDto">
+        INSERT INTO parking_config (
+            id, total_spaces, fixed_subscription_spaces, updated_at
+        ) VALUES (
+                     1, #{totalSpaces}, #{fixedSubscriptionSpaces}, NOW()
+                 )
+            ON DUPLICATE KEY UPDATE
+                                 total_spaces = VALUES(total_spaces),
+                                 fixed_subscription_spaces = VALUES(fixed_subscription_spaces),
+                                 updated_at = NOW()
+    </insert>
+
+    <select id="getConfig" resultType="com.aipms.dto.ParkingConfigDto">
+        SELECT total_spaces AS totalSpaces,
+               fixed_subscription_spaces AS fixedSubscriptionSpaces
+        FROM parking_config
+        WHERE id = 1
+    </select>
+
+</mapper>

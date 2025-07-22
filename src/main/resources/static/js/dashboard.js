@@ -70,15 +70,15 @@ async function loadLiveStatus() {
   console.log('📊 실시간 주차장 현황 로드 중...');
 
   try {
-    const data = await apiRequest('/api/parking/live-status');
+    const data = await apiRequest('/api/parking/space');
     if (!data) return false;
 
     const statusNumbers = document.querySelectorAll('.status-number');
     if (statusNumbers.length >= 4) {
-      statusNumbers[0].textContent = data.totalSlots || 247;
-      statusNumbers[1].textContent = data.occupiedSlots || 189;
-      statusNumbers[2].textContent = data.availableSlots || 58;
-      statusNumbers[3].textContent = (data.occupancyRate || 76) + '%';
+      statusNumbers[0].textContent = data.total || 247;
+      statusNumbers[1].textContent = data.used || 189;
+      statusNumbers[2].textContent = data.available || 58;
+      statusNumbers[3].textContent = (data.usageRate || 76) + '%';
 
       console.log('📊 실시간 현황 업데이트 완료');
     }
@@ -190,59 +190,54 @@ function updateRecentHistoryDisplay(history) {
 // 구역별 실시간 현황 API
 // ========================================
 async function loadRealtimeStatus() {
-  console.log('🏢 구역별 실시간 현황 로드 중...');
+  console.log('🏢 실시간 주차장 전체 현황 로드 중...');
 
   try {
-    const data = await apiRequest('/api/parking/realtime-status');
-    if (!data || !data.zones) return false;
+    const data = await apiRequest('/api/parking/space');
+    if (!data) return false;
 
     const zoneContainer = document.querySelector('.zone-status-container');
     if (!zoneContainer) return false;
 
     zoneContainer.innerHTML = '';
 
-    data.zones.forEach(zone => {
-      const zoneElement = document.createElement('div');
-      zoneElement.className = 'zone-status-item';
+    const availabilityRate = Math.round((data.available / data.total) * 100);
 
-      // 가용률 계산
-      const availableSlots = zone.total - zone.used;
-      const availabilityRate = Math.round((availableSlots / zone.total) * 100);
+    let statusClass = 'high-availability';
+    if (availabilityRate < 20) statusClass = 'low-availability';
+    else if (availabilityRate < 50) statusClass = 'medium-availability';
 
-      // 상태에 따른 클래스 설정
-      let statusClass = 'high-availability';
-      if (availabilityRate < 20) statusClass = 'low-availability';
-      else if (availabilityRate < 50) statusClass = 'medium-availability';
+    const zoneElement = document.createElement('div');
+    zoneElement.className = 'zone-status-item';
 
-      zoneElement.innerHTML = `
-        <div class="zone-header">
-          <span class="zone-name">${zone.zoneName}</span>
-          <span class="zone-code">${zone.zoneCode}</span>
+    zoneElement.innerHTML = `
+      <div class="zone-header">
+        <span class="zone-name">전체 주차장</span>
+        <span class="zone-code">MAIN</span>
+      </div>
+      <div class="zone-stats">
+        <div class="zone-available ${statusClass}">
+          <span class="available-count">${data.available}</span>
+          <span class="total-count">/${data.total}</span>
         </div>
-        <div class="zone-stats">
-          <div class="zone-available ${statusClass}">
-            <span class="available-count">${availableSlots}</span>
-            <span class="total-count">/${zone.total}</span>
-          </div>
-          <div class="zone-rate ${statusClass}">
-            가용률: ${availabilityRate}%
-            <div class="rate-progress">
-              <div class="rate-bar" style="width: ${availabilityRate}%"></div>
-            </div>
+        <div class="zone-rate ${statusClass}">
+          가용률: ${availabilityRate}%
+          <div class="rate-progress">
+            <div class="rate-bar" style="width: ${availabilityRate}%"></div>
           </div>
         </div>
-        <div class="zone-usage-rate">
-          이용률: ${zone.usageRate}%
-        </div>
-      `;
+      </div>
+      <div class="zone-usage-rate">
+        이용률: ${data.usageRate}%
+      </div>
+    `;
 
-      zoneContainer.appendChild(zoneElement);
-    });
+    zoneContainer.appendChild(zoneElement);
 
-    console.log('✅ 구역별 실시간 현황 업데이트 완료');
+    console.log('✅ 전체 주차장 현황 업데이트 완료');
     return true;
   } catch (error) {
-    console.error('❌ 구역별 실시간 현황 로드 실패:', error);
+    console.error('❌ 전체 주차장 현황 로드 실패:', error);
     return false;
   }
 }

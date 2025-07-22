@@ -7,9 +7,6 @@ let systemLogs = [];
 
 // 주차 제한 상수
 const PARKING_LIMITS = {
-  TOTAL_SPACES: 20,
-  MONTHLY_LIMIT: 8,
-  DAILY_LIMIT: 20
 };
 
 // 주차 현황 데이터
@@ -296,8 +293,9 @@ function initializeDashboard() {
 }
 
 // 주차 관리 초기화
-function initializeParkingManagement() {
+async function initializeParkingManagement() {
   console.log('주차 관리 초기화');
+  await loadParkingConfig();
   renderParkingTable();
   updateParkingStatus();
   displayCapacityWarning();
@@ -443,40 +441,40 @@ function updateStats() {
 
 // 주차 현황 업데이트
 function updateParkingStatus() {
-  const approvedMonthly = parkingData.filter(item => 
+  const approvedMonthly = parkingData.filter(item =>
     item.type === '월주차' && item.status === '승인'
   ).length;
-  
-  const approvedDaily = parkingData.filter(item => 
+
+  const approvedDaily = parkingData.filter(item =>
     item.type === '일주차' && item.status === '승인'
   ).length;
-  
-  const waitingMonthly = parkingData.filter(item => 
+
+  const waitingMonthly = parkingData.filter(item =>
     item.type === '월주차' && item.status === '미승인'
   ).length;
-  
-  const waitingDaily = parkingData.filter(item => 
+
+  const waitingDaily = parkingData.filter(item =>
     item.type === '일주차' && item.status === '미승인'
   ).length;
-  
+
   parkingStatus.approvedMonthly = approvedMonthly;
   parkingStatus.approvedDaily = approvedDaily;
   parkingStatus.waitingMonthly = waitingMonthly;
   parkingStatus.waitingDaily = waitingDaily;
-  
+
   const totalUsed = approvedMonthly + approvedDaily + parkingStatus.currentGeneral;
   parkingStatus.availableSpaces = Math.max(0, PARKING_LIMITS.TOTAL_SPACES - totalUsed);
-  
+
   updateElementIfExists('currentMonthly', `${approvedMonthly}대`);
   updateElementIfExists('currentDaily', `${approvedDaily}대`);
   updateElementIfExists('availableSpaces', `${parkingStatus.availableSpaces}대`);
   updateElementIfExists('monthlyParkingCount', `${approvedMonthly}/${PARKING_LIMITS.MONTHLY_LIMIT}`);
   updateElementIfExists('monthlyLimit', `${approvedMonthly}/${PARKING_LIMITS.MONTHLY_LIMIT}`);
   updateElementIfExists('totalLimit', `${totalUsed}/${PARKING_LIMITS.TOTAL_SPACES}`);
-  
+
   updateElementIfExists('waitingCount', waitingMonthly + waitingDaily);
   updateElementIfExists('approvedCount', approvedMonthly + approvedDaily);
-  
+
   // 회원 관리 통계
   updateElementIfExists('totalMembers', memberData.length);
   updateElementIfExists('activeMembers', memberData.filter(m => m.status === '활성').length);
@@ -672,8 +670,8 @@ function createParkingTableRow(item) {
 }
 
 const MAX_LIMITS = {
-  monthly: 16,
-  total: 50
+  monthly: 100,
+  total: 100
 };
 
 function openLimitPopup(type) {
@@ -740,7 +738,62 @@ function saveLimit(type) {
   valueElement.textContent = `${used}/${newLimit}`;
 
   closePopup(type);
+
+  // 📌 [💥 추가: 설정 서버에 저장 요청]
+  fetch('/api/parking-config/setConfig', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      totalSpaces: type === 'total' ? newLimit : PARKING_LIMITS.TOTAL_SPACES,
+      fixedSubscriptionSpaces: type === 'monthly' ? newLimit : PARKING_LIMITS.MONTHLY_LIMIT
+    })
+  })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          alert('✅ 설정이 저장되었습니다.');
+
+          // 전역 한도 상수도 반영
+          if (type === 'monthly') {
+            PARKING_LIMITS.MONTHLY_LIMIT = newLimit;
+          } else {
+            PARKING_LIMITS.TOTAL_SPACES = newLimit;
+          }
+
+          updateParkingStatus(); // 상태 즉시 갱신
+        } else {
+          alert('❌ 설정 저장 실패: ' + (result.message || '알 수 없는 오류'));
+        }
+      })
+      .catch(err => {
+        console.error('🚫 설정 저장 중 오류:', err);
+        alert('설정 저장 중 오류 발생');
+      });
 }
+
+/**
+ * 주차장 설정을 서버에서 가져와 전역 한도 상수를 갱신한다.
+ * @returns {Promise<void>}
+ */
+async function loadParkingConfig() {
+  try {
+    const res = await fetch('/api/parking-config');
+    if (!res.ok) throw new Error('설정 로드 실패');
+    const cfg = await res.json();
+
+    // 전역 상수 적용
+    PARKING_LIMITS.TOTAL_SPACES  = cfg.totalSpaces;
+    PARKING_LIMITS.MONTHLY_LIMIT = cfg.fixedSubscriptionSpaces;
+
+    console.log('[CONFIG] 주차장 설정 불러옴:', cfg);
+  } catch (err) {
+    console.error('❌ 주차장 설정 로드 오류:', err);
+    // 실패 시에는 기존 하드코딩 값 사용
+  }
+}
+
 // 입출차 로그
 (() => {
   const MIN_ROWS = 10;
