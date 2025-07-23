@@ -1,11 +1,11 @@
 package com.aipms.controller;
 
-import com.aipms.dto.LiveParkingStatusDto;
-import com.aipms.dto.ParkingDto;
-import com.aipms.dto.ParkingRealtimeStatusResponseDto;
-import com.aipms.dto.ParkingStatusResponseDto;
+import com.aipms.dto.*;
 import com.aipms.mapper.ParkingConfigMapper;
 import com.aipms.mapper.ParkingLogMapper;
+import com.aipms.mapper.ParkingMapper;
+import com.aipms.mapper.ReservationMapper;
+import com.aipms.security.CustomUserDetails;
 import com.aipms.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +29,8 @@ public class ParkingController {
     private final ParkingLogMapper parkingLogMapper;
     private final ReservationService reservationService;
     private final ParkingLogService parkingLogService;
+    private final ParkingMapper parkingMapper;
+    private final ReservationMapper reservationMapper;
 
     @PostMapping
     public ResponseEntity<String> register(@RequestBody ParkingDto dto) {
@@ -62,6 +64,7 @@ public class ParkingController {
     public LiveParkingStatusDto getLiveStatus() {
         return parkingService.getLiveParkingStatus();
     }
+
 
     @GetMapping("/status")
     public ParkingStatusResponseDto getParkingStatus(
@@ -126,5 +129,51 @@ public class ParkingController {
                 "available", available,
                 "usageRate", usageRate
         ));
+    }
+
+    @GetMapping("/data")
+    public Map<Long, Map<String, Object>> getParkingData() {
+        List<ParkingStatusDto> list = parkingMapper.selectParkingStatus();
+
+        Map<Long, Map<String, Object>> result = new HashMap<>();
+
+        for (ParkingStatusDto dto : list) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("name", dto.getName());
+            item.put("total", dto.getTotal());
+            item.put("occupied", dto.getOccupied());
+            item.put("rate", dto.getRate());
+            result.put(dto.getId(), item);
+        }
+
+        return result;
+    }
+    @GetMapping("/subscription-status")
+    public Map<String, Integer> getSubscriptionStatus() {
+        // 전체 정기권 공간 (ex. parking_config 테이블 등에서)
+        int totalSubscriptionSpots = parkingConfigMapper.getConfig().getFixedSubscriptionSpaces();
+
+        // 현재 활성화된 정기권 수 (결제 완료 + 기간 만료 X)
+        int activeSubscriptions = reservationMapper.countActiveSubscriptions(); // 이 함수는 직접 구현해야 함
+
+        // 가용 공간
+        int availableSubscriptionSpots = totalSubscriptionSpots - activeSubscriptions;
+
+        Map<String, Integer> result = new HashMap<>();
+        result.put("totalSubscriptionSpots", totalSubscriptionSpots);
+        result.put("activeSubscriptions", activeSubscriptions);
+        result.put("availableSubscriptionSpots", availableSubscriptionSpots);
+        return result;
+    }
+
+    @GetMapping("/my-parking-status")
+    public ResponseEntity<?> getMyParkingStatus(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long memberId = userDetails.getMember().getMemberId();
+        ParkingStatusDto parkingStatus = parkingLogService.getCurrentParkingStatus(memberId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("parking", parkingStatus); // parkingStatus가 null이어도 예외 안 남
+
+        return ResponseEntity.ok(response);
     }
 }

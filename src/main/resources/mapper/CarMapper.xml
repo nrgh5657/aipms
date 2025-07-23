@@ -10,6 +10,12 @@
         VALUES (#{memberId}, #{carNumber}, #{carType}, #{regDate})
     </insert>
 
+    <!-- 비회원 차량 등록 -->
+    <insert id="insertCarForGuest" parameterType="com.aipms.domain.Car">
+        INSERT INTO car (guest_token, car_number, car_type, reg_date)
+        VALUES (#{guestToken}, #{carNumber}, #{carType}, #{regDate})
+    </insert>
+
     <!-- 차량 수정 -->
     <update id="updateCar" parameterType="com.aipms.domain.Car">
         UPDATE car
@@ -41,6 +47,14 @@
         SELECT car_id, member_id, car_number, car_type, reg_date
         FROM car
         WHERE car_id = #{carId}
+    </select>
+
+    <!-- 번호판 조회 -->
+    <select id="findByCarNumber" parameterType="String" resultType="com.aipms.domain.Car">
+        SELECT * FROM car
+        WHERE car_number = #{carNumber}
+        ORDER BY reg_date DESC
+            LIMIT 1
     </select>
 
 </mapper>

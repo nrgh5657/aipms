@@ -8,4 +8,8 @@ import java.io.IOException;
 
 public interface PlateService {
     PlateDetectResponseDto detectPlateFromAI(MultipartFile file) throws IOException;
+
+    // ✅ cameraId를 추가
+    boolean processPlateEntry(String carNumber, int cameraId);
+
 }

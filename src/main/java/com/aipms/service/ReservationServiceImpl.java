@@ -6,6 +6,7 @@ import com.aipms.mapper.ReservationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,4 +69,23 @@ public class ReservationServiceImpl implements ReservationService {
     public int countPaidReservations() {
         return reservationMapper.countPaidReservations();
     }
+
+    @Override
+    public ReservationDto getActiveReservation(Long memberId) {
+        LocalDateTime now = LocalDateTime.now();
+        Reservation reservation = reservationMapper.findCurrentReservation(memberId, now);
+
+        if (reservation == null) return null;
+
+        ReservationDto dto = new ReservationDto();
+        dto.setReservationId(reservation.getReservationId());
+        dto.setMemberId(reservation.getMemberId());
+        dto.setVehicleNumber(reservation.getVehicleNumber());
+        dto.setReservationStart(reservation.getReservationStart());
+        dto.setReservationEnd(reservation.getReservationEnd());
+        dto.setStatus(reservation.getStatus());
+
+        return dto;
+    }
+
 }

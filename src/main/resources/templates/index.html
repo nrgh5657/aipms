@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>세이프파킹 - 통합관리시스템</title>
   <link rel="stylesheet" href="/css/unified-style.css">
+  <link rel="stylesheet" href="/css/entry-style.css"> <!-- 분리된 entry 관련 스타일 -->
+  <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=2u5xzguw5g&callback=initMap"></script>
 </head>
 <body>
 <header id="main-header">
@@ -34,8 +36,8 @@
     <div class="guest-menu" id="guest-menu">
       <ul>
         <li><a href="#features">서비스 소개</a></li>
-        <li><a href="#pricing">요금 안내</a></li>
         <li><a href="#location">위치 안내</a></li>
+        <li><a href="#pricing">요금 안내</a></li>
         <li><a href="#contact">고객지원</a></li>
       </ul>
     </div>
@@ -92,18 +94,39 @@
 <main id="main-content">
   <!-- 기본 화면 (로그인 전) -->
   <section class="welcome-section" id="welcome-section">
-    <div class="hero">
-      <h1>스마트파킹에 오신 것을 환영합니다</h1>
-      <p>AI 기반 주차관리와 화재감지 시스템으로 안전하고 편리한 주차 서비스를 제공합니다</p>
-      <div class="cta-buttons">
-        <button class="cta-btn primary" onclick="showUnifiedLogin()">서비스 이용하기</button>
-        <button class="cta-btn secondary" onclick="showSignupModal()">첫 주차 무료 체험</button>
+
+
+    <!-- 서비스 소개 -->
+    <div class="features-preview" id="features">
+      <h2>스마트파킹에 오신 것을 환영합니다</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🅿️</div>
+          <h3>스마트 예약</h3>
+          <p>시간/일일/월 주차 예약으로 편리하게 주차공간을 미리 확보하세요</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💳</div>
+          <h3>빠른 결제</h3>
+          <p>두 번의 클릭으로 간편하게! 빠르고 편리하게 주차 요금을 정산하세요.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔥</div>
+          <h3>화재 안전</h3>
+          <p>AI 화재감지 시스템으로 24시간 안전한 주차환경을 제공합니다</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>실시간 모니터링</h3>
+          <p>AI가 차량 번호판을 자동으로 인식해, 복잡한 주차 확인 없이 실시간으로 현황을 보여드립니다.</p>
+        </div>
       </div>
     </div>
 
+
     <!-- 실시간 주차장 현황 -->
     <div class="public-status">
-      <h2>실시간 주차장 현황</h2>
+      <h2>총 주차장 현황</h2>
       <div class="status-cards">
         <div class="status-card">
           <div class="status-icon">🅿️</div>
@@ -135,32 +158,94 @@
         </div>
       </div>
     </div>
+    <!-- 실시간 입차 인식 -->
 
-    <!-- 서비스 소개 -->
-    <div class="features-preview" id="features">
-      <h2>주요 서비스</h2>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🅿️</div>
-          <h3>스마트 예약</h3>
-          <p>시간/일일/월 주차 예약으로 편리하게 주차공간을 미리 확보하세요</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">💳</div>
-          <h3>간편 결제</h3>
-          <p>다양한 결제 방법과 자동결제로 편리하게 주차요금을 정산하세요</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🔥</div>
-          <h3>화재 안전</h3>
-          <p>AI 화재감지 시스템으로 24시간 안전한 주차환경을 제공합니다</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">📱</div>
-          <h3>실시간 모니터링</h3>
-          <p>CCTV와 IoT 센서로 실시간 주차장 현황을 확인할 수 있습니다</p>
+    <div class="live-entry-section">
+
+
+      <div class="public-status">
+        <h2>📸 실시간 입차 인식</h2>
+        <div class="entry-card-body-horizontal">
+
+          <!-- 📁 왼쪽: 이미지 업로드 -->
+          <div class="upload-section">
+            <p class="entry-label">차량 이미지 업로드</p>
+            <div class="image-placeholder" id="image-preview" style="width:300px; height:300px; background:#f1f3f5; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+              <span style="color: #aaa;">300x300</span>
+            </div>
+            <input type="file" id="image-upload" accept="image/*" />
+          </div>
+
+
+          <!-- 🔍 오른쪽: 번호판 인식 -->
+          <div class="detect-section">
+
+            <div style="margin: 0px;">
+              <label for="camera-id"><h4>📸 카메라 선택 (주차장 위치):</h4> </label>
+              <div class="custom-select" style="margin: 10px;">
+                <select id="camera-id">
+                  <option value="1">천호 주차장</option>
+                  <option value="2">서초 주차장</option>
+                  <option value="3">송파 주차장</option>
+                </select>
+              </div>
+              <br>
+              <div style="margin: 15px;">
+                <button class="detect-btn" onclick="uploadAndRecognize()">번호판 인식</button>
+              </div>
+            </div>
+
+
+            <!-- 결과 영역 -->
+            <div class="entry-result-card" id="entry-result" style="display: none;">
+              <div class="result-item">
+                <span class="result-label">차량 번호</span>
+                <span class="result-value" id="plate-number"></span>
+              </div>
+              <div class="result-item">
+                <span class="result-label">회원 여부</span>
+                <span class="result-value" id="member-status"></span>
+              </div>
+              <div class="result-item">
+                <span class="result-label">입차 시간</span>
+                <span class="result-value" id="entry-time"></span>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </div>
+    </div>
+
+
+
+
+
+
+
+
+    <!-- 위치 안내 섹션 -->
+    <div class="location-section" id="location">
+      <h2>🚗 실시간 주차장 현황</h2>
+      <div id="map" style="width:100%;height:400px;"></div>
+      <!-- 실시간 주차장 현황 -->
+      <section class="parking-status">
+        <div class="status-grid" id="status-grid">
+          <!-- JS로 채워짐 -->
+        </div>
+      </section>
+
+      <br>
+      <div class="operating-hours">
+        <h4>🕒 운영시간</h4>
+        <p>24시간 운영 (연중무휴)</p>
+        <p>고객센터: 09:00 - 18:00</p>
+      </div>
+    </div>
+
+
+    </div>
     </div>
 
     <!-- 요금 안내 섹션 -->
@@ -203,40 +288,6 @@
             <li>✓ 전용 앱 서비스</li>
             <li>✓ 24시간 고객지원</li>
           </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- 위치 안내 섹션 -->
-    <div class="location-section" id="location">
-      <h2>위치 안내</h2>
-      <div class="location-content">
-        <div class="location-info">
-          <h3>📍 세이프파킹 타워</h3>
-          <div class="address">
-            <p><strong>주소:</strong> 서울특별시 강남구 테헤란로 123</p>
-            <p><strong>지하철:</strong> 2호선 역삼역 3번 출구 도보 5분</p>
-            <p><strong>버스:</strong> 146, 360, 740번</p>
-          </div>
-          <div class="operating-hours">
-            <h4>🕒 운영시간</h4>
-            <p>24시간 운영 (연중무휴)</p>
-            <p>고객센터: 09:00 - 18:00</p>
-          </div>
-          <div class="facilities">
-            <h4>🏢 편의시설</h4>
-            <p>• 전기차 충전소 (20대)</p>
-            <p>• 세차장 및 정비소</p>
-            <p>• 편의점 및 카페</p>
-            <p>• 장애인 전용 구역</p>
-          </div>
-        </div>
-        <div class="location-map">
-          <div class="map-placeholder">
-            <div class="map-icon">🗺️</div>
-            <p>지도 서비스</p>
-            <button class="map-btn" onclick="openMap()">길찾기</button>
-          </div>
         </div>
       </div>
     </div>
@@ -464,7 +515,10 @@
   <p>&copy; 2025 스마트파킹 | 안전하고 효율적인 주차장 관리</p>
 </footer>
 
-
 <script src="/js/unified-script.js"></script>
+<script src="/js/entry-script.js"></script> <!-- 분리된 JS -->
+
+
+
 </body>
 </html>

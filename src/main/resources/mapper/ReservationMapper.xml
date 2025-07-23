@@ -34,4 +34,26 @@
           AND reservation_end &gt;= NOW()
     </select>
 
+    <select id="findUpcomingReservation" parameterType="long" resultType="com.aipms.dto.ReservationDto">
+        SELECT
+        reservation_id   AS reservationId,
+        member_id        AS memberId,
+        vehicle_number   AS vehicleNumber,
+        reservation_start AS reservationStart,
+        reservation_end   AS reservationEnd,
+        status
+        FROM reservation
+        WHERE member_id = #{memberId}
+        AND status = 'PAID'
+        AND reservation_end >= NOW()  <!-- 🔍 현재 시각 기준으로 아직 유효한 예약만 -->
+        ORDER BY reservation_start ASC
+        LIMIT 1
+    </select>
+
+    <select id="countActiveSubscriptions" resultType="int">
+        SELECT COUNT(*)
+        FROM subscription
+        WHERE active = 1
+    </select>
+
 </mapper>

@@ -15,4 +15,8 @@ public class ParkingLogWithMemberDto {
     private Integer cameraId;
     private LocalDateTime createdAt;
     private String memberName;  // 신청자 이름
+
+    // 💡 실시간 계산용 필드
+    private Long durationMinutes;      // 경과시간 (분 단위)
+    private Integer estimatedFee;      // 실시간 요금
 }

@@ -5,6 +5,7 @@ import com.aipms.domain.ParkingLog;
 import com.aipms.domain.Payment;
 import com.aipms.dto.ExitResponseDto;
 import com.aipms.dto.ParkingLogWithMemberDto;
+import com.aipms.dto.ParkingStatusDto;
 import com.aipms.mapper.MemberMapper;
 import com.aipms.mapper.ParkingLogMapper;
 import com.aipms.mapper.PaymentMapper;
@@ -99,6 +100,24 @@ public class ParkingLogServiceImpl implements ParkingLogService {
     @Override
     public int countCurrentlyParkedCars() {
         return parkingLogMapper.countCurrentlyParkedCars();
+    }
+
+    @Override
+    public ParkingStatusDto getCurrentParkingStatus(Long memberId) {
+        ParkingLog log = parkingLogMapper.findLatestUnpaidByMemberId(memberId);
+        if (log == null || log.getEntryTime() == null) return null;
+
+        long minutes = Duration.between(log.getEntryTime(), LocalDateTime.now()).toMinutes();
+        int fee = calculateFee(log.getEntryTime());
+
+        ParkingStatusDto dto = new ParkingStatusDto();
+        dto.setId(log.getId());
+        dto.setCarNumber(log.getCarNumber());
+        dto.setEntryTime(log.getEntryTime());
+        dto.setDurationMinutes(minutes);
+        dto.setEstimatedFee(fee);
+
+        return dto;
     }
 
 

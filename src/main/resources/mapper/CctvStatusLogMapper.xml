@@ -15,4 +15,10 @@
                  )
     </insert>
 
+    <select id="findParkingIdByCameraId" resultType="long">
+        SELECT parking_id
+        FROM cctv_status_log
+        WHERE id = #{cameraId}
+    </select>
+
 </mapper>

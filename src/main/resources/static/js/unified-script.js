@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('✅ 메인 페이지 초기화 완료');
 });
 
+
 function checkCommonLibraries() {
   return typeof showToast === 'function' &&
       typeof apiRequest === 'function';
@@ -56,16 +57,16 @@ async function loadParkingStats() {
 }
 
 function updateParkingStats(data) {
-  const statNumbers = document.querySelectorAll('.stat-number');
+  const statNumbers = document.querySelectorAll('.status-number');
 
-  if (statNumbers.length >= 3) {
-    // 애니메이션과 함께 숫자 업데이트
-    animateNumber(statNumbers[0], data.totalSlots || 247);
-    animateNumber(statNumbers[1], data.customerSatisfaction || 98, '%');
-    statNumbers[2].textContent = '24/7';
+  if (statNumbers.length >= 4) {
+    animateNumber(statNumbers[0], data.totalSlots || 0);                   // 총 주차면
+    animateNumber(statNumbers[1], data.occupiedSlots || 0);                // 현재 이용중
+    animateNumber(statNumbers[2], data.availableSlots || 0);               // 빈 주차면
+    animateNumber(statNumbers[3], data.occupancyRate || 0, '%');           // 이용률 (%)
   }
 
-  console.log('✅ 주차장 현황 업데이트 완료');
+  console.log('✅ 실시간 주차장 현황 업데이트 완료');
 }
 
 function animateNumber(element, targetValue, suffix = '') {
@@ -312,3 +313,52 @@ window.addEventListener('load', function() {
 window.showDirections = showDirections;
 window.checkAvailability = checkAvailability;
 window.toggleMobileMenu = toggleMobileMenu;
+
+async function apiRequest(url, options = {}) {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', // 세션 쿠키 유지
+    ...options,
+  });
+
+  const contentType = response.headers.get('content-type');
+  if (!response.ok || !contentType?.includes('application/json')) {
+    throw new Error('API 응답 오류 또는 로그인 필요');
+  }
+
+  return await response.json();
+}
+function showToast(message, type = 'info', duration = 3000) {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+
+  Object.assign(toast.style, {
+    position: 'fixed',
+    bottom: '40px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: type === 'error' ? '#dc3545' : '#333',
+    color: 'white',
+    padding: '12px 20px',
+    borderRadius: '6px',
+    fontSize: '14px',
+    zIndex: 9999,
+    opacity: 0,
+    transition: 'opacity 0.3s ease-in-out'
+  });
+
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.style.opacity = 1;
+  });
+
+  setTimeout(() => {
+    toast.style.opacity = 0;
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}

@@ -3,6 +3,7 @@ package com.aipms.service;
 import com.aipms.domain.ParkingLog;
 import com.aipms.dto.ExitResponseDto;
 import com.aipms.dto.ParkingLogWithMemberDto;
+import com.aipms.dto.ParkingStatusDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,4 +23,6 @@ public interface ParkingLogService {
 
 
     int countCurrentlyParkedCars();
+
+    ParkingStatusDto getCurrentParkingStatus(Long memberId);
 }

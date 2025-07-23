@@ -12,4 +12,5 @@ public interface ReservationService {
     List<ReservationDto> getAllReservations();
     int countPaidReservations();
 
+    ReservationDto getActiveReservation(Long memberId);
 }

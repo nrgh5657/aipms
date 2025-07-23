@@ -38,4 +38,5 @@ public interface ParkingLogMapper {
     void updatePaymentAndExitInfo(Map<String,? extends Serializable> entryId);
 
     int countCurrentlyParkedCars();
+
 }

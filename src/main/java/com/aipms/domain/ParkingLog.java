@@ -20,5 +20,6 @@ public class ParkingLog {
     private String paymentMethod;
     private Integer fee;
     private Long paymentId;
+    private String imagePath;
 
 }

@@ -97,23 +97,24 @@ async function loadCurrentParkingStatus() {
   console.log('🚗 현재 주차 상태 로드 중...');
 
   try {
-    const data = await apiRequest('/api/parking/status');
-    if (!data) return false;
+    const data = await apiRequest('/api/parking/my-parking-status');
+    console.log('📦 API 응답 데이터:', data); // 🔍 여기에 출력 추가
 
-    // 현재 주차중 상태 업데이트
-    if (data.currentStatus && data.currentStatus.type === 'active') {
-      updateCurrentParkingDisplay(data.currentStatus);
+    if (!data || !data.parking) {
+      console.log('🚫 현재 주차중 아님');
+      clearCurrentParkingDisplay();  // 🆕 상태 초기화 함수 필요
+      return false;
     }
 
-    // 예약 상태 업데이트
-    if (data.reservationStatus && data.reservationStatus.type === 'reserved') {
-      updateReservationDisplay(data.reservationStatus);
-    }
+    const parking = data.parking;
 
-    // 이용 내역 업데이트
-    if (data.history && data.history.length > 0) {
-      updateRecentHistoryDisplay(data.history);
-    }
+    const currentStatus = {
+      elapsedTime: formatElapsedTime(parking.durationMinutes),
+      estimatedFee: parking.estimatedFee,
+      entryTime: formatDateTime(parking.entryTime)
+    };
+
+    updateCurrentParkingDisplay(currentStatus);
 
     console.log('✅ 현재 주차 상태 업데이트 완료');
     return true;
@@ -124,30 +125,55 @@ async function loadCurrentParkingStatus() {
 }
 
 function updateCurrentParkingDisplay(currentStatus) {
-  // 경과시간 업데이트
-  const elapsedElement = document.getElementById('elapsed-time');
-  if (elapsedElement) {
-    elapsedElement.textContent = currentStatus.elapsedTime;
-    elapsedElement.dataset.apiUpdated = 'true';
+  console.log('📦 렌더링할 파킹 데이터:', currentStatus);
+
+  const entryTimeEl = document.getElementById('entry-time');
+  const elapsedTimeEl = document.getElementById('elapsed-time');
+  const estimatedFeeEl = document.querySelector('.estimated-fee');
+
+  if (!entryTimeEl || !elapsedTimeEl || !estimatedFeeEl) {
+    console.warn('❌ 일부 요소가 존재하지 않음');
+    return;
   }
 
-  // 주차구역 업데이트
-  const slotElements = document.querySelectorAll('.parking-slot');
-  slotElements.forEach(el => {
-    if (el) el.textContent = currentStatus.slotName;
-  });
+  // 문자열 포맷만 정확히 전달됐는지 출력
+  console.log('📅 입차시간:', currentStatus.entryTime);
+  console.log('⏱️ 경과시간:', currentStatus.elapsedTime);
+  console.log('💰 요금:', currentStatus.estimatedFee);
 
-  // 예상요금 업데이트
-  const feeElements = document.querySelectorAll('.estimated-fee, .current-fee');
-  feeElements.forEach(el => {
-    if (el) el.textContent = '₩' + currentStatus.estimatedFee.toLocaleString();
-  });
+  entryTimeEl.textContent = currentStatus.entryTime;
+  elapsedTimeEl.textContent = currentStatus.elapsedTime;
+  estimatedFeeEl.textContent = `₩${(currentStatus.estimatedFee || 0).toLocaleString()}`;
+}
 
-  // 입차시간 업데이트
-  const entryTimeElement = document.getElementById('entry-time');
-  if (entryTimeElement) {
-    entryTimeElement.textContent = currentStatus.entryTime;
+function clearCurrentParkingDisplay() {
+  const entryTimeEl = document.getElementById('entry-time');
+  const elapsedTimeEl = document.getElementById('elapsed-time');
+  const estimatedFeeEl = document.querySelector('.estimated-fee');
+
+  if (entryTimeEl) entryTimeEl.textContent = '-';
+  if (elapsedTimeEl) elapsedTimeEl.textContent = '-';
+  if (estimatedFeeEl) estimatedFeeEl.textContent = '₩0';
+
+  // 추가로 상태 뱃지도 변경
+  const statusBadge = document.querySelector('.status-badge');
+  if (statusBadge) {
+    statusBadge.textContent = '미입차';
+    statusBadge.className = 'status-badge'; // class 초기화
   }
+
+  // 버튼 숨기기
+  const exitBtn = document.getElementById('exitBtn');
+  if (exitBtn) exitBtn.style.display = 'none';
+}
+
+function formatElapsedTime(durationMinutes) {
+  if (typeof durationMinutes !== 'number' || isNaN(durationMinutes)) return '-';
+
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+
+  return hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
 }
 
 function updateReservationDisplay(reservationStatus) {

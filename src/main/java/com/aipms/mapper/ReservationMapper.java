@@ -3,6 +3,7 @@ package com.aipms.mapper;
 import com.aipms.domain.Reservation;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -14,4 +15,8 @@ public interface ReservationMapper {
     List<Reservation> findAll();
 
     int countPaidReservations();
+
+    Reservation findCurrentReservation(Long memberId, LocalDateTime now);
+
+    int countActiveSubscriptions();
 }

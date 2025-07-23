@@ -63,7 +63,8 @@ public class SecurityConfig {
                                 "/api/membership/info",
                                 "/api/parking-log/logs",
                                 "/error", "/error/**",
-                                "/fire/**", "/fireDetect/detected","/detect", "/fast-payment"
+                                "/fire/**", "/fireDetect/detected","/detect", "/fast-payment",
+                                "/search","/api/parking/data"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

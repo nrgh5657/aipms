@@ -2,9 +2,11 @@ package com.aipms.controller;
 
 import com.aipms.dto.PageDto;
 import com.aipms.dto.ReservationDto;
+import com.aipms.security.CustomUserDetails;
 import com.aipms.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -52,6 +54,15 @@ public class ReservationController {
         );
 
         return ResponseEntity.ok(pageDto);
+    }
+
+    @GetMapping("/reservation/current")
+    public ResponseEntity<?> getCurrentReservation(@AuthenticationPrincipal CustomUserDetails user) {
+        ReservationDto dto = reservationService.getActiveReservation(user.getMember().getMemberId());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("reservation", dto); // null 가능
+        return ResponseEntity.ok(response);
     }
 
 
