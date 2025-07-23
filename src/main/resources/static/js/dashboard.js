@@ -124,6 +124,33 @@ async function loadCurrentParkingStatus() {
   }
 }
 
+async function loadUpcomingReservation() {
+  console.log('📅 예정된 예약 정보 로드 중...');
+
+  try {
+    const data = await apiRequest('/api/reservations/current');
+    console.log('📦 예약 응답 데이터:', data);
+
+    const reservation = data?.reservation;
+
+    if (!reservation) {
+      console.log('📭 유효한 예약 없음');
+      clearReservationDisplay();
+      return;
+    }
+
+    updateReservationDisplay({
+      startTime: formatDateTime(new Date(reservation.reservationStart)),
+      vehicleNumber: reservation.vehicleNumber,
+      fee: reservation.fee ?? 0,
+    });
+
+    console.log('✅ 예약 상태 업데이트 완료');
+  } catch (error) {
+    console.error('❌ 예약 정보 로드 실패:', error);
+  }
+}
+
 function updateCurrentParkingDisplay(currentStatus) {
   console.log('📦 렌더링할 파킹 데이터:', currentStatus);
 
@@ -176,19 +203,20 @@ function formatElapsedTime(durationMinutes) {
   return hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
 }
 
-function updateReservationDisplay(reservationStatus) {
-  const reservationElements = {
-    slot: document.querySelectorAll('.reserved-slot'),
-    time: document.querySelectorAll('.reserved-time'),
-    duration: document.querySelectorAll('.reserved-duration'),
-    fee: document.querySelectorAll('.reserved-fee')
-  };
-
-  reservationElements.slot.forEach(el => el.textContent = reservationStatus.slotName);
-  reservationElements.time.forEach(el => el.textContent = reservationStatus.reservationTime);
-  reservationElements.duration.forEach(el => el.textContent = reservationStatus.duration + '시간');
-  reservationElements.fee.forEach(el => el.textContent = '₩' + reservationStatus.reservationFee.toLocaleString());
+function updateReservationDisplay({ startTime, vehicleNumber, fee }) {
+  document.querySelector('.reserved-start-time').textContent = startTime;
+  document.querySelector('.reserved-vehicle').textContent = vehicleNumber;
+  document.querySelector('.reserved-fee').textContent = `₩${fee.toLocaleString()}`;
 }
+
+function clearReservationDisplay() {
+  updateReservationDisplay({
+    startTime: '-',
+    vehicleNumber: '-',
+    fee: 0
+  });
+}
+
 
 function updateRecentHistoryDisplay(history) {
   const historyContainer = document.querySelector('.recent-history-list');
@@ -396,14 +424,15 @@ function startRealTimeUpdates() {
       await Promise.all([
         loadLiveStatus(),
         loadRealtimeStatus(),
-        loadCurrentParkingStatus()
+        loadCurrentParkingStatus(),
+        loadUpcomingReservation()
       ]);
 
       console.log('✅ 실시간 업데이트 완료');
     } catch (error) {
       console.error('❌ 실시간 업데이트 실패:', error);
     }
-  }, 30000); // 30초
+  }, 60000); // 1분
 
   console.log('⏰ 실시간 업데이트 시작 (30초 간격)');
 }
@@ -566,6 +595,7 @@ async function loadInitialData() {
     // 순차적 로드 (중요한 순서대로)
     await loadLiveStatus();
     await loadCurrentParkingStatus();
+    await loadUpcomingReservation();
 
     // 병렬 로드 (나머지)
     await Promise.all([

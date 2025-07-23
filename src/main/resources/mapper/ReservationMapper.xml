@@ -5,9 +5,9 @@
 
 <mapper namespace="com.aipms.mapper.ReservationMapper">
 
-    <insert id="insertReservation" parameterType="com.aipms.domain.Reservation">
-        INSERT INTO reservation (member_id, vehicle_number, reservation_start, reservation_end, status)
-        VALUES (#{memberId}, #{vehicleNumber}, #{reservationStart}, #{reservationEnd}, #{status})
+    <insert id="insertReservation" parameterType="com.aipms.domain.Reservation" useGeneratedKeys="true" keyProperty="reservationId">
+        INSERT INTO reservation (member_id, vehicle_number, reservation_start, reservation_end, status, fee)
+        VALUES (#{memberId}, #{vehicleNumber}, #{reservationStart}, #{reservationEnd}, #{status}, #{fee})
     </insert>
 
     <select id="findByMemberId" resultType="com.aipms.domain.Reservation">
@@ -41,7 +41,8 @@
         vehicle_number   AS vehicleNumber,
         reservation_start AS reservationStart,
         reservation_end   AS reservationEnd,
-        status
+        status,
+        fee
         FROM reservation
         WHERE member_id = #{memberId}
         AND status = 'PAID'

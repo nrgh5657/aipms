@@ -1,7 +1,9 @@
 package com.aipms.service;
 
+import com.aipms.domain.Payment;
 import com.aipms.domain.Reservation;
 import com.aipms.dto.ReservationDto;
+import com.aipms.mapper.PaymentMapper;
 import com.aipms.mapper.ReservationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,16 +17,38 @@ import java.util.stream.Collectors;
 public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationMapper reservationMapper;
+    private final PaymentMapper paymentMapper;
 
     @Override
     public void makeReservation(ReservationDto dto) {
-        Reservation r = new Reservation();
-        r.setMemberId(dto.getMemberId());
-        r.setVehicleNumber(dto.getVehicleNumber());
-        r.setReservationStart(dto.getReservationStart());
-        r.setReservationEnd(dto.getReservationEnd());
-        r.setStatus("PAID");
-        reservationMapper.insertReservation(r);
+        // 1. 예약 정보 저장
+        Reservation reservation = new Reservation();
+        reservation.setMemberId(dto.getMemberId());
+        reservation.setVehicleNumber(dto.getVehicleNumber());
+        reservation.setReservationStart(dto.getReservationStart());
+        reservation.setReservationEnd(dto.getReservationEnd());
+        reservation.setStatus("PAID");
+        reservation.setFee(20000); // 고정
+
+        reservationMapper.insertReservation(reservation); // ✅ 예약 저장
+        Long reservationId = reservation.getReservationId(); // PK 가져오기 (useGeneratedKeys=true)
+
+        // 2. 결제 정보 저장
+        Payment payment = new Payment();
+        payment.setMemberId(dto.getMemberId());
+        payment.setReservationId(reservationId); // ✅ 예약 ID 연동
+        payment.setTotalFee(20000);
+        payment.setPaymentMethod(dto.getPaymentMethod()); // JS에서 넘겨줘야 함
+        payment.setGateway(dto.getGateway());
+        payment.setPaid(true);
+        payment.setStatus("결제 완료");
+        payment.setPaymentType("일주차"); // 고정
+        payment.setMerchantUid(dto.getMerchantUid());
+        payment.setImpUid(dto.getImpUid());
+        payment.setPaymentTime(LocalDateTime.now());
+        payment.setCarNumber(dto.getVehicleNumber());
+
+        paymentMapper.insertPayment(payment);
     }
 
     @Override
@@ -73,19 +97,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public ReservationDto getActiveReservation(Long memberId) {
         LocalDateTime now = LocalDateTime.now();
-        Reservation reservation = reservationMapper.findCurrentReservation(memberId, now);
-
-        if (reservation == null) return null;
-
-        ReservationDto dto = new ReservationDto();
-        dto.setReservationId(reservation.getReservationId());
-        dto.setMemberId(reservation.getMemberId());
-        dto.setVehicleNumber(reservation.getVehicleNumber());
-        dto.setReservationStart(reservation.getReservationStart());
-        dto.setReservationEnd(reservation.getReservationEnd());
-        dto.setStatus(reservation.getStatus());
-
-        return dto;
+        return reservationMapper.findUpcomingReservation(memberId, now); // ✅ 그대로 리턴
     }
 
 }

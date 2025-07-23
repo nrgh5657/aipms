@@ -106,6 +106,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         memberMapper.updateSubscriptionStatus(memberId, true);
 
+        // 🔁 subscription_id 확인
+        Long subscriptionId = sub.getSubscriptionId(); // 또는 getId(), getId() 이름에 따라
+
         // ✅ 2. payment 테이블에도 결제 정보 저장
         Payment payment = new Payment();
         payment.setMemberId(memberId);
@@ -119,6 +122,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         payment.setImpUid(impUid);
         payment.setPaymentTime(now);
         payment.setCarNumber(carNumber);
+
+        payment.setSubscriptionId(subscriptionId);
 
         paymentMapper.insertPayment(payment); // 기존 insert 구문 그대로 사용
     }

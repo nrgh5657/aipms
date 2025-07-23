@@ -56,7 +56,7 @@ public class ReservationController {
         return ResponseEntity.ok(pageDto);
     }
 
-    @GetMapping("/reservation/current")
+    @GetMapping("/current")
     public ResponseEntity<?> getCurrentReservation(@AuthenticationPrincipal CustomUserDetails user) {
         ReservationDto dto = reservationService.getActiveReservation(user.getMember().getMemberId());
 

@@ -1,6 +1,7 @@
 package com.aipms.mapper;
 
 import com.aipms.domain.Reservation;
+import com.aipms.dto.ReservationDto;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ public interface ReservationMapper {
 
     int countPaidReservations();
 
-    Reservation findCurrentReservation(Long memberId, LocalDateTime now);
+    ReservationDto findUpcomingReservation(Long memberId, LocalDateTime now);
 
     int countActiveSubscriptions();
 }

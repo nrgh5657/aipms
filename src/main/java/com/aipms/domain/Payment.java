@@ -22,4 +22,8 @@ public class Payment {
     private String impUid;
     private String paymentType;
     private String carNumber;
+    private Long reservationId; // 예약 결제 시만 사용
+    private Long subscriptionId;//정기권 결제 시만 사용
+    
+
 }

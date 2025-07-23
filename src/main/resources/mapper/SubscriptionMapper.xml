@@ -39,7 +39,7 @@
         SELECT COUNT(*) > 0 FROM subscription WHERE member_id = #{memberId}
     </select>
 
-    <insert id="insertSubscription" parameterType="com.aipms.domain.Subscription">
+    <insert id="insertSubscription" parameterType="com.aipms.domain.Subscription" useGeneratedKeys="true" keyProperty="subscriptionId">
         INSERT INTO subscription (member_id, customer_uid, start_date, end_date, active)
         VALUES (#{memberId}, #{customerUid}, NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH), true)
     </insert>

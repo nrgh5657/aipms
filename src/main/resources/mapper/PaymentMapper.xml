@@ -8,6 +8,7 @@
     <insert id="insertPayment" parameterType="com.aipms.domain.Payment" useGeneratedKeys="true" keyProperty="paymentId">
         INSERT INTO payment (
             member_id,
+            reservation_id,
             entry_id,
             total_fee,
             payment_method,
@@ -23,6 +24,7 @@
         )
         VALUES (
                 #{memberId},
+                #{reservationId},
                 #{entryId},
                 #{totalFee},
                 #{paymentMethod},

@@ -193,9 +193,11 @@ async function submitDailyReservation(event) {
         reservationStart: `${start}T00:00:00`,
         reservationEnd: `${end}T23:59:59`,
         status: "CONFIRMED",  // 결제 완료 시 확정
+        fee: totalAmount,
         impUid: rsp.imp_uid,
         merchantUid: rsp.merchant_uid,
-        amount: totalAmount
+        paymentMethod: rsp.pay_method,         // ✅ 추가
+        gateway: rsp.pg_provider,              // ✅ 필요 시 추가
       };
 
       const result = await apiPost('/api/reservations/apply', payload);

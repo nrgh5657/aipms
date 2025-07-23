@@ -12,4 +12,9 @@ public class ReservationDto {
     private LocalDateTime reservationStart;
     private LocalDateTime reservationEnd;
     private String status;
+    private Integer fee;
+    private String paymentMethod;
+    private String impUid;
+    private String merchantUid;
+    private String gateway;
 }
