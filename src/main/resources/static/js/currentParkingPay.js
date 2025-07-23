@@ -38,8 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         IMP.request_pay({
-            pg: 'kakaopay',
-           // pg: 'nice_v',
+            //pg: 'kakaopay',
+            pg: 'nice_v2',
             pay_method: 'card',
             merchant_uid: 'order_' + Date.now(),
             name: '현재 주차 요금 결제',

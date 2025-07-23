@@ -6,10 +6,7 @@ import com.aipms.dto.ParkingRealtimeStatusResponseDto;
 import com.aipms.dto.ParkingStatusResponseDto;
 import com.aipms.mapper.ParkingConfigMapper;
 import com.aipms.mapper.ParkingLogMapper;
-import com.aipms.service.ParkingAvailabilityService;
-import com.aipms.service.ParkingRealtimeStatusService;
-import com.aipms.service.ParkingService;
-import com.aipms.service.ParkingStatusService;
+import com.aipms.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,6 +27,8 @@ public class ParkingController {
     private final ParkingAvailabilityService parkingAvailabilityService;
     private final ParkingConfigMapper parkingConfigMapper;
     private final ParkingLogMapper parkingLogMapper;
+    private final ReservationService reservationService;
+    private final ParkingLogService parkingLogService;
 
     @PostMapping
     public ResponseEntity<String> register(@RequestBody ParkingDto dto) {
@@ -114,12 +113,15 @@ public class ParkingController {
 
         int total = config.getTotalSpaces();
         int fixed = config.getFixedSubscriptionSpaces();
-        int used = parkingLogMapper.countCurrentlyParkedCars();
+        int parkedCars = parkingLogService.countCurrentlyParkedCars();
+        int reserved = reservationService.countPaidReservations();
+        int used = parkedCars + reserved;
         int available = parkingAvailabilityService.getAvailableNormalSpots();
         int usageRate = (int) ((used / (double) total) * 100);
 
         return ResponseEntity.ok(Map.of(
                 "total", total,
+                "fixed", fixed,
                 "used", used,
                 "available", available,
                 "usageRate", usageRate

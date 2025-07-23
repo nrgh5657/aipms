@@ -21,4 +21,5 @@ public interface ParkingLogService {
     ExitResponseDto processExit(String carNumber);
 
 
+    int countCurrentlyParkedCars();
 }

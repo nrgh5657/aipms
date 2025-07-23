@@ -96,6 +96,11 @@ public class ParkingLogServiceImpl implements ParkingLogService {
         return new ExitResponseDto(true, "출차 완료", false, 0);
     }
 
+    @Override
+    public int countCurrentlyParkedCars() {
+        return parkingLogMapper.countCurrentlyParkedCars();
+    }
+
 
     @Override
     public List<ParkingLogWithMemberDto> getPagedLogs(int page, int size) {

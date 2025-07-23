@@ -2,6 +2,11 @@
 // 예약 시스템 초기화
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
+  if (window.IMP) {
+    IMP.init("imp18655565"); // ✅ 너의 아임포트 가맹점 코드로 교체
+  } else {
+    console.error("❌ IMP 객체를 찾을 수 없습니다.");
+  }
   initializeCommon();
   initializeReservationPage();
 });
@@ -167,20 +172,42 @@ async function submitDailyReservation(event) {
     return;
   }
 
-  const payload = {
-    memberId,
-    vehicleNumber: car,
-    reservationStart: `${start}T00:00:00`,
-    reservationEnd: `${end}T23:59:59`,
-    status: "WAITING"
-  };
+  const days = Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24)) + 1;
+  const totalAmount = days * 20000;
 
-  const response = await apiPost('/api/reservations/apply', payload);
-  if (response?.success) {
-    alert("✅ 일일 주차 신청 완료!");
-  } else {
-    alert("❌ 예약 실패: " + (response?.message || "서버 오류"));
-  }
+  const merchantUid = 'daily_' + new Date().getTime();
+
+  IMP.request_pay({
+    pg: "kakaopay", // 결제사
+    pay_method: "card",
+    merchant_uid: merchantUid,
+    name: "일일 주차 예약",
+    amount: totalAmount,
+    buyer_email: userData.email,
+    buyer_name: userData.user
+  }, async function (rsp) {
+    if (rsp.success) {
+      const payload = {
+        memberId,
+        vehicleNumber: car,
+        reservationStart: `${start}T00:00:00`,
+        reservationEnd: `${end}T23:59:59`,
+        status: "CONFIRMED",  // 결제 완료 시 확정
+        impUid: rsp.imp_uid,
+        merchantUid: rsp.merchant_uid,
+        amount: totalAmount
+      };
+
+      const result = await apiPost('/api/reservations/apply', payload);
+      if (result?.success) {
+        alert("✅ 예약 및 결제 완료!");
+      } else {
+        alert("⚠️ 예약 저장 실패");
+      }
+    } else {
+      alert("❌ 결제 실패 또는 취소됨");
+    }
+  });
 }
 
 // ========================================

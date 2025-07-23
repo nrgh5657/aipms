@@ -74,11 +74,12 @@ async function loadLiveStatus() {
     if (!data) return false;
 
     const statusNumbers = document.querySelectorAll('.status-number');
-    if (statusNumbers.length >= 4) {
+    if (statusNumbers.length >= 5) {
       statusNumbers[0].textContent = data.total || 247;
-      statusNumbers[1].textContent = data.used || 189;
-      statusNumbers[2].textContent = data.available || 58;
-      statusNumbers[3].textContent = (data.usageRate || 76) + '%';
+      statusNumbers[1].textContent = data.fixed ;
+      statusNumbers[2].textContent = data.used || 189;
+      statusNumbers[3].textContent = data.available || 58;
+      statusNumbers[4].textContent = (data.usageRate || 76) + '%';
 
       console.log('📊 실시간 현황 업데이트 완료');
     }

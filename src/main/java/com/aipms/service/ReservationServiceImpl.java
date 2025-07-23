@@ -22,7 +22,7 @@ public class ReservationServiceImpl implements ReservationService {
         r.setVehicleNumber(dto.getVehicleNumber());
         r.setReservationStart(dto.getReservationStart());
         r.setReservationEnd(dto.getReservationEnd());
-        r.setStatus("WAITING");
+        r.setStatus("PAID");
         reservationMapper.insertReservation(r);
     }
 
@@ -62,5 +62,10 @@ public class ReservationServiceImpl implements ReservationService {
             dto.setStatus(r.getStatus());
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public int countPaidReservations() {
+        return reservationMapper.countPaidReservations();
     }
 }
