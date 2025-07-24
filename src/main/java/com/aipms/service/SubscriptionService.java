@@ -24,4 +24,6 @@ public interface SubscriptionService {
     boolean isActiveSubscription(Long memberId);
 
     boolean isMonthlySubscriptionAvailable();
+
+    void refundSubscription(Long memberId, String reason) ;
 }

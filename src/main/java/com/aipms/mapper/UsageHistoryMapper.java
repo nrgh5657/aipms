@@ -14,4 +14,6 @@ public interface UsageHistoryMapper {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    List<UsageHistoryDto> selectRecentUsageHistoryByMemberId(Long memberId);
 }

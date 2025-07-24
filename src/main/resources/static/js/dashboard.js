@@ -143,11 +143,28 @@ async function loadUpcomingReservation() {
       startTime: formatDateTime(new Date(reservation.reservationStart)),
       vehicleNumber: reservation.vehicleNumber,
       fee: reservation.fee ?? 0,
+      reservationId: reservation.reservationId
     });
+
+    const cancelBtn = document.querySelector('.cancel-btn');
+    if (cancelBtn) {
+      cancelBtn.dataset.reservationId = reservation.reservationId;
+    }
 
     console.log('✅ 예약 상태 업데이트 완료');
   } catch (error) {
     console.error('❌ 예약 정보 로드 실패:', error);
+  }
+}
+
+async function loadRecentUsageHistory() {
+  try {
+    const res = await fetch('/api/usage/recent', { credentials: 'include' });
+    const data = await res.json();
+    console.log('📦 usage history 응답:', data); // ← 이거 꼭 넣어봐
+    updateRecentHistoryDisplay(data);
+  } catch (e) {
+    console.error('❌ 최근 이용내역 불러오기 실패:', e);
   }
 }
 
@@ -203,10 +220,15 @@ function formatElapsedTime(durationMinutes) {
   return hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
 }
 
-function updateReservationDisplay({ startTime, vehicleNumber, fee }) {
+function updateReservationDisplay({ startTime, vehicleNumber, fee, reservationId }) {
   document.querySelector('.reserved-start-time').textContent = startTime;
   document.querySelector('.reserved-vehicle').textContent = vehicleNumber;
   document.querySelector('.reserved-fee').textContent = `₩${fee.toLocaleString()}`;
+
+  const cancelBtn = document.querySelector('.cancel-btn');
+  if (cancelBtn && reservationId) {
+    cancelBtn.dataset.reservationId = reservationId;
+  }
 }
 
 function clearReservationDisplay() {
@@ -219,24 +241,28 @@ function clearReservationDisplay() {
 
 
 function updateRecentHistoryDisplay(history) {
-  const historyContainer = document.querySelector('.recent-history-list');
+  const historyContainer = document.querySelector('.history-list'); // ✅ class 이름 확인
   if (!historyContainer) return;
 
   historyContainer.innerHTML = '';
 
-  // 최근 3개 항목만 표시
   history.slice(0, 3).forEach(record => {
     const item = document.createElement('div');
     item.className = 'history-item';
+
+    const statusClass = record.status === '완료' ? 'completed'
+        : record.status === '이용중' ? 'pending'
+            : '';
+
     item.innerHTML = `
       <div class="history-date">${record.date}</div>
       <div class="history-details">
-        <span class="history-spot">${record.slotName}</span>
-        <span class="history-time">${record.duration}</span>
+        <span class="history-time">${record.startTime} - ${record.endTime} (${record.duration})</span>
         <span class="history-amount">₩${record.fee.toLocaleString()}</span>
       </div>
-      <span class="history-status completed">${record.status}</span>
+      <span class="history-status ${statusClass}">${record.status}</span>
     `;
+
     historyContainer.appendChild(item);
   });
 }
@@ -596,6 +622,7 @@ async function loadInitialData() {
     await loadLiveStatus();
     await loadCurrentParkingStatus();
     await loadUpcomingReservation();
+    await loadRecentUsageHistory()
 
     // 병렬 로드 (나머지)
     await Promise.all([

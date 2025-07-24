@@ -108,4 +108,26 @@ public class SubscriptionController {
 
         return ResponseEntity.ok(Map.of("available", true));
     }
+
+    @PostMapping("/refund")
+    public ResponseEntity<?> refundSubscription(@AuthenticationPrincipal CustomUserDetails user,
+                                                @RequestBody Map<String, String> payload) {
+        try {
+            Long memberId = user.getMember().getMemberId();
+            String reason = payload.get("reason");
+
+            subscriptionService.refundSubscription(memberId, reason);  // 환불 로직 실행
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "정기권 환불이 완료되었습니다."
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
+    }
 }

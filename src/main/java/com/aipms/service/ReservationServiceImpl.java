@@ -8,7 +8,10 @@ import com.aipms.mapper.ReservationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +21,7 @@ public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationMapper reservationMapper;
     private final PaymentMapper paymentMapper;
+    private final IamportService iamportService;
 
     @Override
     public void makeReservation(ReservationDto dto) {
@@ -65,10 +69,6 @@ public class ReservationServiceImpl implements ReservationService {
         }).collect(Collectors.toList());
     }
 
-    @Override
-    public void cancelReservation(Long reservationId) {
-        reservationMapper.cancelReservation(reservationId);
-    }
 
     @Override
     public void updateStatus(Long reservationId, String status) {
@@ -98,6 +98,50 @@ public class ReservationServiceImpl implements ReservationService {
     public ReservationDto getActiveReservation(Long memberId) {
         LocalDateTime now = LocalDateTime.now();
         return reservationMapper.findUpcomingReservation(memberId, now); // ✅ 그대로 리턴
+    }
+
+    @Override
+    public void processReservationRefund(Long reservationId, String reason, Long memberId) {
+        Reservation reservation = reservationMapper.findByIdAndMemberId(reservationId, memberId);
+        if (reservation == null || !reservation.getStatus().equals("PAID")) {
+            throw new IllegalStateException("유효하지 않은 예약입니다.");
+        }
+
+        Payment payment = paymentMapper.findByReservationId(reservationId);
+        if (payment == null || !payment.getStatus().equals("결제 완료")) {
+            throw new IllegalStateException("결제 정보가 없습니다.");
+        }
+
+        // 1시간 이내 확인
+        if (Duration.between(payment.getPaymentTime(), LocalDateTime.now()).toMinutes() > 60) {
+            throw new IllegalStateException("결제 1시간 이후에는 환불할 수 없습니다.");
+        }
+        int fee = reservation.getFee();
+        LocalDate today = LocalDate.now();
+        LocalDate resDate = reservation.getReservationStart().toLocalDate();
+
+        // 예약일 기준 위약금 계산
+        long daysBetween = ChronoUnit.DAYS.between(today, resDate);
+        int penalty;
+
+        if (daysBetween >= 2) {
+            penalty = 0;
+        } else if (daysBetween == 1) {
+            penalty = 1000;
+        } else if (daysBetween == 0) {
+            penalty = 3000;
+        } else {
+            throw new IllegalStateException("이미 지난 예약은 환불할 수 없습니다.");
+        }
+        int refundAmount = Math.max(fee - penalty, 0);
+
+        // 아임포트 환불 요청
+        iamportService.refund(payment.getImpUid(), refundAmount);
+
+        // DB 상태 업데이트
+        paymentMapper.markAsCancelled(payment.getPaymentId(), reason, refundAmount);
+        reservationMapper.cancelReservation(reservationId, reason, refundAmount);
+
     }
 
 }

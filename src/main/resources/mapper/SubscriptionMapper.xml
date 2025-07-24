@@ -57,6 +57,8 @@
         FROM subscription
         WHERE member_id = #{memberId}
           AND active = 1
+          AND start_date &lt;= NOW()
+          AND end_date &gt;= NOW()
             LIMIT 1
     </select>
 
@@ -77,6 +79,12 @@
           AND start_date &lt;= NOW()
           AND end_date &gt;= NOW()
     </select>
+
+    <update id="deactivateSubscription">
+        UPDATE subscription
+        SET active = 0
+        WHERE subscription_id = #{subscriptionId}
+    </update>
 
 
 </mapper>

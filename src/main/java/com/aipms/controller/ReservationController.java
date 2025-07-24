@@ -2,6 +2,7 @@ package com.aipms.controller;
 
 import com.aipms.dto.PageDto;
 import com.aipms.dto.ReservationDto;
+import com.aipms.dto.ReservationRefundRequestDto;
 import com.aipms.security.CustomUserDetails;
 import com.aipms.service.ReservationService;
 import lombok.RequiredArgsConstructor;
@@ -66,11 +67,6 @@ public class ReservationController {
     }
 
 
-    @PutMapping("/cancel/{reservationId}")
-    public ResponseEntity<String> cancel(@PathVariable Long reservationId) {
-        reservationService.cancelReservation(reservationId);
-        return ResponseEntity.ok("예약 취소 완료");
-    }
 
     @PutMapping("/status/{reservationId}")
     public ResponseEntity<String> updateStatus(@PathVariable Long reservationId,
@@ -82,5 +78,18 @@ public class ReservationController {
     @GetMapping("/list")
     public ResponseEntity<List<ReservationDto>> getAll() {
         return ResponseEntity.ok(reservationService.getAllReservations());
+    }
+
+    @PostMapping("/refund")
+    public ResponseEntity<?> refundReservation(@RequestBody ReservationRefundRequestDto dto,
+                                               @AuthenticationPrincipal CustomUserDetails user) {
+        try {
+            reservationService.processReservationRefund(dto.getReservationId(), dto.getReason(), user.getMember().getMemberId());
+            return ResponseEntity.ok(Map.of("success", true, "message", "환불이 완료되었습니다."));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "서버 오류"));
+        }
     }
 }

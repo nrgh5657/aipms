@@ -14,9 +14,6 @@
         SELECT * FROM reservation WHERE member_id = #{memberId}
     </select>
 
-    <update id="cancelReservation">
-        UPDATE reservation SET status = 'CANCELLED' WHERE reservation_id = #{reservationId}
-    </update>
 
     <update id="updateStatus">
         UPDATE reservation SET status = #{status} WHERE reservation_id = #{reservationId}
@@ -56,5 +53,25 @@
         FROM subscription
         WHERE active = 1
     </select>
+
+    <!-- 예약 조회 -->
+    <select id="findByIdAndMemberId" resultType="com.aipms.domain.Reservation">
+        SELECT *
+        FROM reservation
+        WHERE reservation_id = #{reservationId}
+          AND member_id = #{memberId}
+    </select>
+
+    <!-- 예약 상태 변경 -->
+    <update id="cancelReservation">
+        UPDATE reservation
+        SET status = 'CANCELLED',
+            cancel_reason = #{cancelReason},
+            cancelled_at = NOW(),
+            refund_amount = #{refundAmount},
+            updated_at = NOW()
+        WHERE reservation_id = #{reservationId}
+    </update>
+
 
 </mapper>

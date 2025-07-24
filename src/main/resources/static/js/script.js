@@ -1272,8 +1272,16 @@ function renderPaymentTable() {
 // 결제 테이블 행 생성
 function createPaymentTableRow(item) {
   const row = document.createElement('tr');
-  
-  const statusClass = item.status === '완료' ? 'status-approved' : 'status-fire';
+
+  const statusLabel = item.status?.includes('환불') ? '환불 완료'
+      : item.status?.includes('출차') ? '출차 결제'
+          : item.status?.includes('결제') ? '결제 완료'
+              : item.status || '-';
+
+  const statusClass = item.status?.includes('환불') ? 'status-fire'
+      : item.status?.includes('출차') ? 'status-approved'
+          : item.status?.includes('결제') ? 'status-approved'
+              : '';
   console.log('🔍 결제 아이템:', item);
   row.innerHTML = `
     <td>${item.id}</td>
@@ -1283,7 +1291,7 @@ function createPaymentTableRow(item) {
     <td>${item.amount?.toLocaleString() || '0'} 원</td>
     <td>${item.paymentMethod || '-'}</td>     <!-- 수정됨 -->
     <td>${item.paidAt ? formatDate(item.paidAt) : '-'}</td> <!-- 수정됨 -->
-    <td><span class="${statusClass}">${item.status}</span></td>
+    <td><span class="${statusClass}">${statusLabel}</span></td>
     <td>
       <button class="action-btn" onclick="viewPaymentDetail('${item.id}')">상세</button>
     </td>

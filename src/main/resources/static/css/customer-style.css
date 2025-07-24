@@ -2950,3 +2950,105 @@ footer {
 .fee-breakdown .detail-row.total span:last-child {
   color: #4299e1;
 }
+
+/* 모달 전체 배경 */
+#refundModal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4); /* 반투명 배경 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* 모달 숨김 */
+#refundModal.hidden {
+  display: none !important;
+}
+
+/* 모달 내용 박스 */
+#refundModal .modal-content {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 360px;
+  max-width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* 제목 */
+#refundModal h3 {
+  margin-top: 0;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #222;
+}
+
+/* 안내문 */
+#refundModal p {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+/* 텍스트 영역 */
+#refundModal textarea {
+  width: 100%;
+  height: 80px;
+  padding: 0.6rem;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  resize: vertical;
+  margin-bottom: 1rem;
+}
+
+/* 버튼 영역 */
+#refundModal .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+#refundModal button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#confirmRefundBtn {
+  background-color: #1e88e5;
+  color: white;
+}
+
+#confirmRefundBtn:hover {
+  background-color: #1565c0;
+}
+
+#cancelRefundBtn {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+#cancelRefundBtn:hover {
+  background-color: #e0e0e0;
+}
+
+/* 부드러운 등장 애니메이션 */
+@keyframes fadeIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

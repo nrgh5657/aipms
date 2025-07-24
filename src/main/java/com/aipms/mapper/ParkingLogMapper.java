@@ -2,6 +2,7 @@ package com.aipms.mapper;
 
 import com.aipms.domain.ParkingLog;
 import com.aipms.dto.ParkingLogWithMemberDto;
+import com.aipms.dto.UsageHistoryDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -38,5 +39,4 @@ public interface ParkingLogMapper {
     void updatePaymentAndExitInfo(Map<String,? extends Serializable> entryId);
 
     int countCurrentlyParkedCars();
-
 }

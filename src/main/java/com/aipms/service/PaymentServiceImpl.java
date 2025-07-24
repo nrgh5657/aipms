@@ -163,7 +163,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PageDto<AdminPaymentDto> getAdminPaymentList(AdminPaymentHistoryRequestDto req) {
         int page = req.getPage() != null ? req.getPage() : 1;
-        int limit = req.getLimit() != null ? req.getLimit() : 20;
+        int limit = req.getLimit() != null ? req.getLimit() : 10;
         int offset = (page - 1) * limit;
 
         List<AdminPaymentDto> payments = paymentMapper.selectAdminPayments(req, offset, limit);

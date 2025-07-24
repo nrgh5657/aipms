@@ -1,10 +1,13 @@
 package com.aipms.controller;
 
 import com.aipms.dto.UsageHistoryDto;
+import com.aipms.dto.UsageHistoryResponseDto;
 import com.aipms.dto.UsageSummaryDto;
+import com.aipms.security.CustomUserDetails;
 import com.aipms.service.UsageHistoryService;
 import com.aipms.service.UsageSummaryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,6 +55,15 @@ public class UsageHistoryController {
         result.put("history", history);
         result.put("summary", summary);
         return result;
+    }
+
+    @GetMapping("/recent")
+    public ResponseEntity<List<UsageHistoryResponseDto>> getRecentUsageHistory(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        Long memberId = user.getMember().getMemberId();
+        List<UsageHistoryResponseDto> history = usageHistoryService.getRecentUsageHistory(memberId);
+        return ResponseEntity.ok(history);
     }
 
 

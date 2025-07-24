@@ -48,4 +48,21 @@ public class MessageTestController {
         return count + "명의 사용자에게 메시지를 전송했습니다.";
     }
 
+    @PostMapping("/send-friends")
+    @ResponseBody
+    public String sendMessagesToFriends(@RequestBody List<String> kakaoIdList) {
+        int count = 0;
+        FireAlertDto latestLog = fireLogService.getLatestFireLog();
+
+        for (String kakaoId : kakaoIdList) {
+            try {
+                kakaoMessageService.sendMessageToFriend(kakaoId, latestLog);  // 🔁 이 부분만 sendMessageToFriend로 바꿈
+                count++;
+            } catch (Exception e) {
+                System.out.println("❌ 친구 메시지 전송 실패: " + kakaoId + " - " + e.getMessage());
+            }
+        }
+        return count + "명의 사용자(친구)에게 메시지를 전송했습니다.";
+    }
+
 }

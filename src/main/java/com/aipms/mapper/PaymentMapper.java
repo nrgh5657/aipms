@@ -41,4 +41,12 @@ public interface PaymentMapper {
     Payment selectByTransactionId(String transactionId);
 
     void updatePaidStatus(@Param("paymentId") Long paymentId, @Param("paid") int paid);
+
+    Payment findByReservationId(Long reservationId);
+
+    int markAsCancelled(@Param("paymentId") Long paymentId,
+                        @Param("cancelReason") String cancelReason,
+                        @Param("refundAmount") int refundAmount);
+
+    Payment findLatestSubscriptionPayment(Long memberId);
 }

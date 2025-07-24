@@ -150,7 +150,7 @@
     <select id="selectAdminPayments" resultType="com.aipms.dto.AdminPaymentDto">
         SELECT
         p.payment_id AS id,
-        p.car_number AS carNumber, <!-- ✅ 수정된 부분 -->
+        p.car_number AS carNumber,
         m.name AS payer,
         CASE
         WHEN s.subscription_id IS NOT NULL THEN '월주차'
@@ -159,10 +159,7 @@
         p.total_fee AS amount,
         p.payment_method AS paymentMethod,
         p.payment_time AS paidAt,
-        CASE
-        WHEN p.paid = 1 THEN '완료'
-        ELSE '실패'
-        END AS status
+        p.status AS status  <!-- ✅ 여기만 수정 -->
         FROM payment p
         LEFT JOIN member m ON p.member_id = m.member_id
         LEFT JOIN subscription s ON s.member_id = m.member_id AND s.active = 1
@@ -170,14 +167,23 @@
             <if test="req.keyword != null and req.keyword != ''">
                 AND (
                 m.name LIKE CONCAT('%', #{req.keyword}, '%') OR
-                p.car_number LIKE CONCAT('%', #{req.keyword}, '%') <!-- ✅ 여기도 수정 -->
+                p.car_number LIKE CONCAT('%', #{req.keyword}, '%')
                 )
             </if>
             <if test="req.status != null and req.status != '' and req.status != 'all'">
-                AND p.paid =
                 <choose>
-                    <when test="req.status == 'paid'">1</when>
-                    <when test="req.status == 'unpaid'">0</when>
+                    <when test="req.status == 'paid'">
+                        AND p.paid = 1 AND p.status = '결제 완료'
+                    </when>
+                    <when test="req.status == 'cancelled'">
+                        AND p.status = '결제 취소'
+                    </when>
+                    <when test="req.status == 'failed'">
+                        AND p.paid = 0 AND p.status = '결제 실패'
+                    </when>
+                    <when test="req.status == 'unpaid'">
+                        AND p.paid = 0 AND p.status IS NULL
+                    </when>
                 </choose>
             </if>
         </where>
@@ -194,20 +200,49 @@
         LEFT JOIN member m ON p.member_id = m.member_id
         LEFT JOIN subscription s ON s.member_id = m.member_id AND s.active = 1
         <where>
-            <if test="req.keyword != null and req.keyword != ''">
-                AND (
-                m.name LIKE CONCAT('%', #{req.keyword}, '%') OR
-                pl.car_number LIKE CONCAT('%', #{req.keyword}, '%')
-                )
-            </if>
             <if test="req.status != null and req.status != '' and req.status != 'all'">
-                AND p.paid =
                 <choose>
-                    <when test="req.status == 'paid'">1</when>
-                    <when test="req.status == 'unpaid'">0</when>
+                    <when test="req.status == 'paid'">
+                        AND p.paid = 1 AND p.status = '결제 완료'
+                    </when>
+                    <when test="req.status == 'cancelled'">
+                        AND p.status = '결제 취소'
+                    </when>
+                    <when test="req.status == 'failed'">
+                        AND p.paid = 0 AND p.status = '결제 실패'
+                    </when>
+                    <when test="req.status == 'unpaid'">
+                        AND p.paid = 0 AND p.status IS NULL
+                    </when>
                 </choose>
             </if>
         </where>
+    </select>
+
+    <!-- 예약 ID로 결제 조회 -->
+    <select id="findByReservationId" resultType="com.aipms.domain.Payment">
+        SELECT *
+        FROM payment
+        WHERE reservation_id = #{reservationId}
+    </select>
+
+    <!-- 환불 완료 처리 -->
+    <update id="markAsCancelled">
+        UPDATE payment
+        SET cancelled = 1,
+            cancel_reason = #{cancelReason},
+            status = '환불 완료'
+        WHERE payment_id = #{paymentId}
+    </update>
+
+    <select id="findLatestSubscriptionPayment" parameterType="long" resultType="com.aipms.domain.Payment">
+        SELECT *
+        FROM payment
+        WHERE member_id = #{memberId}
+          AND payment_type = '정기권'
+          AND status = '결제 완료'
+        ORDER BY payment_time DESC
+            LIMIT 1
     </select>
 
 

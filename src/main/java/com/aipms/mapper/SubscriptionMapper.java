@@ -31,4 +31,6 @@ public interface SubscriptionMapper {
     void updateSubscriptionDates(Map<String, Object> paramMap);
 
     int countActiveMonthlySubscriptions();
+
+    void deactivateSubscription(Long subscriptionId);
 }

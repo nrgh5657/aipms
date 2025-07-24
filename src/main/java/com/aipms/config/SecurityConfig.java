@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -21,6 +22,7 @@ public class SecurityConfig {
 
     private final CustomUserDetailsServiceImpl customUserDetailsService;
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver;
 
     // 비밀번호 암호화 빈 등록
     @Bean
@@ -81,6 +83,9 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/member/login") // 로그인 페이지
                         .defaultSuccessUrl("/dashboard", true)
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .authorizationRequestResolver(customAuthorizationRequestResolver) // 👈 여기에 prompt=consent 붙이기
+                        )
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService) // 위에서 만든 서비스
                         )

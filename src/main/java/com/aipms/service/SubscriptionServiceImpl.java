@@ -11,7 +11,10 @@ import com.aipms.mapper.SubscriptionMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +28,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final MemberMapper memberMapper;
     private final PaymentMapper paymentMapper;
     private final ParkingConfigMapper parkingConfigMapper;
+    private final IamportService iamportService;
 
     @Override
     public void applySubscription(SubscriptionDto dto) {
@@ -179,5 +183,48 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         ParkingConfigDto config = parkingConfigMapper.getConfig();
         int current = subscriptionMapper.countActiveMonthlySubscriptions();
         return current < config.getFixedSubscriptionSpaces();
+    }
+
+    @Override
+    public void refundSubscription(Long memberId, String reason) {
+        Subscription subscription = subscriptionMapper.findActiveByMemberId(memberId);
+        if (subscription == null || subscription.getStartDate() == null) {
+            throw new IllegalStateException("활성화된 정기권이 없습니다.");
+        }
+
+        Payment payment = paymentMapper.findLatestSubscriptionPayment(memberId);
+        if (payment == null || !payment.getStatus().equals("결제 완료")) {
+            throw new IllegalStateException("결제 정보가 없습니다.");
+        }
+
+        // 1시간 이내 전액 환불
+        long minutesSincePayment = Duration.between(payment.getPaymentTime(), LocalDateTime.now()).toMinutes();
+        int totalFee = payment.getTotalFee();
+        int refundAmount;
+
+        if (minutesSincePayment <= 60) {
+            refundAmount = totalFee; // 전액 환불
+        } else {
+            // 당일 환불: 위약금 10% + 사용일수 차감
+            LocalDate today = LocalDate.now();
+            LocalDate start = subscription.getStartDate().toLocalDate();
+
+            long usedDays = ChronoUnit.DAYS.between(start, today);
+            if (usedDays < 0) usedDays = 0;
+            if (usedDays >= 30) throw new IllegalStateException("이미 사용 완료된 정기권은 환불할 수 없습니다.");
+
+            int penalty = (int) (totalFee * 0.1); // 10% 위약금
+            int dailyRate = totalFee / 30;
+            int usageFee = (int) (usedDays * dailyRate);
+            refundAmount = Math.max(totalFee - penalty - usageFee, 0);
+        }
+
+        // 아임포트 환불 처리
+        iamportService.refund(payment.getImpUid(), refundAmount);
+
+        // DB 업데이트
+        subscriptionMapper.deactivateSubscription(subscription.getSubscriptionId());
+        paymentMapper.markAsCancelled(payment.getPaymentId(), reason, refundAmount);
+
     }
 }
