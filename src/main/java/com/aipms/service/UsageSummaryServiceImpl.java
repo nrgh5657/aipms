@@ -13,6 +13,6 @@ public class UsageSummaryServiceImpl implements UsageSummaryService {
 
     @Override
     public UsageSummaryDto getSummary(Long memberId) {
-        return usageSummaryMapper.getSummary(memberId);
+        return usageSummaryMapper.getSummaryByMemberId(memberId);
     }
 }

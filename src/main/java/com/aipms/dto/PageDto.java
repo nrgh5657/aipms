@@ -22,4 +22,11 @@ public class PageDto<T> {
         this.totalPages = (int) Math.ceil((double) totalElements / pageSize);  // ✅ 핵심
     }
 
+    public PageDto(int page, int limit, int totalElements) {
+        this.currentPage = page;
+        this.pageSize = limit;
+        this.totalElements = totalElements;
+        this.totalPages = (int) Math.ceil((double) totalElements / pageSize);
+    }
+
 }

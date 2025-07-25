@@ -1,14 +1,13 @@
 package com.aipms.controller;
 
-import com.aipms.dto.UsageHistoryDto;
-import com.aipms.dto.UsageHistoryResponseDto;
-import com.aipms.dto.UsageSummaryDto;
+import com.aipms.dto.*;
 import com.aipms.security.CustomUserDetails;
 import com.aipms.service.UsageHistoryService;
 import com.aipms.service.UsageSummaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -48,7 +47,7 @@ public class UsageHistoryController {
         if (startDate == null) startDate = LocalDate.of(2000, 1, 1);
         if (endDate == null) endDate = LocalDate.now();
 
-        List<UsageHistoryDto> history = usageHistoryService.getHistory(memberId, startDate, endDate);
+        List<UsageHistoryResponseDto> history = usageHistoryService.getHistory(memberId, startDate, endDate);
         UsageSummaryDto summary = usageSummaryService.getSummary(memberId);
 
         Map<String, Object> result = new HashMap<>();
@@ -64,6 +63,49 @@ public class UsageHistoryController {
         Long memberId = user.getMember().getMemberId();
         List<UsageHistoryResponseDto> history = usageHistoryService.getRecentUsageHistory(memberId);
         return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/history/paged")
+    public ResponseEntity<PageDto<UsageHistoryResponseDto>> getPagedUsageHistory(
+            @AuthenticationPrincipal Object principal,
+            @RequestParam int page,
+            @RequestParam int limit
+    ) {
+        Long memberId;
+
+        if (principal instanceof CustomUserDetails user) {
+            memberId = user.getMember().getMemberId();
+        } else if (principal instanceof OAuth2User oauthUser) {
+            String kakaoId = oauthUser.getAttribute("id").toString();
+            memberId = usageHistoryService.findMemberIdByKakaoId(kakaoId);
+        } else {
+            throw new IllegalStateException("인증된 사용자가 아닙니다.");
+        }
+
+        UsageHistoryRequestDto req = new UsageHistoryRequestDto();
+        req.setPage(page);
+        req.setLimit(limit);
+        req.setMemberId(memberId); // 👉 여기에 담기만 하면 됨
+
+        PageDto<UsageHistoryResponseDto> result = usageHistoryService.getPagedUsageHistory(req);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/summary")
+    public UsageSummaryDto getSummary(@AuthenticationPrincipal Object principal) {
+        Long memberId;
+
+        if (principal instanceof CustomUserDetails user) {
+            memberId = user.getMember().getMemberId();
+        } else if (principal instanceof org.springframework.security.oauth2.core.user.OAuth2User oauthUser) {
+            String kakaoId = oauthUser.getAttribute("id").toString();
+            // TODO: 카카오 ID로 memberId 조회하는 서비스 메서드 구현 필요 시 여기에 넣기
+            throw new IllegalStateException("카카오 회원 지원 미구현");
+        } else {
+            throw new IllegalStateException("인증된 사용자가 아닙니다.");
+        }
+
+        return usageSummaryService.getSummary(memberId);
     }
 
 

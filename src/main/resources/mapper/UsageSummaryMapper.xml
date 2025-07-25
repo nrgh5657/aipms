@@ -5,17 +5,16 @@
 
 <mapper namespace="com.aipms.mapper.UsageSummaryMapper">
 
-    <select id="getSummary" resultType="com.aipms.dto.UsageSummaryDto">
+    <select id="getSummaryByMemberId" resultType="com.aipms.dto.UsageSummaryDto">
         SELECT
-            COUNT(el.entry_id) AS totalCount,
-            FLOOR(SUM(TIMESTAMPDIFF(MINUTE, el.entry_time, el.exit_time)) / 60) AS totalTime,
-            IFNULL(SUM(p.total_fee), 0) AS totalPaid,
-            ROUND(AVG(TIMESTAMPDIFF(MINUTE, el.entry_time, el.exit_time)) / 60, 1) AS averageTime
-        FROM entry_log el
-                 JOIN car c ON el.car_id = c.car_id
-                 JOIN member m ON c.member_id = m.member_id
-                 LEFT JOIN payment p ON el.payment_id = p.payment_id
-        WHERE m.member_id = #{memberId}
+            COUNT(*) AS totalCount,
+            SUM(TIMESTAMPDIFF(MINUTE, entry_time, exit_time)) AS totalMinutes,  -- ✅ 수정
+            SUM(IFNULL(p.total_fee, 0)) AS totalPaid,
+            AVG(TIMESTAMPDIFF(MINUTE, entry_time, exit_time)) AS averageMinutes  -- ✅ 수정
+        FROM parking_log pl
+                 LEFT JOIN payment p ON pl.payment_id = p.payment_id
+        WHERE pl.member_id = #{memberId}
+          AND pl.exit_time IS NOT NULL
     </select>
 
 </mapper>

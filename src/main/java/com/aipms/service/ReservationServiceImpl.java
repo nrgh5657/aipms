@@ -3,6 +3,8 @@ package com.aipms.service;
 import com.aipms.domain.Payment;
 import com.aipms.domain.Reservation;
 import com.aipms.dto.ReservationDto;
+import com.aipms.dto.ReservationHistoryDto;
+import com.aipms.dto.ReservationHistoryRequestDto;
 import com.aipms.mapper.PaymentMapper;
 import com.aipms.mapper.ReservationMapper;
 import lombok.RequiredArgsConstructor;
@@ -142,6 +144,16 @@ public class ReservationServiceImpl implements ReservationService {
         paymentMapper.markAsCancelled(payment.getPaymentId(), reason, refundAmount);
         reservationMapper.cancelReservation(reservationId, reason, refundAmount);
 
+    }
+
+    @Override
+    public List<ReservationHistoryDto> getPagedReservationHistory(ReservationHistoryRequestDto dto) {
+        return reservationMapper.getPagedReservationHistory(dto);
+    }
+
+    @Override
+    public int countReservationHistory(ReservationHistoryRequestDto dto) {
+        return reservationMapper.countReservationHistory(dto);
     }
 
 }

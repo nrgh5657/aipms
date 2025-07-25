@@ -3,7 +3,9 @@
 // ========================================
 
 let recordsUpdateInterval = null;
-let currentFilters = {};
+let currentFilters = {
+  limit: 10
+};
 let currentPage = 1;
 let currentTab = 'usage';
 
@@ -17,6 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (typeof initializeCommon === 'function' && !initializeCommon()) {
     return;
   }
+
+  loadUsageSummary();  // ✅ 요약 통계 먼저 불러옴
+  loadUsageHistory();  // ✅ 내역은 페이징으로 로드
 
   // 이용내역 페이지 초기화
   initializeRecordsPage();
@@ -48,29 +53,42 @@ async function loadUsageHistory(page = currentPage, filters = currentFilters) {
   console.log('📋 이용 내역 로드 중...', { page, filters });
 
   try {
-    // 실제 API 요청 대신 가상 데이터 사용
-    const data = await getMockUsageData(page, filters);
+    const queryParams = new URLSearchParams();
 
-    // 상태 업데이트
+    queryParams.append('page', page); // ✅ 필수
+    queryParams.append('limit', filters.limit || 5); // ✅ 기본 5개
+
+    if (filters.startDate) queryParams.append('startDate', filters.startDate);
+    if (filters.endDate) queryParams.append('endDate', filters.endDate);
+
+    const res = await fetch(`/api/usage/history/paged?${queryParams.toString()}`, {
+      method: 'GET',
+      credentials: 'include' // ✅ 세션 유지
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP 오류! 상태 코드: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log('📦 페이징 응답:', data);
+
     currentPage = page;
 
-    // PDF 명세서에 따른 UI 업데이트
-    if (data.summary) {
-      updateUsageSummary(data.summary);
+    // ✅ 리스트 렌더링
+    if (data.content) {
+      updateUsageHistoryList(data.content); // ← 여기가 핵심!
     }
 
-    if (data.history) {
-      updateUsageHistoryList(data.history);
+    // ✅ 페이징 정보 렌더링
+    if (data.totalElements !== undefined) {
+      updatePagination('usage', {
+        totalElements: data.totalElements,
+        totalPages: data.totalPages,
+        currentPage: data.currentPage,
+        pageSize: data.pageSize
+      });
     }
-
-    if (data.pagination) {
-      updatePagination('usage', data.pagination);
-    }
-
-    console.log('✅ 이용 내역 로드 완료', {
-      totalRecords: data.history?.length || 0,
-      currentPage: page
-    });
 
     return true;
   } catch (error) {
@@ -206,25 +224,40 @@ async function getMockReservationData(page, filters) {
   });
 }
 
+async function loadUsageSummary() {
+  try {
+    const res = await fetch('/api/usage/summary', {
+      method: 'GET',
+      credentials: 'include'
+    });
+
+    const summary = await res.json();
+    updateUsageSummary(summary);
+  } catch (e) {
+    console.error('❌ 요약 통계 로드 실패:', e);
+  }
+}
+
 // PDF 명세서에 따른 통계 정보 업데이트
 function updateUsageSummary(summary) {
-  // 총 이용횟수 (totalCount)
+  // 총 이용횟수
   updateElement('total-count', summary.totalCount || 0);
   updateElement('usage-count', summary.totalCount || 0);
 
-  // 총 이용시간 (totalTime - 시간 단위)
-  const totalHours = summary.totalTime || 0;
+  // 총 이용시간 (분 → 시간)
+  const totalHours = Math.floor((summary.totalMinutes || 0) / 60);
   updateElement('total-time', totalHours + 'h');
   updateElement('usage-time', totalHours + 'h');
 
-  // 총 결제금액 (totalPaid)
-  updateElement('total-paid', '₩' + (summary.totalPaid || 0).toLocaleString());
-  updateElement('usage-paid', '₩' + (summary.totalPaid || 0).toLocaleString());
+  // 총 결제금액
+  const totalPaid = summary.totalPaid || 0;
+  updateElement('total-paid', '₩' + totalPaid.toLocaleString());
+  updateElement('usage-paid', '₩' + totalPaid.toLocaleString());
 
-  // 평균 이용시간 (averageTime)
-  const avgTime = summary.averageTime || 0;
-  updateElement('average-time', avgTime + 'h');
-  updateElement('usage-average', avgTime + 'h');
+  // 평균 이용시간 (분 → 시간. 한 자리 소수점까지 표시)
+  const avgHours = ((summary.averageMinutes || 0) / 60).toFixed(1);
+  updateElement('average-time', avgHours + 'h');
+  updateElement('usage-average', avgHours + 'h');
 
   console.log('📊 이용 내역 통계 업데이트 완료:', summary);
 }
@@ -234,18 +267,37 @@ function updateUsageHistoryList(history) {
   const historyContainer = document.querySelector('.usage-history, .history-list');
   if (!historyContainer) return;
 
-  // 기존 목록 클리어 (헤더 제외)
-  const existingItems = historyContainer.querySelectorAll('.history-item, .usage-item');
+  // 기존 항목 제거
+  const existingItems = historyContainer.querySelectorAll('.history-item, .usage-item, .empty-message');
   existingItems.forEach(item => item.remove());
 
-  if (history && history.length > 0) {
-    // 새 목록 추가
+  const totalRows = 5;
+  const actualCount = history?.length || 0;
+
+  if (actualCount > 0) {
+    // 실제 항목 추가
     history.forEach(record => {
       const item = createUsageHistoryItem(record);
       historyContainer.appendChild(item);
     });
+
+    // 부족한 만큼 빈 카드 추가
+    for (let i = 0; i < totalRows - actualCount; i++) {
+      const filler = document.createElement('div');
+      filler.className = 'history-item filler-item';
+      filler.innerHTML = `
+        <div class="history-date">&nbsp;</div>
+        <div class="history-duration"><div class="duration-main">&nbsp;</div></div>
+        <div class="history-time">&nbsp;</div>
+        <div class="history-car"><div class="car-number">&nbsp;</div></div>
+        <div class="history-fee"><div class="fee-amount">&nbsp;</div></div>
+        <div class="history-status"><span class="history-status">&nbsp;</span></div>
+        <div class="history-actions">&nbsp;</div>
+      `;
+      historyContainer.appendChild(filler);
+    }
   } else {
-    // 빈 목록 메시지
+    // 빈 메시지 출력
     const emptyMessage = document.createElement('div');
     emptyMessage.className = 'empty-message';
     emptyMessage.innerHTML = `
@@ -259,63 +311,62 @@ function updateUsageHistoryList(history) {
   }
 }
 
-// PDF 명세서에 따른 이용 내역 항목 생성
 function createUsageHistoryItem(record) {
   const item = document.createElement('div');
-  item.className = 'history-item usage-item';
+  item.className = 'history-item';
   item.setAttribute('data-record-id', record.id || '');
 
-  const statusClass = record.status.toLowerCase();
+  const statusKey = record.status.toLowerCase(); // "완료" -> "완료"
   const statusText = getUsageStatusText(record.status);
+  const statusClass = getUsageStatusClass(record.status); // 새로운 함수로 매핑
 
   item.innerHTML = `
-    <div class="item-date">
-      <div class="date-main">${formatDate(record.date)}</div>
-      <div class="date-day">${getKoreanDayOfWeek(record.date)}</div>
+    <div class="history-date">
+      ${formatDate(record.date)} (${getKoreanDayOfWeek(record.date)})
     </div>
-    <div class="item-slot">
-      <div class="slot-name">${escapeHtml(record.slotName)}</div>
-    </div>
-    <div class="item-duration">
+    <div class="history-duration">
       <div class="duration-main">${record.duration}</div>
     </div>
-    <div class="item-time">
-      <div class="time-entry">${record.startTime}</div>
-      <div class="time-separator">~</div>
-      <div class="time-exit">${record.endTime || '이용중'}</div>
+    <div class="history-time">
+      ${record.startTime} ~ ${record.endTime || '이용중'}
     </div>
-    <div class="item-car">
+    <div class="history-car">
       <div class="car-number">${escapeHtml(record.carNumber)}</div>
     </div>
-    <div class="item-fee">
+    <div class="history-fee">
       <div class="fee-amount">₩${record.fee.toLocaleString()}</div>
     </div>
-    <div class="item-status">
-      <span class="status-badge status-${statusClass}">${statusText}</span>
+    <div class="history-status">
+      <span class="history-status ${statusClass}">${statusText}</span>
     </div>
-    <div class="item-actions">
-      <button onclick="showUsageDetail('${record.id || ''}')" class="btn-detail" title="상세 보기">
-        상세
-      </button>
-      ${record.status === '완료' ?
-      `<button onclick="downloadUsageReceipt('${record.id || ''}')" class="btn-receipt" title="영수증 다운로드">
-          영수증
-        </button>` : ''
-  }
+    <div class="history-actions">
+      <button class="usage-btn usage-btn-detail" onclick="showUsageDetail('${record.id}')">상세</button>
+      ${record.status === '완료' ? `
+        <button class="usage-btn usage-btn-receipt" onclick="downloadUsageReceipt('${record.id}')">영수증</button>
+      ` : ''}
     </div>
   `;
 
   return item;
 }
 
+// 상태 텍스트 반환 (한국어 유지)
 function getUsageStatusText(status) {
   const statusMap = {
     '이용중': '이용중',
     '완료': '완료',
-    '취소': '취소',
-    '만료': '만료'
+    '취소': '취소'
   };
   return statusMap[status] || status;
+}
+
+function getUsageStatusClass(status) {
+  const classMap = {
+    '이용중': 'pending',
+    '완료': 'completed',
+    '취소': 'cancelled'
+  };
+  return classMap[status] || '';
 }
 
 // ========================================
@@ -467,16 +518,26 @@ async function loadPaymentHistory(page = currentPage, filters = currentFilters) 
   console.log('💳 결제 내역 로드 중...', { page, filters });
 
   try {
-    const data = await getMockPaymentData(page, filters);
+    const queryParams = new URLSearchParams();
+    if (filters.startDate) queryParams.append('startDate', filters.startDate);
+    if (filters.endDate) queryParams.append('endDate', filters.endDate);
+    if (filters.status) queryParams.append('status', filters.status);
+    if (filters.keyword) queryParams.append('keyword', filters.keyword);
+    queryParams.append('page', page);
+    queryParams.append('limit', 5); // ✅ 항상 5개 고정
 
+    const res = await fetch(`/api/payment/history?${queryParams.toString()}`, {
+      method: 'GET',
+      credentials: 'include'
+    });
+
+    const data = await res.json();
     currentPage = page;
 
-    // 결제 내역 목록 업데이트
     if (data.payments) {
       updatePaymentHistoryList(data.payments);
     }
 
-    // 페이지네이션 업데이트
     if (data.pagination) {
       updatePagination('payment', data.pagination);
     }
@@ -491,58 +552,102 @@ async function loadPaymentHistory(page = currentPage, filters = currentFilters) 
 }
 
 function updatePaymentHistoryList(payments) {
-  const container = document.querySelector('.payment-history-list');
+  const container = document.querySelector('.payment-history');
   if (!container) return;
 
   container.innerHTML = '';
 
-  if (payments && payments.length > 0) {
+  // ✅ 헤더 고정
+  const header = document.createElement('div');
+  header.className = 'usage-history-header';
+  header.innerHTML = `
+    <div>날짜</div>
+    <div>결제시간</div>
+    <div>결제수단</div>
+    <div>차량</div>
+    <div>요금</div>
+    <div>상태</div>
+    <div>작업</div>
+  `;
+  container.appendChild(header);
+
+  const totalRows = 5;
+  const actualCount = payments?.length || 0;
+
+  if (actualCount > 0) {
     payments.forEach(payment => {
       const item = createPaymentHistoryItem(payment);
       container.appendChild(item);
     });
+
+    // ❗ 부족한 행만큼 filler 추가
+    for (let i = 0; i < totalRows - actualCount; i++) {
+      const filler = document.createElement('div');
+      filler.className = 'history-item filler-item';
+      filler.innerHTML = `
+        <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>
+        <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>
+      `;
+      container.appendChild(filler);
+    }
   } else {
-    container.innerHTML = `
-      <div class="empty-message">
-        <div style="text-align: center; padding: 2rem; color: #64748b;">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">💳</div>
-          <p>조건에 맞는 결제 내역이 없습니다.</p>
-        </div>
+    // ❗ 결제 내역 없음 메시지
+    const emptyItem = document.createElement('div');
+    emptyItem.className = 'history-item empty-item';
+    emptyItem.innerHTML = `
+      <div class="item-empty" style="grid-column: span 7; text-align: center; padding: 2rem; color: #64748b;">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">💳</div>
+        <p>조건에 맞는 결제 내역이 없습니다.</p>
       </div>
     `;
+    container.appendChild(emptyItem);
   }
 }
+
 
 function createPaymentHistoryItem(payment) {
   const item = document.createElement('div');
-  item.className = 'payment-history-item';
+  item.className = 'history-item';
+  item.setAttribute('data-payment-id', payment.paymentId || '');
 
-  const statusClass = payment.status.toLowerCase();
-  const statusText = getPaymentStatusText(payment.status);
+  const amount = typeof payment.totalFee === 'number' ? payment.totalFee : 0;
+  const isCancelled = payment.cancelled === true;
+  const statusText = isCancelled ? '환불 완료' : '결제 완료';
+  const statusClass = isCancelled ? 'cancelled' : 'completed';
+  const dateText = formatDate(payment.paymentTime);
+  const dayText = getKoreanDayOfWeek(dateText);
+  const timeText = payment.paymentTime;
+  const methodText = getPaymentMethodText(payment.paymentMethod);
+
 
   item.innerHTML = `
-    <div class="payment-date">${formatDateTime(payment.paymentDate)}</div>
-    <div class="payment-id">
-      <div class="id-main">${payment.paymentId}</div>
-      <div class="id-method">${getPaymentMethodText(payment.paymentMethod)}</div>
-    </div>
-    <div class="payment-amount">
-      <div class="amount-main">₩${payment.amount.toLocaleString()}</div>
-      ${payment.discountAmount > 0 ? `<div class="amount-discount">-₩${payment.discountAmount.toLocaleString()}</div>` : ''}
-    </div>
-    <div class="payment-status">
-      <span class="status-badge status-${statusClass}">${statusText}</span>
-    </div>
-    <div class="payment-actions">
-      <button onclick="showPaymentDetail('${payment.paymentId}')" class="btn-detail">상세</button>
-      ${payment.status === 'COMPLETED' ?
-      `<button onclick="downloadPaymentReceipt('${payment.paymentId}')" class="btn-receipt">영수증</button>` : ''
-  }
-    </div>
-  `;
+  <div class="history-date">
+    ${dateText} (${dayText})
+  </div>
+  <div class="history-duration">
+    <div class="duration-main">${timeText}</div>
+  </div>
+  <div class="history-time">
+    ${methodText}
+  </div>
+  <div class="history-car">
+    <div class="car-number">${payment.carNumber || '-'}</div>
+  </div>
+  <div class="history-fee">
+    <div class="fee-amount">₩${amount.toLocaleString()}</div>
+  </div>
+  <div class="history-status">
+    <span class="history-status ${statusClass}">${statusText}</span>
+  </div>
+  <div class="item-actions">
+    <button class="usage-btn usage-btn-detail" onclick="showPaymentDetail('${payment.paymentId}')">상세</button>
+    <button class="usage-btn usage-btn-receipt" onclick="downloadPaymentReceipt('${payment.paymentId}')" style="${isCancelled ? 'display: none;' : ''}">영수증</button>
+  </div>
+`;
 
   return item;
 }
+
 
 function getPaymentStatusText(status) {
   const statusMap = {
@@ -573,16 +678,29 @@ async function loadReservationHistory(page = currentPage, filters = currentFilte
   console.log('📅 예약 내역 로드 중...', { page, filters });
 
   try {
-    const data = await getMockReservationData(page, filters);
+    const queryParams = new URLSearchParams({
+      page,
+      limit: filters.limit || 10,
+      startDate: filters.startDate || '',
+      endDate: filters.endDate || '',
+      status: filters.status || '',
+      keyword: filters.keyword || ''
+    });
 
+    const res = await fetch(`/api/reservations/history?${queryParams.toString()}`, {
+      method: 'GET',
+      credentials: 'include'
+    });
+
+    if (!res.ok) throw new Error('서버 응답 오류');
+
+    const data = await res.json();
     currentPage = page;
 
-    // 예약 내역 목록 업데이트
     if (data.reservations) {
       updateReservationHistoryList(data.reservations);
     }
 
-    // 페이지네이션 업데이트
     if (data.pagination) {
       updatePagination('reservation', data.pagination);
     }
@@ -597,66 +715,112 @@ async function loadReservationHistory(page = currentPage, filters = currentFilte
 }
 
 function updateReservationHistoryList(reservations) {
-  const container = document.querySelector('.reservation-history-list');
+  const container = document.querySelector('#reservation-records .history-list');
   if (!container) return;
 
-  container.innerHTML = '';
+  const totalRows = 5;
+  const actualCount = reservations?.length || 0;
 
-  if (reservations && reservations.length > 0) {
+  // 헤더 고정
+  container.innerHTML = `
+    <div class="usage-history-header">
+      <div>날짜</div>
+      <div>시간</div>
+      <div>장소</div>
+      <div>차량번호</div>
+      <div>요금</div>
+      <div>상태</div>
+      <div>액션</div>
+    </div>
+  `;
+
+  if (actualCount > 0) {
     reservations.forEach(reservation => {
       const item = createReservationHistoryItem(reservation);
       container.appendChild(item);
     });
+
+    // 부족한 만큼 filler div 추가
+    for (let i = 0; i < totalRows - actualCount; i++) {
+      const filler = document.createElement('div');
+      filler.className = 'history-item filler-item';
+      filler.innerHTML = `
+        <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>
+        <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>
+      `;
+      container.appendChild(filler);
+    }
   } else {
-    container.innerHTML = `
-      <div class="empty-message">
-        <div style="text-align: center; padding: 2rem; color: #64748b;">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
-          <p>조건에 맞는 예약 내역이 없습니다.</p>
-        </div>
+    // 비어있을 때 메시지 출력
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = 'empty-message';
+    emptyMsg.innerHTML = `
+      <div style="text-align: center; padding: 2rem; color: #64748b;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+        <p>조건에 맞는 예약 내역이 없습니다.</p>
       </div>
     `;
+    container.appendChild(emptyMsg);
   }
 }
 
 function createReservationHistoryItem(reservation) {
   const item = document.createElement('div');
-  item.className = 'reservation-history-item';
+  item.className = 'history-item';
 
-  const statusClass = reservation.status.toLowerCase();
+  const statusClass = getReservationStatusClass(reservation.status);
   const statusText = getReservationStatusText(reservation.status);
+  const date = formatDate(reservation.reservationStart);
+  const start = formatTime(reservation.reservationStart);
+  const end = formatTime(reservation.reservationEnd);
+
 
   item.innerHTML = `
-    <div class="reservation-date">${formatDate(reservation.reservationDate)}</div>
-    <div class="reservation-slot">
-      <div class="slot-name">${escapeHtml(reservation.slotName)}</div>
-      <div class="slot-time">${formatTime(reservation.startTime)} ~ ${formatTime(reservation.endTime)}</div>
+    <div class="history-date">${date}</div>
+    <div class="history-duration">
+      <div class="duration-main">${start} ~ ${end}</div>
     </div>
-    <div class="reservation-car">${escapeHtml(reservation.carNumber)}</div>
-    <div class="reservation-fee">₩${reservation.fee.toLocaleString()}</div>
-    <div class="reservation-status">
-      <span class="status-badge status-${statusClass}">${statusText}</span>
-    </div>
-    <div class="reservation-actions">
-      <button onclick="showReservationDetail('${reservation.id}')" class="btn-detail">상세</button>
-      ${reservation.status === 'ACTIVE' ?
-      `<button onclick="cancelReservation('${reservation.id}')" class="btn-cancel">취소</button>` : ''
-  }
+    <div class="history-spot">천호 주차장</div>  <!-- 슬롯 칸 (빈칸 유지) -->
+    <div class="history-car">${reservation.carNumber}</div>
+    <div class="history-fee">₩${reservation.fee.toLocaleString()}</div>
+      <div class="history-status ${statusClass}">
+        ${statusText}
+      </div>
+    <div class="history-actions">
+      <button class="usage-btn usage-btn-detail" onclick="showReservationDetail('${reservation.id}')">상세</button>
+      ${reservation.status === 'PAID' ? `
+        <button class="usage-btn usage-btn-receipt" onclick="cancelReservation('${reservation.id}')">취소</button>
+      ` : ''}
     </div>
   `;
-
   return item;
 }
 
 function getReservationStatusText(status) {
   const statusMap = {
-    'ACTIVE': '활성',
-    'COMPLETED': '완료',
-    'CANCELLED': '취소',
+    'ACTIVE': '예약 중',
+    'PAID': '결제완료',
+    'CANCELLED': '취소완료',
+    'FAILED': '결제 실패',
+    'COMPLETED': '이용 완료',
     'EXPIRED': '만료',
     'NO_SHOW': '미이용'
   };
   return statusMap[status] || status;
+}
+
+function getReservationStatusClass(status) {
+  const classMap = {
+    'ACTIVE': 'status-upcoming',
+    'PAID': 'completed',
+    'CANCELLED': 'cancelled',
+    'FAILED': 'status-fire',
+    'COMPLETED': 'status-completed',
+    'EXPIRED': 'status-muted',
+    'NO_SHOW': 'status-muted'
+  };
+  return classMap[status] || '';
+
 }
 
 // ========================================
@@ -902,7 +1066,10 @@ function formatTime(timeString) {
   if (!timeString) return '-';
 
   try {
-    return timeString.substring(0, 5); // HH:MM 형식
+    const date = new Date(timeString);
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
   } catch (error) {
     console.error('❌ 시간 포맷팅 실패:', error);
     return '-';

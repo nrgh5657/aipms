@@ -5,22 +5,12 @@
 
 <mapper namespace="com.aipms.mapper.UsageHistoryMapper">
 
-    <select id="getUsageHistory" resultType="com.aipms.dto.UsageHistoryDto">
+    <select id="getPagedUsageHistory" resultType="com.aipms.dto.UsageHistoryDto">
         SELECT
-        DATE_FORMAT(pl.entry_time, '%Y-%m-%d') AS date,
-        CONCAT(
-        FLOOR(TIMESTAMPDIFF(MINUTE, pl.entry_time, pl.exit_time)/60), '시간 ',
-        MOD(TIMESTAMPDIFF(MINUTE, pl.entry_time, pl.exit_time), 60), '분'
-        ) AS duration,
-        DATE_FORMAT(pl.entry_time,'%H:%i') AS startTime,
-        DATE_FORMAT(pl.exit_time ,'%H:%i') AS endTime,
-        CONCAT(DATE_FORMAT(pl.entry_time,'%H:%i'), ' - ', DATE_FORMAT(pl.exit_time,'%H:%i')) AS timeRange,
+        pl.entry_time,
+        pl.exit_time,
         m.car_number AS carNumber,
-        IFNULL(pmt.total_fee, 0) AS fee,
-        CASE
-        WHEN pl.exit_time IS NULL THEN '이용중'
-        ELSE '완료'
-        END AS status
+        IFNULL(pmt.total_fee, 0) AS fee
         FROM parking_log pl
         JOIN member m ON pl.member_id = m.member_id
         LEFT JOIN payment pmt ON pl.payment_id = pmt.payment_id
@@ -29,6 +19,17 @@
             AND DATE(pl.entry_time) BETWEEN #{startDate} AND #{endDate}
         </if>
         ORDER BY pl.entry_time DESC
+        LIMIT #{limit} OFFSET #{offset} <!-- ✅ 페이징 처리 -->
+    </select>
+
+    <select id="countUsageHistory" resultType="int">
+        SELECT COUNT(*)
+        FROM parking_log pl
+        JOIN member m ON pl.member_id = m.member_id
+        WHERE m.member_id = #{memberId}
+        <if test="startDate != null and endDate != null">
+            AND DATE(pl.entry_time) BETWEEN #{startDate} AND #{endDate}
+        </if>
     </select>
 
     <select id="selectRecentUsageHistoryByMemberId" resultType="com.aipms.dto.UsageHistoryDto">

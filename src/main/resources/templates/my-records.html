@@ -132,9 +132,8 @@
     <!-- 주차 이용내역 -->
     <section id="usage-records" class="records-content active">
       <div class="usage-history history-list">
-        <div class="history-header">
+        <div class="usage-history-header">
           <div class="header-date">날짜</div>
-          <div class="header-slot">위치</div>
           <div class="header-duration">이용시간</div>
           <div class="header-time">시간</div>
           <div class="header-car">차량</div>
@@ -155,8 +154,18 @@
 
     <!-- 결제 내역 -->
     <section id="payment-records" class="records-content">
-      <div class="payment-history-list">
-        <!-- 결제 내역 항목들이 여기에 동적으로 추가됩니다 -->
+      <div class="payment-history history-list">
+        <!-- ✅ 공통 스타일 클래스 사용 -->
+        <div class="usage-history-header">
+          <div>날짜</div>         <!-- item-date -->
+          <div>대행사</div>     <!-- item-duration -->
+          <div>결제수단</div>     <!-- item-time -->
+          <div>차량</div>          <!-- item-car (여기엔 paymentId) -->
+          <div>요금</div>         <!-- item-fee -->
+          <div>상태</div>         <!-- item-status -->
+          <div>작업</div>         <!-- item-actions -->
+        </div>
+        <!-- ✅ 동적으로 .history-item 들이 추가됨 -->
       </div>
 
       <!-- 페이지네이션 -->
@@ -169,11 +178,19 @@
 
     <!-- 예약 내역 -->
     <section id="reservation-records" class="records-content">
-      <div class="reservation-history-list">
+      <div class="reservation-history history-list">
+        <div class="history-header">
+          <div class="header-date">날짜</div>
+          <div class="header-duration">시간</div>
+          <div class="header-spot">슬롯</div>
+          <div class="header-car">차량번호</div>
+          <div class="header-fee">요금</div>
+          <div class="header-status">상태</div>
+          <div class="header-actions">액션</div>
+        </div>
         <!-- 예약 내역 항목들이 여기에 동적으로 추가됩니다 -->
       </div>
 
-      <!-- 페이지네이션 -->
       <div class="pagination" id="reservation-pagination">
         <button id="reservation-prev-page" class="page-btn">‹ 이전</button>
         <span id="reservation-page-info" class="page-info">1 / 1 페이지 (총 0건)</span>

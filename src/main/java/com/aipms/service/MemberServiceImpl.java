@@ -1,5 +1,7 @@
 package com.aipms.service;
 
+import com.aipms.domain.Car;
+import com.aipms.mapper.CarMapper;
 import com.aipms.mapper.KakaoTokenMapper;
 import com.aipms.mapper.MemberMapper;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class MemberServiceImpl implements MemberService {
     private final MemberMapper memberMapper;
     private final KakaoTokenMapper kakaoTokenMapper;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final CarMapper carMapper;
 
     //회원 등록
     @Override
@@ -46,6 +49,14 @@ public class MemberServiceImpl implements MemberService {
         String memberCode = String.format("M%03d", member.getMemberId());
 
         memberMapper.updateMemberCode(member.getMemberId(), memberCode);
+
+        Car car = new Car();
+        car.setMemberId(member.getMemberId());
+        car.setCarNumber(dto.getCarNumber());
+        car.setCarType("null"); // 기본값, 또는 dto에서 받아도 됨
+        car.setRegDate(LocalDateTime.now());
+
+        carMapper.insertCar(car); // 매퍼 호출
     }
 
     //멤버 코드 업데이트

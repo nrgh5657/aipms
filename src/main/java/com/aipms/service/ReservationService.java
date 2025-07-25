@@ -1,6 +1,8 @@
 package com.aipms.service;
 
 import com.aipms.dto.ReservationDto;
+import com.aipms.dto.ReservationHistoryDto;
+import com.aipms.dto.ReservationHistoryRequestDto;
 
 import java.util.List;
 
@@ -18,4 +20,7 @@ public interface ReservationService {
     ReservationDto getActiveReservation(Long memberId);
 
     void processReservationRefund(Long reservationId, String reason, Long memberId);
+
+    List<ReservationHistoryDto> getPagedReservationHistory(ReservationHistoryRequestDto dto);
+    int countReservationHistory(ReservationHistoryRequestDto dto);
 }

@@ -1,8 +1,7 @@
 package com.aipms.service;
 
 import com.aipms.domain.Member;
-import com.aipms.dto.UsageHistoryDto;
-import com.aipms.dto.UsageHistoryResponseDto;
+import com.aipms.dto.*;
 import com.aipms.mapper.MemberMapper;
 import com.aipms.mapper.ParkingLogMapper;
 import com.aipms.mapper.UsageHistoryMapper;
@@ -25,10 +24,15 @@ public class UsageHistoryServiceImpl implements UsageHistoryService {
     private final ParkingLogMapper parkingLogMapper;
 
     @Override
-    public List<UsageHistoryDto> getHistory(Long memberId, LocalDate startDate, LocalDate endDate) {
+    public List<UsageHistoryResponseDto> getHistory(Long memberId, LocalDate startDate, LocalDate endDate) {
         LocalDateTime from = startDate.atStartOfDay();
         LocalDateTime to = endDate.plusDays(1).atStartOfDay(); // 끝나는 날 포함
-        return usageHistoryMapper.getUsageHistory(memberId, from, to);
+
+        List<UsageHistoryDto> raw = usageHistoryMapper.getUsageHistory(memberId, from, to);
+
+        return raw.stream()
+                .map(this::toResponseDto) // 가공 메서드 호출
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -44,6 +48,26 @@ public class UsageHistoryServiceImpl implements UsageHistoryService {
         return rawLogs.stream()
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public PageDto<UsageHistoryResponseDto> getPagedUsageHistory(UsageHistoryRequestDto req) {
+        List<UsageHistoryDto> list = usageHistoryMapper.getPagedUsageHistory(req);
+        int count = usageHistoryMapper.countUsageHistory(req);
+
+        List<UsageHistoryResponseDto> formattedList = list.stream()
+                .map(this::toResponseDto)
+                .toList();
+
+        int totalPages = (int) Math.ceil((double) count / req.getLimit());
+
+        return new PageDto<>(
+                formattedList,
+                count,
+                totalPages,
+                req.getPage(),
+                req.getLimit()
+        );
     }
 
     private UsageHistoryResponseDto toResponseDto(UsageHistoryDto dto) {

@@ -1,6 +1,7 @@
 package com.aipms.mapper;
 
 import com.aipms.dto.UsageHistoryDto;
+import com.aipms.dto.UsageHistoryRequestDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -16,4 +17,8 @@ public interface UsageHistoryMapper {
     );
 
     List<UsageHistoryDto> selectRecentUsageHistoryByMemberId(Long memberId);
+
+    List<UsageHistoryDto> getPagedUsageHistory(UsageHistoryRequestDto req);
+
+    int countUsageHistory(UsageHistoryRequestDto req);
 }

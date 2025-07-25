@@ -1,8 +1,6 @@
 package com.aipms.controller;
 
-import com.aipms.dto.PageDto;
-import com.aipms.dto.ReservationDto;
-import com.aipms.dto.ReservationRefundRequestDto;
+import com.aipms.dto.*;
 import com.aipms.security.CustomUserDetails;
 import com.aipms.service.ReservationService;
 import lombok.RequiredArgsConstructor;
@@ -91,5 +89,26 @@ public class ReservationController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", "서버 오류"));
         }
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<?> getReservationHistory(
+            @AuthenticationPrincipal CustomUserDetails user,
+            ReservationHistoryRequestDto dto
+    ) {
+        dto.setMemberId(user.getMember().getMemberId());
+
+        List<ReservationHistoryDto> reservations = reservationService.getPagedReservationHistory(dto);
+        int total = reservationService.countReservationHistory(dto);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("reservations", reservations);
+        result.put("pagination", Map.of(
+                "totalCount", total,
+                "totalPages", (int) Math.ceil((double) total / dto.getLimit()),
+                "currentPage", dto.getPage()
+        ));
+
+        return ResponseEntity.ok(result);
     }
 }

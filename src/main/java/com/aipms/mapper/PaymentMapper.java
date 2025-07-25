@@ -1,10 +1,7 @@
 package com.aipms.mapper;
 
 import com.aipms.domain.Payment;
-import com.aipms.dto.AccountInfoResponseDto;
-import com.aipms.dto.AdminPaymentDto;
-import com.aipms.dto.AdminPaymentHistoryRequestDto;
-import com.aipms.dto.PaymentHistoryRequestDto;
+import com.aipms.dto.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -22,10 +19,9 @@ public interface PaymentMapper {
     AccountInfoResponseDto getAccountInfo(Long memberId);
 
     // ✅ 결제 내역 조회 (리스트)
-    List<Payment> selectPayments(@Param("req") PaymentHistoryRequestDto req,
-                                 @Param("offset") int offset,
-                                 @Param("limit") int limit);
-
+    List<PaymentHistoryDto> selectPayments(@Param("req") PaymentHistoryRequestDto req,
+                                           @Param("offset") int offset,
+                                           @Param("limit") int limit);
 
 
     // ✅ 결제 내역 건수

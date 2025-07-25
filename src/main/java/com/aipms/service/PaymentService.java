@@ -4,6 +4,7 @@ import com.aipms.dto.*;
 
 public interface PaymentService {
     PaymentResultDto processPayment(PaymentRequestDto requestDto);
+
     AccountInfoResponseDto getAccountInfo(Long memberId);
 
     PaymentHistoryResponseDto getPaymentHistory(PaymentHistoryRequestDto req);

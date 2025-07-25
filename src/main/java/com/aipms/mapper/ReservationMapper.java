@@ -2,6 +2,8 @@ package com.aipms.mapper;
 
 import com.aipms.domain.Reservation;
 import com.aipms.dto.ReservationDto;
+import com.aipms.dto.ReservationHistoryDto;
+import com.aipms.dto.ReservationHistoryRequestDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -30,4 +32,7 @@ public interface ReservationMapper {
     int cancelReservation(@Param("reservationId") Long reservationId,
                           @Param("cancelReason") String reason,
                           @Param("refundAmount") int refundAmount);
+
+    List<ReservationHistoryDto> getPagedReservationHistory(ReservationHistoryRequestDto dto);
+    int countReservationHistory(ReservationHistoryRequestDto dto);
 }

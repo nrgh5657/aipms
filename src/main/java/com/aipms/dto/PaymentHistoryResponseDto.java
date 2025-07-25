@@ -15,6 +15,6 @@ import java.util.List;
 @AllArgsConstructor
 public class PaymentHistoryResponseDto {
 
-    private List<Payment> payments;       // 결제 내역 리스트
+    private List<PaymentHistoryDto> payments;      // 결제 내역 리스트
     private PageDto pagination;    // 페이지네이션 정보
 }

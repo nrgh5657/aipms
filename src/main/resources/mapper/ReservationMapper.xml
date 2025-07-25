@@ -73,5 +73,48 @@
         WHERE reservation_id = #{reservationId}
     </update>
 
+    <select id="getPagedReservationHistory" resultType="com.aipms.dto.ReservationHistoryDto">
+        SELECT
+        reservation_id AS id,
+        reservation_start,
+        reservation_end,
+        vehicle_number AS carNumber,
+        fee,
+        status
+        FROM reservation
+        WHERE member_id = #{memberId}
+        <if test="startDate != null and startDate != ''">
+            AND reservation_start &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND reservation_end &lt;= #{endDate}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND vehicle_number LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY reservation_start DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countReservationHistory" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE member_id = #{memberId}
+        <if test="startDate != null and startDate != ''">
+            AND reservation_start &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND reservation_end &lt;= #{endDate}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND vehicle_number LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
 
 </mapper>
