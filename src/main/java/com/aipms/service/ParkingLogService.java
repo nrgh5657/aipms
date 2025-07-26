@@ -2,6 +2,7 @@ package com.aipms.service;
 
 import com.aipms.domain.ParkingLog;
 import com.aipms.dto.ExitResponseDto;
+import com.aipms.dto.ParkingLogFilterRequestDto;
 import com.aipms.dto.ParkingLogWithMemberDto;
 import com.aipms.dto.ParkingStatusDto;
 
@@ -25,4 +26,8 @@ public interface ParkingLogService {
     int countCurrentlyParkedCars();
 
     ParkingStatusDto getCurrentParkingStatus(Long memberId);
+
+    List<ParkingLogWithMemberDto> getFilteredLogs(ParkingLogFilterRequestDto filter);
+
+    int countFilteredLogs(ParkingLogFilterRequestDto filter);
 }

@@ -64,8 +64,7 @@ public class UsageHistoryServiceImpl implements UsageHistoryService {
         return new PageDto<>(
                 formattedList,
                 count,
-                totalPages,
-                req.getPage(),
+                req.getPage(),     // ✅ 여기에 totalPages 넣으면 안 됨
                 req.getLimit()
         );
     }

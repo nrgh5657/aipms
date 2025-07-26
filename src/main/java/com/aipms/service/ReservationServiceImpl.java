@@ -24,9 +24,20 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationMapper reservationMapper;
     private final PaymentMapper paymentMapper;
     private final IamportService iamportService;
+    private final ParkingAvailabilityService parkingAvailabilityService;
 
     @Override
     public void makeReservation(ReservationDto dto) {
+
+        int overlap = reservationMapper.countOverlappingReservation(dto.getMemberId(), dto.getReservationStart(), dto.getReservationEnd());
+        if (overlap > 0) {
+            throw new IllegalStateException("해당 기간에 이미 예약이 존재합니다.");
+        }
+        int available = parkingAvailabilityService.getAvailableNormalSpots();
+        if (available <= 0) {
+            throw new IllegalStateException("잔여 주차 공간이 없습니다.");
+        }
+
         // 1. 예약 정보 저장
         Reservation reservation = new Reservation();
         reservation.setMemberId(dto.getMemberId());
@@ -154,6 +165,17 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public int countReservationHistory(ReservationHistoryRequestDto dto) {
         return reservationMapper.countReservationHistory(dto);
+    }
+
+    @Override
+    public boolean hasDailyReservationToday(Long memberId, LocalDateTime entryTime) {
+        LocalDate date = entryTime.toLocalDate();
+        return reservationMapper.existsTodayReservation(memberId, date) > 0;
+    }
+
+    @Override
+    public boolean hasOverlappingReservation(Long memberId, LocalDateTime start, LocalDateTime end) {
+        return reservationMapper.countOverlappingReservation(memberId, start, end) > 0;
     }
 
 }

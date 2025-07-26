@@ -117,4 +117,27 @@
         </if>
     </select>
 
+    <select id="existsTodayReservation" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE member_id = #{memberId}
+          AND DATE(reservation_start) = #{date}
+          AND status = 'PAID'
+    </select>
+
+
+    <!--중복예약 방지-->
+    <select id="countOverlappingReservation" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE member_id = #{memberId}
+        AND status IN ('PAID', 'CONFIRMED')
+        AND
+        (
+            reservation_start &lt;= #{end}
+            AND reservation_end &gt;= #{start}
+        )
+    </select>
+
+
 </mapper>

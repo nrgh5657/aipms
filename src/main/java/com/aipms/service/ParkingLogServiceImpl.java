@@ -4,6 +4,7 @@ import com.aipms.domain.Member;
 import com.aipms.domain.ParkingLog;
 import com.aipms.domain.Payment;
 import com.aipms.dto.ExitResponseDto;
+import com.aipms.dto.ParkingLogFilterRequestDto;
 import com.aipms.dto.ParkingLogWithMemberDto;
 import com.aipms.dto.ParkingStatusDto;
 import com.aipms.mapper.MemberMapper;
@@ -24,6 +25,7 @@ public class ParkingLogServiceImpl implements ParkingLogService {
     private final MemberMapper memberMapper;
     private final SubscriptionService subscriptionService;
     private final PaymentMapper paymentMapper;
+    private final ReservationService reservationService;
 
     @Override
     public ExitResponseDto insertLog(ParkingLog log) {
@@ -39,20 +41,32 @@ public class ParkingLogServiceImpl implements ParkingLogService {
 
     @Override
     public void processEntry(ParkingLog log) {
+        if (log.getEntryTime() == null) {
+            log.setEntryTime(LocalDateTime.now()); // ✅ 먼저 설정
+        }
+
         Member member = memberMapper.findByCarNumber(log.getCarNumber());
         System.out.println("🔍 조회된 member: " + (member != null ? member.getName() + "/" + member.getMemberId() : "❌ 없음"));
 
         if (member != null) {
             log.setMemberId(member.getMemberId());
+
             boolean hasSubscription = subscriptionService.isActiveSubscription(member.getMemberId());
-            log.setParkingType(hasSubscription ? "정기권" : "일반");
+
+            boolean hasDailyReservation = reservationService.hasDailyReservationToday(
+                    member.getMemberId(), log.getEntryTime()
+            );
+
+            if (hasSubscription) {
+                log.setParkingType("정기권");
+            } else if (hasDailyReservation) {
+                log.setParkingType("일주차");
+            } else {
+                log.setParkingType("일반");
+            }
         } else {
             log.setMemberId(null);
             log.setParkingType("일반");
-        }
-
-        if (log.getEntryTime() == null) {
-            log.setEntryTime(LocalDateTime.now());
         }
 
         parkingLogMapper.insertLog(log);
@@ -68,11 +82,12 @@ public class ParkingLogServiceImpl implements ParkingLogService {
         Long memberId = log.getMemberId();
         LocalDateTime now = LocalDateTime.now();
 
-        // 1. 정기권 확인
-        if (memberId != null && subscriptionService.isActiveSubscription(memberId)) {
+        // 1. 정기권 확인 || 예약자 확인
+        String type = log.getParkingType();
+        if ("정기권".equals(type) || "일주차".equals(type)) {
             log.setExitTime(now);
             parkingLogMapper.updateExitTime(log);
-            return new ExitResponseDto(true, "출차 완료 (정기권)", false, 0);
+            return new ExitResponseDto(true, "출차 완료 (" + type + ")", false, 0);
         }
 
         // 2. 결제 확인
@@ -118,6 +133,17 @@ public class ParkingLogServiceImpl implements ParkingLogService {
         dto.setEstimatedFee(fee);
 
         return dto;
+    }
+
+    @Override
+    public List<ParkingLogWithMemberDto> getFilteredLogs(ParkingLogFilterRequestDto filter) {
+        return parkingLogMapper.selectFilteredLogs(filter);
+    }
+
+
+    @Override
+    public int countFilteredLogs(ParkingLogFilterRequestDto filter) {
+        return parkingLogMapper.countFilteredLogs(filter);
     }
 
 

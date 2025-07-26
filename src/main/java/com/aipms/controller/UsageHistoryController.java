@@ -8,10 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -68,24 +65,18 @@ public class UsageHistoryController {
     @GetMapping("/history/paged")
     public ResponseEntity<PageDto<UsageHistoryResponseDto>> getPagedUsageHistory(
             @AuthenticationPrincipal Object principal,
-            @RequestParam int page,
-            @RequestParam int limit
+            @ModelAttribute UsageHistoryRequestDto req // ✅ 필터 DTO 자동 바인딩
     ) {
         Long memberId;
 
         if (principal instanceof CustomUserDetails user) {
-            memberId = user.getMember().getMemberId();
+            req.setMemberId(user.getMember().getMemberId());
         } else if (principal instanceof OAuth2User oauthUser) {
             String kakaoId = oauthUser.getAttribute("id").toString();
-            memberId = usageHistoryService.findMemberIdByKakaoId(kakaoId);
+            req.setMemberId(usageHistoryService.findMemberIdByKakaoId(kakaoId));
         } else {
             throw new IllegalStateException("인증된 사용자가 아닙니다.");
         }
-
-        UsageHistoryRequestDto req = new UsageHistoryRequestDto();
-        req.setPage(page);
-        req.setLimit(limit);
-        req.setMemberId(memberId); // 👉 여기에 담기만 하면 됨
 
         PageDto<UsageHistoryResponseDto> result = usageHistoryService.getPagedUsageHistory(req);
         return ResponseEntity.ok(result);

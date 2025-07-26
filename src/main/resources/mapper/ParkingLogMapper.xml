@@ -124,6 +124,47 @@
         WHERE exit_time IS NULL
     </select>
 
+    <select id="selectFilteredLogs" resultType="com.aipms.dto.ParkingLogWithMemberDto">
+        SELECT
+        pl.id,
+        pl.car_number,
+        pl.entry_time,
+        pl.exit_time,
+        m.name AS member_name,
+        m.subscription AS subscription,
+        IFNULL(m.member_id, 0) AS member_id
+        FROM parking_log pl
+        LEFT JOIN member m ON pl.member_id = m.member_id
+        WHERE 1=1
+        <if test="carNumber != null and carNumber != ''">
+            AND pl.car_number LIKE CONCAT('%', #{carNumber}, '%')
+        </if>
+        <if test="requester != null and requester != ''">
+            AND m.name LIKE CONCAT('%', #{requester}, '%')
+        </if>
+        <if test="subscription != null">
+            AND m.subscription = #{subscription}
+        </if>
+        ORDER BY pl.entry_time DESC
+        LIMIT #{size} OFFSET ${(page - 1) * size}
+    </select>
+
+    <select id="countFilteredLogs" resultType="int">
+        SELECT COUNT(*)
+        FROM parking_log pl
+        LEFT JOIN member m ON pl.member_id = m.member_id
+        WHERE 1=1
+        <if test="carNumber != null and carNumber != ''">
+            AND pl.car_number LIKE CONCAT('%', #{carNumber}, '%')
+        </if>
+        <if test="requester != null and requester != ''">
+            AND m.name LIKE CONCAT('%', #{requester}, '%')
+        </if>
+        <if test="subscription != null">
+            AND m.subscription = #{subscription}
+        </if>
+    </select>
+
 
 
 </mapper>

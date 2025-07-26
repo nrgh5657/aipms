@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,5 +111,14 @@ public class ReservationController {
         ));
 
         return ResponseEntity.ok(result);
+    }
+
+    //중복 예약 체크
+    @GetMapping("/check-overlap")
+    public ResponseEntity<?> checkReservationOverlap(@AuthenticationPrincipal CustomUserDetails user,
+                                                     @RequestParam LocalDateTime startDate,
+                                                     @RequestParam LocalDateTime endDate) {
+        boolean overlap = reservationService.hasOverlappingReservation(user.getMember().getMemberId(), startDate, endDate);
+        return ResponseEntity.ok(Map.of("available", !overlap));
     }
 }

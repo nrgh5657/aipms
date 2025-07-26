@@ -177,6 +177,26 @@ async function submitDailyReservation(event) {
 
   const merchantUid = 'daily_' + new Date().getTime();
 
+  //💡 주차공간 확인
+  const availability = await apiRequest('/api/parking/check-availability');
+  if (!availability || !availability.available) {
+    alert(availability?.message || '❌ 예약 가능한 공간이 없습니다.');
+    return;
+  }
+
+  // 💡 중복 확인
+  const query = new URLSearchParams({
+    startDate: `${start}T00:00:00`,
+    endDate: `${end}T23:59:59`
+  }).toString();
+
+  const check = await apiRequest('/api/reservations/check-overlap?' + query);
+
+  if (!check.available) {
+    alert('⚠️ 이미 해당 기간에 예약이 존재합니다.');
+    return;
+  }
+
   IMP.request_pay({
     pg: "kakaopay", // 결제사
     pay_method: "card",

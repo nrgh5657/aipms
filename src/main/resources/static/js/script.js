@@ -848,9 +848,17 @@ async function loadParkingConfig() {
     }
   }
 
-  // 📌 서버에서 데이터 요청
-  function fetchParkingLogs(page = 1) {
-    fetch(`/api/parking-log/logs?page=${page}&size=${pageSize}`)
+  function fetchParkingLogs(page = 1, filters = {}) {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('size', pageSize);
+
+    // 📦 필터 조건 추가
+    if (filters.carNumber) params.append('carNumber', filters.carNumber);
+    if (filters.requester) params.append('requester', filters.requester);
+    if (filters.subscription !== undefined) params.append('subscription', filters.subscription);
+
+    fetch(`/api/parking-log/logs?${params.toString()}`)
         .then(res => {
           if (!res.ok) throw new Error('서버 응답 오류');
           return res.json();
@@ -859,7 +867,7 @@ async function loadParkingConfig() {
           parkingData = data.logs;
           totalLogs = data.totalCount;
           renderParkingTable(parkingData);
-          renderParkingPagination();
+          renderParkingPagination(filters); // 필터 유지
         })
         .catch(err => {
           console.error('🚨 입출차 로그 불러오기 실패:', err);
@@ -867,51 +875,44 @@ async function loadParkingConfig() {
         });
   }
 
-  function renderParkingPagination() {
+  function renderParkingPagination(filters = {}) {
     const totalPages = Math.ceil(totalLogs / pageSize);
     const container = document.getElementById('parkingPagination');
     if (!container) return;
 
     container.innerHTML = '';
-    // ◀ 이전 버튼
-    // 항상 표시되는 이전 버튼 (비활성 조건만 추가)
+
     const prevBtn = document.createElement('button');
     prevBtn.textContent = '이전';
-    if (currentPage === 1) {
-      prevBtn.disabled = true;
-    }
+    prevBtn.disabled = currentPage === 1;
     prevBtn.classList.add('pagination-nav');
     prevBtn.onclick = () => {
       if (currentPage > 1) {
         currentPage--;
-        fetchParkingLogs(currentPage);
+        fetchParkingLogs(currentPage, filters);
       }
     };
     container.appendChild(prevBtn);
 
-    // 숫자 페이지 버튼들
     for (let i = 1; i <= totalPages; i++) {
       const btn = document.createElement('button');
       btn.textContent = i;
       btn.className = i === currentPage ? 'active' : '';
       btn.onclick = () => {
         currentPage = i;
-        fetchParkingLogs(currentPage);
+        fetchParkingLogs(i, filters);
       };
       container.appendChild(btn);
     }
 
-    // 항상 표시되는 다음 버튼 (비활성 조건만 추가)
     const nextBtn = document.createElement('button');
     nextBtn.textContent = '다음';
-    if (currentPage === totalPages || totalPages === 0) {
-      nextBtn.disabled = true;
-    }
+    nextBtn.disabled = currentPage === totalPages || totalPages === 0;
     nextBtn.classList.add('pagination-nav');
     nextBtn.onclick = () => {
       if (currentPage < totalPages) {
         currentPage++;
-        fetchParkingLogs(currentPage);
+        fetchParkingLogs(currentPage, filters);
       }
     };
     container.appendChild(nextBtn);
@@ -920,42 +921,40 @@ async function loadParkingConfig() {
 
   // 🔍 필터 적용 함수
   function applyParkingFilters() {
+    const filters = getParkingFilters();
+    currentPage = 1; // 항상 첫 페이지부터
+    fetchParkingLogs(currentPage, filters);
+  }
+
+  function getParkingFilters() {
     const carKeyword = document.getElementById('searchInput').value.trim();
     const nameKeyword = document.getElementById('requesterSearch').value.trim();
-
     const selectedFilter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
 
-    const filtered = parkingData.filter(item => {
-      const carMatch = carKeyword === '' || item.carNumber.includes(carKeyword);
-      const nameMatch =
-          nameKeyword === '' ||
-          (item.memberId === null && nameKeyword === '비회원') ||
-          (item.memberName && item.memberName.includes(nameKeyword));
+    const filters = {};
 
-      let typeMatch = true;
-      if (selectedFilter === 'monthly') {
-        typeMatch = item.subscription === 1;
-      } else if (selectedFilter === 'daily') {
-        typeMatch = item.subscription !== 1;
-      }
+    if (carKeyword) filters.carNumber = carKeyword;
+    if (nameKeyword) filters.requester = nameKeyword;
 
-      return carMatch && nameMatch && typeMatch;
-    });
+    if (selectedFilter === 'monthly') {
+      filters.subscription = 1;
+    } else if (selectedFilter === 'daily') {
+      filters.subscription = 0;
+    }
 
-    renderParkingTable(filtered);
+    return filters;
   }
 
   // ✅ DOM 로드 시점 초기화
   document.addEventListener('DOMContentLoaded', () => {
-    fetchParkingLogs(currentPage);
+    const filters = getParkingFilters(); // 초기 필터 적용
+    fetchParkingLogs(currentPage, filters);
 
-    // 🔍 검색 버튼 이벤트
     const searchBtn = document.querySelector('.search-btn');
     if (searchBtn) {
       searchBtn.addEventListener('click', applyParkingFilters);
     }
 
-    // 🧭 필터 버튼 이벤트
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -963,7 +962,7 @@ async function loadParkingConfig() {
         applyParkingFilters();
       });
     });
-  });
+  })
 })();
 
 

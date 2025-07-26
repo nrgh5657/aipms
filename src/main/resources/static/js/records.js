@@ -4,9 +4,10 @@
 
 let recordsUpdateInterval = null;
 let currentFilters = {
-  limit: 10
+  limit: 5
 };
 let currentPage = 1;
+let totalPages = 1;
 let currentTab = 'usage';
 
 // ========================================
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeRecordsPage();
 
   console.log('✅ 이용내역 페이지 초기화 완료');
+
 });
 
 function initializeRecordsPage() {
@@ -49,54 +51,42 @@ function initializeRecordsPage() {
 // ========================================
 // 이용 내역 로드 (PDF 명세서 기준)
 // ========================================
-async function loadUsageHistory(page = currentPage, filters = currentFilters) {
-  console.log('📋 이용 내역 로드 중...', { page, filters });
+async function loadUsageHistory(page = 1, filters = currentFilters) {
+  const queryParams = new URLSearchParams();
 
-  try {
-    const queryParams = new URLSearchParams();
+  queryParams.append('page', page);
+  queryParams.append('limit', filters.limit || 5);
 
-    queryParams.append('page', page); // ✅ 필수
-    queryParams.append('limit', filters.limit || 5); // ✅ 기본 5개
+  // ✅ 나머지 필터도 다 붙이기
+  if (filters.startDate) queryParams.append('startDate', filters.startDate);
+  if (filters.endDate) queryParams.append('endDate', filters.endDate);
+  if (filters.type) queryParams.append('type', filters.type);
+  if (filters.status) queryParams.append('status', filters.status);
+  if (filters.keyword) queryParams.append('keyword', filters.keyword);
 
-    if (filters.startDate) queryParams.append('startDate', filters.startDate);
-    if (filters.endDate) queryParams.append('endDate', filters.endDate);
+  const res = await fetch(`/api/usage/history/paged?${queryParams.toString()}`, {
+    method: 'GET',
+    credentials: 'include'
+  });
 
-    const res = await fetch(`/api/usage/history/paged?${queryParams.toString()}`, {
-      method: 'GET',
-      credentials: 'include' // ✅ 세션 유지
-    });
+  const data = await res.json();
+  console.log('📦 서버 응답 전체:', data);
 
-    if (!res.ok) {
-      throw new Error(`HTTP 오류! 상태 코드: ${res.status}`);
-    }
+  currentPage = data.currentPage || page;
+  totalPages = data.totalPages || 1;
 
-    const data = await res.json();
-    console.log('📦 페이징 응답:', data);
-
-    currentPage = page;
-
-    // ✅ 리스트 렌더링
-    if (data.content) {
-      updateUsageHistoryList(data.content); // ← 여기가 핵심!
-    }
-
-    // ✅ 페이징 정보 렌더링
-    if (data.totalElements !== undefined) {
-      updatePagination('usage', {
-        totalElements: data.totalElements,
-        totalPages: data.totalPages,
-        currentPage: data.currentPage,
-        pageSize: data.pageSize
-      });
-    }
-
-    return true;
-  } catch (error) {
-    console.error('❌ 이용 내역 로드 실패:', error);
-    showErrorMessage('이용 내역을 불러오는데 실패했습니다.');
-    return false;
+  if (data.content) {
+    updateUsageHistoryList(data.content);
   }
+
+  updatePagination('usage', {
+    totalElements: data.totalElements,
+    totalPages: data.totalPages,
+    currentPage: data.currentPage,
+    pageSize: data.pageSize
+  });
 }
+
 
 // 가상 데이터 생성 함수
 async function getMockUsageData(page, filters) {
@@ -479,16 +469,16 @@ function switchRecordTab(tabType) {
   loadTabData(tabType);
 }
 
-async function loadTabData(tabType) {
+async function loadTabData(tabType, page = 1, filters = currentFilters) {
   switch(tabType) {
     case 'usage':
-      await loadUsageHistory();
+      await loadUsageHistory(page, filters);
       break;
     case 'payment':
-      await loadPaymentHistory();
+      await loadPaymentHistory(page, filters);
       break;
     case 'reservation':
-      await loadReservationHistory();
+      await loadReservationHistory(page, filters);
       break;
   }
 }
@@ -524,7 +514,7 @@ async function loadPaymentHistory(page = currentPage, filters = currentFilters) 
     if (filters.status) queryParams.append('status', filters.status);
     if (filters.keyword) queryParams.append('keyword', filters.keyword);
     queryParams.append('page', page);
-    queryParams.append('limit', 5); // ✅ 항상 5개 고정
+    queryParams.append('limit', 5); // ✅ 고정된 페이지 크기
 
     const res = await fetch(`/api/payment/history?${queryParams.toString()}`, {
       method: 'GET',
@@ -532,14 +522,25 @@ async function loadPaymentHistory(page = currentPage, filters = currentFilters) 
     });
 
     const data = await res.json();
+    console.log('📦 결제 내역 서버 응답 전체:', data);  // ✅ 전체 구조 확인
+    console.log('📦 pagination:', data.pagination);     // ✅ 페이징 정보만 따로 확인
+    console.log('📦 payments:', data.payments);         // ✅ 결제 목록만 따로 확인
     currentPage = page;
+    totalPages = data.pagination?.totalPages || 1;
 
-    if (data.payments) {
-      updatePaymentHistoryList(data.payments);
+// ✅ 이 부분 수정: content에서 꺼내기
+    if (data.pagination?.content) {
+      updatePaymentHistoryList(data.pagination.content);
     }
 
+// ✅ updatePagination에도 맞춰주기
     if (data.pagination) {
-      updatePagination('payment', data.pagination);
+      updatePagination('payment', {
+        totalElements: data.pagination.totalElements,
+        totalPages: data.pagination.totalPages,
+        currentPage: data.pagination.currentPage,
+        pageSize: data.pagination.pageSize
+      });
     }
 
     console.log('✅ 결제 내역 로드 완료');
@@ -695,14 +696,23 @@ async function loadReservationHistory(page = currentPage, filters = currentFilte
     if (!res.ok) throw new Error('서버 응답 오류');
 
     const data = await res.json();
-    currentPage = page;
+    console.log('📦 예약 내역 응답:', data);
 
+    currentPage = page;
+    totalPages = data.pagination?.totalPages || 1;
+
+    // ✅ 여기 reservations로 바꿔야 함!
     if (data.reservations) {
       updateReservationHistoryList(data.reservations);
     }
 
     if (data.pagination) {
-      updatePagination('reservation', data.pagination);
+      updatePagination('reservation', {
+        totalElements: data.pagination.totalCount,
+        totalPages: data.pagination.totalPages,
+        currentPage: data.pagination.currentPage,
+        pageSize: filters.limit || 10
+      });
     }
 
     console.log('✅ 예약 내역 로드 완료');
@@ -863,8 +873,8 @@ function clearSearch() {
 // 필터 적용
 // ========================================
 async function applyFilter() {
-  // 현재 필터 상태 수집
-  const newFilters = {
+  // 공통 필터 값 수집
+  const rawFilters = {
     startDate: document.getElementById('date-from')?.value,
     endDate: document.getElementById('date-to')?.value,
     type: document.getElementById('record-type')?.value,
@@ -872,28 +882,28 @@ async function applyFilter() {
     keyword: document.getElementById('search-keyword')?.value?.trim()
   };
 
-  // 빈 값 제거
-  Object.keys(newFilters).forEach(key => {
-    if (!newFilters[key] || newFilters[key] === 'all') {
-      delete newFilters[key];
-    }
-  });
-
   // 날짜 유효성 검사
-  if (newFilters.startDate && newFilters.endDate) {
-    const start = new Date(newFilters.startDate);
-    const end = new Date(newFilters.endDate);
-
+  if (rawFilters.startDate && rawFilters.endDate) {
+    const start = new Date(rawFilters.startDate);
+    const end = new Date(rawFilters.endDate);
     if (start > end) {
       showToast('시작일이 종료일보다 늦을 수 없습니다.', 'error');
       return;
     }
   }
 
-  // 필터 적용
-  currentFilters = newFilters;
-  currentPage = 1;
+  // 탭별 필터 변환
+  currentFilters = mapFiltersByTab(currentTab, rawFilters);
 
+  // 빈 값 제거 (null 또는 'all' 제거)
+  Object.keys(currentFilters).forEach(key => {
+    const v = currentFilters[key];
+    if (v === undefined || v === null || v === '' || v === 'all') {
+      delete currentFilters[key];
+    }
+  });
+
+  currentPage = 1;
   showLoading('필터를 적용하는 중...');
   const success = await loadTabData(currentTab);
   hideLoading();
@@ -931,40 +941,72 @@ function resetFilters() {
   showToast('필터가 초기화되었습니다.', 'info');
 }
 
+function mapFiltersByTab(tab, filters) {
+  const mapped = {
+    startDate: filters.startDate,
+    endDate: filters.endDate,
+    keyword: filters.keyword
+  };
+
+  if (tab === 'usage') {
+    mapped.type = filters.type === '일반' ? 'NORMAL'
+        : filters.type === '정기권' ? 'SUBSCRIPTION'
+            : null;
+
+    mapped.status = filters.status === '이용중' ? 'IN_PROGRESS'
+        : filters.status === '완료' ? 'COMPLETED'
+            : null;
+
+  } else if (tab === 'reservation') {
+    mapped.type = filters.type === '일일' ? 'DAILY'
+        : filters.type === '월정기' ? 'MONTHLY'
+            : null;
+
+    mapped.status = filters.status === '예정' ? 'UPCOMING'
+        : filters.status === '취소됨' ? 'CANCELLED'
+            : null;
+
+  } else if (tab === 'payment') {
+    mapped.type = filters.type === '주차결제' ? 'PARKING'
+        : filters.type === '정기권결제' ? 'SUBSCRIPTION'
+            : null;
+
+    mapped.status = filters.status === '성공' ? 'SUCCESS'
+        : filters.status === '환불' ? 'REFUNDED'
+            : null;
+  }
+
+  return mapped;
+}
+
 // ========================================
 // 페이지네이션
 // ========================================
 function updatePagination(type, pagination) {
-  const { currentPage = 1, totalPages = 1, totalCount = 0 } = pagination;
+  const { currentPage = 1, totalPages = 1, totalElements = 0 } = pagination;
 
-  // 페이지 정보 업데이트
-  const pageInfo = document.getElementById(`${type}-page-info`);
-  if (pageInfo) {
-    pageInfo.textContent = `${currentPage} / ${totalPages} 페이지 (총 ${totalCount}건)`;
-  }
+  document.getElementById(`${type}-page-info`).textContent =
+      `${currentPage} / ${totalPages} 페이지 (총 ${totalElements}건)`;
 
-  // 페이지네이션 버튼 업데이트
   const prevBtn = document.getElementById(`${type}-prev-page`);
   const nextBtn = document.getElementById(`${type}-next-page`);
 
-  if (prevBtn) {
-    prevBtn.disabled = currentPage <= 1;
-    prevBtn.onclick = () => {
-      if (currentPage > 1) {
-        loadTabData(currentTab, currentPage - 1);
-      }
-    };
-  }
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = currentPage >= totalPages;
 
-  if (nextBtn) {
-    nextBtn.disabled = currentPage >= totalPages;
-    nextBtn.onclick = () => {
-      if (currentPage < totalPages) {
-        loadTabData(currentTab, currentPage + 1);
-      }
-    };
-  }
+  prevBtn.onclick = () => {
+    if (currentPage > 1) {
+      loadTabData(currentTab, currentPage - 1);
+    }
+  };
+
+  nextBtn.onclick = () => {
+    if (currentPage < totalPages) {
+      loadTabData(currentTab, currentPage + 1);
+    }
+  };
 }
+
 
 // ========================================
 // 상세보기 및 액션 함수들

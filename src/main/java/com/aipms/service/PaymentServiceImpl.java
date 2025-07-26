@@ -48,19 +48,19 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentMapper.getAccountInfo(memberId);
     }
 
-        @Override
-        public PaymentHistoryResponseDto getPaymentHistory(PaymentHistoryRequestDto req) {
-            int page = req.getPage() != null ? req.getPage() : 1;
-            int limit = req.getLimit() != null ? req.getLimit() : 20;
-            int offset = (page - 1) * limit;
+    @Override
+    public PaymentHistoryResponseDto getPaymentHistory(PaymentHistoryRequestDto req) {
+        int page = req.getPage() != null ? req.getPage() : 1;
+        int limit = req.getLimit() != null ? req.getLimit() : 20;
+        int offset = (page - 1) * limit;
 
-            List<PaymentHistoryDto> payments = paymentMapper.selectPayments(req, offset, limit);
-            int totalCount = paymentMapper.countPayments(req);
+        List<PaymentHistoryDto> payments = paymentMapper.selectPayments(req, offset, limit);
+        int totalCount = paymentMapper.countPayments(req);
 
-            PageDto<PaymentHistoryDto> pageDto = new PageDto<>(payments, totalCount, page, limit);
+        PageDto<PaymentHistoryDto> pageDto = new PageDto<>(payments, totalCount, page, limit);
 
-            return new PaymentHistoryResponseDto(payments, pageDto);
-        }
+        return new PaymentHistoryResponseDto(payments, pageDto);
+    }
 
     @Override
     public boolean verifyAndRecord(PaymentVerifyRequestDto dto, Long memberId) {

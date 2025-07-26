@@ -15,11 +15,43 @@
         JOIN member m ON pl.member_id = m.member_id
         LEFT JOIN payment pmt ON pl.payment_id = pmt.payment_id
         WHERE m.member_id = #{memberId}
+
         <if test="startDate != null and endDate != null">
             AND DATE(pl.entry_time) BETWEEN #{startDate} AND #{endDate}
         </if>
+
+        <if test="type != null and type != ''">
+            <choose>
+                <when test="type == 'NORMAL'">
+                    AND pl.reservation_id IS NULL
+                </when>
+                <when test="type == 'SUBSCRIPTION'">
+                    AND EXISTS (
+                    SELECT 1 FROM subscription s
+                    WHERE s.member_id = m.member_id
+                    AND pl.entry_time BETWEEN s.start_date AND s.end_date
+                    )
+                </when>
+            </choose>
+        </if>
+
+        <if test="status != null and status != ''">
+            <choose>
+                <when test="status == 'IN_PROGRESS'">
+                    AND pl.exit_time IS NULL
+                </when>
+                <when test="status == 'COMPLETED'">
+                    AND pl.exit_time IS NOT NULL
+                </when>
+            </choose>
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            AND m.car_number LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+
         ORDER BY pl.entry_time DESC
-        LIMIT #{limit} OFFSET #{offset} <!-- ✅ 페이징 처리 -->
+        LIMIT #{offset}, #{limit}
     </select>
 
     <select id="countUsageHistory" resultType="int">
@@ -27,8 +59,39 @@
         FROM parking_log pl
         JOIN member m ON pl.member_id = m.member_id
         WHERE m.member_id = #{memberId}
+
         <if test="startDate != null and endDate != null">
             AND DATE(pl.entry_time) BETWEEN #{startDate} AND #{endDate}
+        </if>
+
+        <if test="type != null and type != ''">
+            <choose>
+                <when test="type == 'NORMAL'">
+                    AND pl.reservation_id IS NULL
+                </when>
+                <when test="type == 'SUBSCRIPTION'">
+                    AND EXISTS (
+                    SELECT 1 FROM subscription s
+                    WHERE s.member_id = m.member_id
+                    AND pl.entry_time BETWEEN s.start_date AND s.end_date
+                    )
+                </when>
+            </choose>
+        </if>
+
+        <if test="status != null and status != ''">
+            <choose>
+                <when test="status == 'IN_PROGRESS'">
+                    AND pl.exit_time IS NULL
+                </when>
+                <when test="status == 'COMPLETED'">
+                    AND pl.exit_time IS NOT NULL
+                </when>
+            </choose>
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            AND m.car_number LIKE CONCAT('%', #{keyword}, '%')
         </if>
     </select>
 

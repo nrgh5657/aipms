@@ -4,6 +4,7 @@ import com.aipms.domain.ParkingLog;
 import com.aipms.domain.Payment;
 import com.aipms.dto.ExitRequestDto;
 import com.aipms.dto.ExitResponseDto;
+import com.aipms.dto.ParkingLogFilterRequestDto;
 import com.aipms.dto.ParkingLogWithMemberDto;
 import com.aipms.mapper.ParkingLogMapper;
 import com.aipms.mapper.PaymentMapper;
@@ -37,14 +38,24 @@ public class ParkingLogController {
         return ResponseEntity.ok(result);
     }
 
-    // 🔹 GET: 전체 로그 + 신청자 이름 포함 조회
     @GetMapping("/logs")
     public ResponseEntity<Map<String, Object>> getPagedLogs(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "4") int size) {
+            @RequestParam(defaultValue = "4") int size,
+            @RequestParam(required = false) String carNumber,
+            @RequestParam(required = false) String requester,
+            @RequestParam(required = false) Integer subscription
+    ) {
+        // 👉 서비스에 전달할 DTO
+        ParkingLogFilterRequestDto filter = new ParkingLogFilterRequestDto();
+        filter.setPage(page);
+        filter.setSize(size);
+        filter.setCarNumber(carNumber);
+        filter.setRequester(requester);
+        filter.setSubscription(subscription);
 
-        List<ParkingLogWithMemberDto> logs = parkingLogService.getPagedLogs(page, size);
-        int total = parkingLogService.getTotalLogCount();
+        List<ParkingLogWithMemberDto> logs = parkingLogService.getFilteredLogs(filter);
+        int total = parkingLogService.countFilteredLogs(filter);
 
         Map<String, Object> result = new HashMap<>();
         result.put("logs", logs);

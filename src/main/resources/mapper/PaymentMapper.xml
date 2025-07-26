@@ -112,8 +112,6 @@
     <select id="countPayments" resultType="int">
         SELECT COUNT(*)
         FROM payment p
-        JOIN entry_log el ON el.payment_id = p.payment_id
-        JOIN car c ON el.car_id = c.car_id
         <where>
             <if test="req.memberId != null">
                 AND p.member_id = #{req.memberId}
@@ -132,6 +130,7 @@
                 CAST(p.payment_id AS CHAR) LIKE CONCAT('%', #{req.keyword}, '%')
                 OR p.payment_method LIKE CONCAT('%', #{req.keyword}, '%')
                 OR p.payment_gateway LIKE CONCAT('%', #{req.keyword}, '%')
+                OR p.car_number LIKE CONCAT('%', #{req.keyword}, '%')
                 )
             </if>
         </where>

@@ -4,6 +4,7 @@ import com.aipms.dto.ReservationDto;
 import com.aipms.dto.ReservationHistoryDto;
 import com.aipms.dto.ReservationHistoryRequestDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ReservationService {
@@ -23,4 +24,8 @@ public interface ReservationService {
 
     List<ReservationHistoryDto> getPagedReservationHistory(ReservationHistoryRequestDto dto);
     int countReservationHistory(ReservationHistoryRequestDto dto);
+
+    boolean hasDailyReservationToday(Long memberId, LocalDateTime entryTime);
+
+    boolean hasOverlappingReservation(Long memberId, LocalDateTime start, LocalDateTime end);
 }

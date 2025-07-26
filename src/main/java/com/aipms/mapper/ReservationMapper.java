@@ -7,6 +7,7 @@ import com.aipms.dto.ReservationHistoryRequestDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -35,4 +36,8 @@ public interface ReservationMapper {
 
     List<ReservationHistoryDto> getPagedReservationHistory(ReservationHistoryRequestDto dto);
     int countReservationHistory(ReservationHistoryRequestDto dto);
+
+    int existsTodayReservation(Long memberId, LocalDate date);
+
+    int countOverlappingReservation(Long memberId, LocalDateTime start, LocalDateTime end);
 }
