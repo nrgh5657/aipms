@@ -16,7 +16,7 @@ public interface ParkingLogService {
 
     ParkingLog getCurrentUnpaidLog(Long memberId);
 
-    int calculateFee(LocalDateTime entryTime);
+    int calculateFee(ParkingLog pLog);
 
     void processEntry(ParkingLog log);
 

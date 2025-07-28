@@ -2,6 +2,7 @@ package com.aipms.mapper;
 
 import com.aipms.domain.FireLog;
 import com.aipms.dto.FireAlertDto;
+import com.aipms.dto.FireAlertLogRequestDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -21,8 +22,6 @@ public interface FireLogMapper {
     FireAlertDto findLatestLog();
     
     //화재 감지 로그 페이징 처리
-    List<FireLog> findFireLogsPaged(@Param("offset") int offset, @Param("limit") int limit);
-    
-    //페이징 처리를 위한 화재감지 로그 카운트 
-    int countFireLogs();
+    List<FireAlertDto> getPagedFireLogs(FireAlertLogRequestDto req);
+    int countFireLogs(FireAlertLogRequestDto req);
 }

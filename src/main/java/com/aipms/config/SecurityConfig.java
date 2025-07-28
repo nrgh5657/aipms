@@ -57,7 +57,7 @@ public class SecurityConfig {
                                 "/", "/favicon.ico", "/oauth/**",
                                 "/css/**", "/js/**", "/images/**", "/img/**",
                                 "/member/login", "/member/signup", "/logout",
-                                "/admin-dashboard", "/my-records", "/signup",
+                                "/admin-dashboard", "/my-records", "/signup","/api/**","/admin/policy/fee/all",
                                 "/api/members/register","/api/members/check-email",
                                 "/api/parking/realtime-status",
                                 "/api/parking/live-status",

@@ -117,15 +117,15 @@
           <div class="policy-content">
             <div class="policy-detail">
               <span class="detail-label">기본 요금:</span>
-              <span class="detail-value">1,200원/10분</span>
+              <span class="detail-value" id="hourlyBase">1,200원/10분</span>
             </div>
             <div class="policy-detail">
               <span class="detail-label">최대 요금:</span>
-              <span class="detail-value">7,200원</span>
+              <span class="detail-value" id="hourlyMax">7,200원</span>
             </div>
             <div class="policy-detail">
               <span class="detail-label">적용 시작:</span>
-              <span class="detail-value">2025-07-01</span>
+              <span class="detail-value" id="hourlyApply">2025-07-01</span>
             </div>
           </div>
           <div class="policy-actions">
@@ -142,15 +142,15 @@
           <div class="policy-content">
             <div class="policy-detail">
               <span class="detail-label">기본 요금:</span>
-              <span class="detail-value">12,000원/일</span>
+              <span class="detail-value" id="dailyBase">12,000원/일</span>
             </div>
             <div class="policy-detail">
               <span class="detail-label">적용 시간:</span>
-              <span class="detail-value">24시간</span>
+              <span class="detail-value" id="dailyDuration">24시간</span>
             </div>
             <div class="policy-detail">
               <span class="detail-label">적용 시작:</span>
-              <span class="detail-value">2025-07-01</span>
+              <span class="detail-value" id="dailyApply">2025-07-01</span>
             </div>
           </div>
           <div class="policy-actions">
@@ -159,23 +159,23 @@
           </div>
         </div>
         
-        <div class="policy-card inactive">
+        <div class="policy-card active">
           <div class="policy-header">
             <h3>월 정기권</h3>
-            <span class="policy-status inactive">비활성</span>
+            <span class="policy-status active">활성</span>
           </div>
           <div class="policy-content">
             <div class="policy-detail">
               <span class="detail-label">기본 요금:</span>
-              <span class="detail-value">100,000원/월</span>
+              <span class="detail-value" id="monthlyBase">100,000원/월</span>
             </div>
             <div class="policy-detail">
               <span class="detail-label">할인률:</span>
-              <span class="detail-value">기존 요금 대비 20% 절약</span>
+              <span class="detail-value" id="monthlyDiscount">기존 요금 대비 20% 절약</span>
             </div>
             <div class="policy-detail">
               <span class="detail-label">적용 예정:</span>
-              <span class="detail-value">2025-08-01</span>
+              <span class="detail-value" id="monthlyApply">2025-08-01</span>
             </div>
           </div>
           <div class="policy-actions">
@@ -183,7 +183,37 @@
             <button class="btn-toggle" onclick="togglePolicy('monthly')">활성화</button>
           </div>
         </div>
+
+        <div class="policy-card active">
+          <div class="policy-header">
+            <h3>환불 정책</h3>
+            <span class="policy-status active">활성</span>
+          </div>
+          <div class="policy-content">
+            <div class="policy-detail">
+              <span class="detail-label">환불 가능 시간:</span>
+              <span class="detail-value" id="refundLimitDisplay">-</span>
+            </div>
+            <div class="policy-detail">
+              <span class="detail-label">1일 전 위약금:</span>
+              <span class="detail-value" id="penalty1dDisplay">-</span>
+            </div>
+            <div class="policy-detail">
+              <span class="detail-label">당일 이후 환불:</span>
+              <span class="detail-value" id="penaltySameDayDisplay">-</span>
+            </div>
+            <div class="policy-detail">
+              <span class="detail-label">적용 시작:</span>
+              <span class="detail-value" id="refundApplyDate">-</span>
+            </div>
+          </div>
+          <div class="policy-actions">
+            <button class="btn-edit" onclick="openRefundPolicyModal()">수정</button>
+            <button class="btn-toggle" onclick="togglePolicy('monthly')">활성화</button>
+          </div>
+        </div>
       </div>
+
 
       <!-- 결제 내역 관리 -->
       <div class="payment-section">

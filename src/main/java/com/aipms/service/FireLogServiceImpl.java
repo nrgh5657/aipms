@@ -3,6 +3,7 @@ package com.aipms.service;
 import com.aipms.domain.FireLog;
 import com.aipms.domain.Member;
 import com.aipms.dto.FireAlertDto;
+import com.aipms.dto.FireAlertLogRequestDto;
 import com.aipms.dto.PageDto;
 import com.aipms.mapper.FireLogMapper;
 import com.aipms.mapper.MemberMapper;
@@ -87,13 +88,18 @@ public class FireLogServiceImpl implements FireLogService{
 
     //화재 감지 기록 페이징 처리
     @Override
-    public PageDto<FireLog> getPagedFireLogs(int page, int size) {
-        int totalCount = fireLogMapper.countFireLogs();
-        int offset = page * size;
-        List<FireLog> logs = fireLogMapper.findFireLogsPaged(offset, size);
+    public PageDto<FireAlertDto> getPagedFireLogs(FireAlertLogRequestDto req) {
+        // 전체 개수 조회 (조건 포함)
+        int totalCount = fireLogMapper.countFireLogs(req);
 
-        return new PageDto<>(logs, totalCount, page, size);
+        // 오프셋 계산
+        int offset = req.getPage() * req.getLimit();
+        req.setPage(offset); // ⚠️ XML에서는 LIMIT #{limit} OFFSET #{page}로 쓸 예정
 
+        // 데이터 조회
+        List<FireAlertDto> logs = fireLogMapper.getPagedFireLogs(req);
+
+        return new PageDto<>(logs, totalCount, req.getPage() / req.getLimit(), req.getLimit());
     }
 
 

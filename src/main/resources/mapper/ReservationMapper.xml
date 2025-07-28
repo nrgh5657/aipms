@@ -5,9 +5,25 @@
 
 <mapper namespace="com.aipms.mapper.ReservationMapper">
 
-    <insert id="insertReservation" parameterType="com.aipms.domain.Reservation" useGeneratedKeys="true" keyProperty="reservationId">
-        INSERT INTO reservation (member_id, vehicle_number, reservation_start, reservation_end, status, fee)
-        VALUES (#{memberId}, #{vehicleNumber}, #{reservationStart}, #{reservationEnd}, #{status}, #{fee})
+    <insert id="insertReservation" parameterType="com.aipms.dto.ReservationDto">
+        INSERT INTO reservation (
+            member_id,
+            vehicle_number,
+            reservation_start,
+            reservation_end,
+            status,
+            fee,
+            type
+        )
+        VALUES (
+                   #{memberId},
+                   #{vehicleNumber},
+                   #{reservationStart},
+                   #{reservationEnd},
+                   'UNPAID',
+                   #{fee},
+                   'DAILY'
+               )
     </insert>
 
     <select id="findByMemberId" resultType="com.aipms.domain.Reservation">
@@ -23,11 +39,10 @@
         SELECT * FROM reservation
     </select>
 
-    <select id="countPaidReservations" resultType="int">
+    <select id="countActiveReservations" resultType="int">
         SELECT COUNT(*)
         FROM reservation
-        WHERE status = 'PAID'
-          AND reservation_start &lt;= NOW()
+        WHERE status IN ('PAID', 'UNPAID')
           AND reservation_end &gt;= NOW()
     </select>
 
@@ -125,6 +140,16 @@
           AND status = 'PAID'
     </select>
 
+    <select id="existsReservationForTime" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM reservation
+            WHERE member_id = #{memberId}
+              AND DATE(#{entryTime}) BETWEEN DATE(reservation_start) AND DATE(reservation_end)
+        )
+    </select>
+
+
 
     <!--중복예약 방지-->
     <select id="countOverlappingReservation" resultType="int">
@@ -137,6 +162,18 @@
             reservation_start &lt;= #{end}
             AND reservation_end &gt;= #{start}
         )
+    </select>
+
+    <update id="cancelUnpaidExpiredReservations">
+        UPDATE reservation
+        SET status = 'CANCELLED'
+        WHERE status = 'UNPAID'
+          AND DATE(created_at) &lt; CURDATE()
+    </update>
+
+    <select id="selectReservationById" resultType="com.aipms.dto.ReservationDto">
+        SELECT * FROM reservation
+        WHERE reservation_id = #{reservationId}
     </select>
 
 

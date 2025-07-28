@@ -67,4 +67,8 @@ public interface MemberMapper {
     int countAllMembers();
 
     void updateSubscriptionStatus(@Param("memberId") Long memberId, @Param("status") boolean status);
+
+    List<Member> selectFilteredMembers(String status, String membership, int size, int offset);
+
+    int countFilteredMembers(String status, String membership);
 }

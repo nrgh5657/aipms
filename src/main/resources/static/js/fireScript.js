@@ -552,19 +552,23 @@ function updateElementIfExists(id, value) {
 
 
 function loadFireLogsPaged(page = 0, size = pageSize, filters = null) {
-  fetch(`/fire/logs/paged?page=${page}&size=${size}`)
+  const params = new URLSearchParams();
+  params.append("page", page);
+  params.append("size", size);
+
+  const filterState = filters || getStoredFireFilters();
+  if (filterState.filter && filterState.filter !== 'all') params.append("label", filterState.filter);
+  if (filterState.location) params.append("location", filterState.location);
+  if (filterState.date) params.append("date", filterState.date);
+
+  fetch(`/fire/logs/paged?${params.toString()}`)
       .then(res => res.json())
       .then(data => {
         fireDetectionData = data.content;
         currentPage = data.currentPage;
         totalPages = Math.ceil(data.totalElements / data.pageSize);
 
-        if (filters) {
-          // 필터 UI는 이미 적용했으니 데이터 필터만 적용
-          applyFireFilters(filters.filter, false);
-        } else {
-          applyFireFilters(); // 기본 필터 적용
-        }
+        renderFireTable(fireDetectionData);  // ❌ applyFireFilters() 필요 없음
         renderPagination(totalPages, currentPage);
       });
 }

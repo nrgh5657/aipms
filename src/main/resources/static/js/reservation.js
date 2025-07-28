@@ -1,29 +1,24 @@
 // ========================================
-// 예약 시스템 초기화
-// ========================================
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.IMP) {
-    IMP.init("imp18655565"); // ✅ 너의 아임포트 가맹점 코드로 교체
-  } else {
-    console.error("❌ IMP 객체를 찾을 수 없습니다.");
-  }
-  initializeCommon();
-  initializeReservationPage();
-});
-
-// ========================================
 // 예약 페이지 초기화
 // ========================================
-function initializeReservationPage() {
-  setupDateInputs();              // 일일 날짜 설정
-  setupMonthPicker();             // 월 주차 시작월
-  loadUserCars();                 // 차량 번호 자동입력
-  loadRealtimeZoneStatus();       // 주차장 현황
-  addPriceCalculationListeners(); // 일일 계산
-  addMonthlyPriceListeners();     // 월 요금 계산
-  calculateDailyPrice();          // 기본 일일 요금 표시
-  calculateMonthlyPrice();        // 기본 월 요금 표시
+async function initializeReservationPage() {
+  setupDateInputs();
+  setupMonthPicker();
+  loadUserCars();
+  loadRealtimeZoneStatus();
+
+  await loadFeePolicies();        // ✅ 정책 로딩 완료 후 계산
+
+  addPriceCalculationListeners();
+  addMonthlyPriceListeners();
+
+  calculateDailyPrice();          // ✅ 정책 요금으로 계산
+  calculateMonthlyPrice();
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initializeReservationPage();  // ✅ async 보장
+});
 
 // ========================================
 // 탭 전환
@@ -117,24 +112,72 @@ async function loadRealtimeZoneStatus() {
 // ========================================
 // 요금 계산
 // ========================================
+
+let feePolicies = {
+  DAILY: 20000,
+  MONTHLY: 150000,
+  // TIME: 1200 등도 필요시
+};
+
+async function loadFeePolicies() {
+  try {
+    const res = await fetch('/admin/policy/fee/all', {
+      credentials: 'include'
+    });
+    const json = await res.json();
+
+    console.log('📦 전체 응답:', json); // 이제는 배열임
+
+    (json || []).forEach(policy => {
+      console.log('🔍 개별 정책:', policy);
+
+      const type = policy.policyType || policy.policy_type;
+      const baseFee = policy.baseFee || policy.base_fee;
+
+      if (type && !isNaN(baseFee)) {
+        feePolicies[type] = baseFee;
+      }
+    });
+
+    console.log('📌 최종 정책 요금:', feePolicies);
+  } catch (e) {
+    console.error('❌ 요금 정책 불러오기 실패:', e);
+  }
+}
+
+
 function calculateDailyPrice() {
   const start = new Date(document.getElementById('daily-start')?.value);
   const end = new Date(document.getElementById('daily-end')?.value);
   if (isNaN(start) || isNaN(end)) return;
 
   const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-  const total = days * 20000;
+  const unitPrice = feePolicies.DAILY || 20000; // 백업값 설정
+
+  const total = days * unitPrice;
 
   document.getElementById('daily-days').textContent = `${days}일`;
   document.getElementById('daily-total').textContent = `₩${total.toLocaleString()}`;
+
+  const unitPriceElement = document.getElementById('daily-unit-price');
+  if (unitPriceElement) {
+    unitPriceElement.textContent = `₩${unitPrice.toLocaleString()}`;
+  }
 }
 
 function calculateMonthlyPrice() {
   const months = parseInt(document.getElementById('monthly-period')?.value || '0');
-  const total = months * 150000;
+  const unitPrice = feePolicies.MONTHLY || 150000;
+
+  const total = months * unitPrice;
 
   document.getElementById('monthly-months').textContent = `${months}개월`;
   document.getElementById('monthly-total').textContent = `₩${total.toLocaleString()}`;
+
+  const unitPriceElement = document.getElementById('monthly-unit-price');
+  if (unitPriceElement) {
+    unitPriceElement.textContent = `₩${unitPrice.toLocaleString()}`;
+  }
 }
 
 // ========================================
@@ -154,82 +197,50 @@ function addMonthlyPriceListeners() {
 // ========================================
 async function submitDailyReservation(event) {
   event.preventDefault();
-  let userData = null;
-  try {
-    userData = JSON.parse(serverUserData);
-  } catch {
-    alert("⚠️ 로그인 정보를 불러올 수 없습니다.");
-    return;
-  }
 
-  const memberId = userData?.memberId;
+  // 로그인 정보 및 값 확인
+  const car = document.getElementById('daily-car')?.value;
   const start = document.getElementById('daily-start')?.value;
   const end = document.getElementById('daily-end')?.value;
-  const car = document.getElementById('daily-car')?.value;
 
-  if (!memberId || !start || !end || !car) {
-    alert('❗ 정보를 모두 입력하세요.');
+  if (!car || !start || !end) {
+    alert("❗ 모든 정보를 입력해주세요.");
     return;
   }
 
-  const days = Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24)) + 1;
-  const totalAmount = days * 20000;
+  // ✅ 오늘보다 이전 또는 당일은 예약 불가
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const merchantUid = 'daily_' + new Date().getTime();
-
-  //💡 주차공간 확인
-  const availability = await apiRequest('/api/parking/check-availability');
-  if (!availability || !availability.available) {
-    alert(availability?.message || '❌ 예약 가능한 공간이 없습니다.');
+  const startDate = new Date(start);
+  if (startDate <= today) {
+    alert("❗ 예약은 최소 하루 전부터 가능합니다.");
     return;
   }
 
-  // 💡 중복 확인
-  const query = new URLSearchParams({
-    startDate: `${start}T00:00:00`,
-    endDate: `${end}T23:59:59`
-  }).toString();
+  // ✅ 결제 마감 안내 팝업
+  const confirmMsg =
+      "🚨 예약 안내\n\n" +
+      "해당 예약은 오늘 자정까지 결제를 완료해야 합니다.\n" +
+      "결제하지 않으면 예약은 자동으로 취소됩니다.\n\n" +
+      "계속 진행하시겠습니까?";
 
-  const check = await apiRequest('/api/reservations/check-overlap?' + query);
+  const confirmed = confirm(confirmMsg);
+  if (!confirmed) return;
 
-  if (!check.available) {
-    alert('⚠️ 이미 해당 기간에 예약이 존재합니다.');
-    return;
-  }
-
-  IMP.request_pay({
-    pg: "kakaopay", // 결제사
-    pay_method: "card",
-    merchant_uid: merchantUid,
-    name: "일일 주차 예약",
-    amount: totalAmount,
-    buyer_email: userData.email,
-    buyer_name: userData.user
-  }, async function (rsp) {
-    if (rsp.success) {
-      const payload = {
-        memberId,
-        vehicleNumber: car,
-        reservationStart: `${start}T00:00:00`,
-        reservationEnd: `${end}T23:59:59`,
-        status: "CONFIRMED",  // 결제 완료 시 확정
-        fee: totalAmount,
-        impUid: rsp.imp_uid,
-        merchantUid: rsp.merchant_uid,
-        paymentMethod: rsp.pay_method,         // ✅ 추가
-        gateway: rsp.pg_provider,              // ✅ 필요 시 추가
-      };
-
-      const result = await apiPost('/api/reservations/apply', payload);
-      if (result?.success) {
-        alert("✅ 예약 및 결제 완료!");
-      } else {
-        alert("⚠️ 예약 저장 실패");
-      }
-    } else {
-      alert("❌ 결제 실패 또는 취소됨");
-    }
+  // 예약 POST
+  const res = await apiPost('/api/reservations/apply', {
+    vehicleNumber: car,
+    reservationStart: `${start}T00:00:00`,
+    reservationEnd: `${end}T23:59:59`
   });
+
+  if (res?.success) {
+    alert("✅ 예약 완료! 결제를 진행해주세요.");
+    window.location.href = '/payment'; // 💡 결제 페이지로 이동
+  } else {
+    alert("❌ 예약에 실패했습니다.");
+  }
 }
 
 // ========================================

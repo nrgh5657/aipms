@@ -142,9 +142,26 @@
         <if test="requester != null and requester != ''">
             AND m.name LIKE CONCAT('%', #{requester}, '%')
         </if>
-        <if test="subscription != null">
-            AND m.subscription = #{subscription}
-        </if>
+        <choose>
+            <when test="subscription == '월주차'">
+                AND m.subscription = '월주차'
+            </when>
+            <when test="subscription == '일주차'">
+                AND EXISTS (
+                SELECT 1 FROM reservation r
+                WHERE r.member_id = m.member_id
+                AND DATE(pl.entry_time) BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+                )
+            </when>
+            <when test="subscription == '일반'">
+                AND (m.subscription IS NULL OR m.subscription = '')
+                AND NOT EXISTS (
+                SELECT 1 FROM reservation r
+                WHERE r.member_id = m.member_id
+                AND DATE(pl.entry_time) BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+                )
+            </when>
+        </choose>
         ORDER BY pl.entry_time DESC
         LIMIT #{size} OFFSET ${(page - 1) * size}
     </select>
@@ -160,9 +177,26 @@
         <if test="requester != null and requester != ''">
             AND m.name LIKE CONCAT('%', #{requester}, '%')
         </if>
-        <if test="subscription != null">
-            AND m.subscription = #{subscription}
-        </if>
+        <choose>
+            <when test="subscription == '월주차'">
+                AND m.subscription = '월주차'
+            </when>
+            <when test="subscription == '일주차'">
+                AND EXISTS (
+                SELECT 1 FROM reservation r
+                WHERE r.member_id = m.member_id
+                AND DATE(pl.entry_time) BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+                )
+            </when>
+            <when test="subscription == '일반'">
+                AND (m.subscription IS NULL OR m.subscription = '')
+                AND NOT EXISTS (
+                SELECT 1 FROM reservation r
+                WHERE r.member_id = m.member_id
+                AND DATE(pl.entry_time) BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+                )
+            </when>
+        </choose>
     </select>
 
 

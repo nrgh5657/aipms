@@ -2,10 +2,9 @@ package com.aipms.service;
 
 import com.aipms.domain.Payment;
 import com.aipms.domain.Reservation;
-import com.aipms.dto.ReservationDto;
-import com.aipms.dto.ReservationHistoryDto;
-import com.aipms.dto.ReservationHistoryRequestDto;
+import com.aipms.dto.*;
 import com.aipms.mapper.PaymentMapper;
+import com.aipms.mapper.RefundPolicyMapper;
 import com.aipms.mapper.ReservationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,47 +24,48 @@ public class ReservationServiceImpl implements ReservationService {
     private final PaymentMapper paymentMapper;
     private final IamportService iamportService;
     private final ParkingAvailabilityService parkingAvailabilityService;
+    private final RefundPolicyMapper refundPolicyMapper;
+    private final FeePolicyService feePolicyService;
 
     @Override
-    public void makeReservation(ReservationDto dto) {
+    public void createDailyReservation(ReservationDto dto) {
 
+        // ✅ 오늘 날짜 기준 비교
+        LocalDate today = LocalDate.now();
+        LocalDate reservationDate = dto.getReservationStart().toLocalDate();
+
+        if (!reservationDate.isAfter(today)) {
+            throw new IllegalStateException("예약은 최소 하루 전부터 가능합니다.");
+        }
+
+        // ✅ 중복 체크
         int overlap = reservationMapper.countOverlappingReservation(dto.getMemberId(), dto.getReservationStart(), dto.getReservationEnd());
         if (overlap > 0) {
             throw new IllegalStateException("해당 기간에 이미 예약이 존재합니다.");
         }
+
+        // ✅ 공간 체크
         int available = parkingAvailabilityService.getAvailableNormalSpots();
         if (available <= 0) {
             throw new IllegalStateException("잔여 주차 공간이 없습니다.");
         }
+        FeePolicyDto policy = feePolicyService.getActivePolicyByType("DAILY");
+        if (policy == null) {
+            throw new IllegalStateException("일주차 요금 정책이 설정되어 있지 않습니다.");
+        }
+        int dailyFee = policy.getBaseFee();
 
-        // 1. 예약 정보 저장
+        // ✅ 예약 정보 저장 (결제 X)
         Reservation reservation = new Reservation();
         reservation.setMemberId(dto.getMemberId());
         reservation.setVehicleNumber(dto.getVehicleNumber());
         reservation.setReservationStart(dto.getReservationStart());
         reservation.setReservationEnd(dto.getReservationEnd());
-        reservation.setStatus("PAID");
-        reservation.setFee(20000); // 고정
+        reservation.setStatus("UNPAID"); // 🔸 결제 안 됨
+        reservation.setFee(dailyFee);       // 고정
+        reservation.setType("DAILY");    // 🔸 일주차 표시
 
-        reservationMapper.insertReservation(reservation); // ✅ 예약 저장
-        Long reservationId = reservation.getReservationId(); // PK 가져오기 (useGeneratedKeys=true)
-
-        // 2. 결제 정보 저장
-        Payment payment = new Payment();
-        payment.setMemberId(dto.getMemberId());
-        payment.setReservationId(reservationId); // ✅ 예약 ID 연동
-        payment.setTotalFee(20000);
-        payment.setPaymentMethod(dto.getPaymentMethod()); // JS에서 넘겨줘야 함
-        payment.setGateway(dto.getGateway());
-        payment.setPaid(true);
-        payment.setStatus("결제 완료");
-        payment.setPaymentType("일주차"); // 고정
-        payment.setMerchantUid(dto.getMerchantUid());
-        payment.setImpUid(dto.getImpUid());
-        payment.setPaymentTime(LocalDateTime.now());
-        payment.setCarNumber(dto.getVehicleNumber());
-
-        paymentMapper.insertPayment(payment);
+        reservationMapper.insertReservation(reservation);
     }
 
     @Override
@@ -103,8 +103,8 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public int countPaidReservations() {
-        return reservationMapper.countPaidReservations();
+    public int countActiveReservations() {
+        return reservationMapper.countActiveReservations();
     }
 
     @Override
@@ -116,45 +116,64 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public void processReservationRefund(Long reservationId, String reason, Long memberId) {
         Reservation reservation = reservationMapper.findByIdAndMemberId(reservationId, memberId);
-        if (reservation == null || !reservation.getStatus().equals("PAID")) {
+        if (reservation == null || !"PAID".equals(reservation.getStatus())) {
             throw new IllegalStateException("유효하지 않은 예약입니다.");
         }
 
         Payment payment = paymentMapper.findByReservationId(reservationId);
-        if (payment == null || !payment.getStatus().equals("결제 완료")) {
+        if (payment == null || !"결제 완료".equals(payment.getStatus())) {
             throw new IllegalStateException("결제 정보가 없습니다.");
         }
 
-        // 1시간 이내 확인
-        if (Duration.between(payment.getPaymentTime(), LocalDateTime.now()).toMinutes() > 60) {
-            throw new IllegalStateException("결제 1시간 이후에는 환불할 수 없습니다.");
+        // 🔸 환불 정책 불러오기
+        RefundPolicyDto policy = refundPolicyMapper.findActivePolicy();
+        if (policy == null) {
+            throw new IllegalStateException("적용 가능한 환불 정책이 없습니다.");
         }
-        int fee = reservation.getFee();
+
+        int refundLimit = policy.getRefundTimeLimitMinutes(); // ex: 60
+        double penalty1Day = policy.getPenaltyBefore1day();   // ex: 0.1
+        double penaltySameDay = policy.getPenaltySameOrAfter(); // ex: 1.0 == 환불불가
+
+        // 🔸 결제 시간으로부터 경과 시간 확인
+        long minutesSincePayment = Duration.between(payment.getPaymentTime(), LocalDateTime.now()).toMinutes();
+        if (minutesSincePayment > refundLimit) {
+            throw new IllegalStateException("결제 " + refundLimit + "분 이후에는 환불할 수 없습니다.");
+        }
+
+        int originalFee = reservation.getFee();
         LocalDate today = LocalDate.now();
-        LocalDate resDate = reservation.getReservationStart().toLocalDate();
+        LocalDate reservationDate = reservation.getReservationStart().toLocalDate();
 
-        // 예약일 기준 위약금 계산
-        long daysBetween = ChronoUnit.DAYS.between(today, resDate);
-        int penalty;
+        long daysBefore = ChronoUnit.DAYS.between(today, reservationDate);
+        double penaltyRatio;
 
-        if (daysBetween >= 2) {
-            penalty = 0;
-        } else if (daysBetween == 1) {
-            penalty = 1000;
-        } else if (daysBetween == 0) {
-            penalty = 3000;
+// 전액 환불 조건: 결제 후 일정 시간 이내
+        if (minutesSincePayment <= refundLimit) {
+            penaltyRatio = 0.0;
         } else {
-            throw new IllegalStateException("이미 지난 예약은 환불할 수 없습니다.");
+            if (daysBefore >= 2) {
+                penaltyRatio = 0.0;
+            } else if (daysBefore == 1) {
+                penaltyRatio = penalty1Day;
+            } else if (daysBefore == 0) {
+                penaltyRatio = penaltySameDay;
+                if (penaltyRatio >= 1.0) {
+                    throw new IllegalStateException("예약 당일은 환불이 불가능합니다.");
+                }
+            } else {
+                throw new IllegalStateException("이미 지난 예약은 환불할 수 없습니다.");
+            }
         }
-        int refundAmount = Math.max(fee - penalty, 0);
 
-        // 아임포트 환불 요청
+        int refundAmount = (int) Math.max(originalFee * (1 - penaltyRatio), 0);
+
+        // 🔸 아임포트 환불 요청
         iamportService.refund(payment.getImpUid(), refundAmount);
 
-        // DB 상태 업데이트
+        // 🔸 DB 업데이트
         paymentMapper.markAsCancelled(payment.getPaymentId(), reason, refundAmount);
         reservationMapper.cancelReservation(reservationId, reason, refundAmount);
-
     }
 
     @Override
@@ -176,6 +195,16 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public boolean hasOverlappingReservation(Long memberId, LocalDateTime start, LocalDateTime end) {
         return reservationMapper.countOverlappingReservation(memberId, start, end) > 0;
+    }
+
+    @Override
+    public int cancelExpiredUnpaidReservations() {
+        return reservationMapper.cancelUnpaidExpiredReservations();
+    }
+
+    @Override
+    public ReservationDto getReservationById(Long reservationId) {
+        return reservationMapper.selectReservationById(reservationId);
     }
 
 }

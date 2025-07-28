@@ -117,7 +117,7 @@ public class ParkingController {
         int total = config.getTotalSpaces();
         int fixed = config.getFixedSubscriptionSpaces();
         int parkedCars = parkingLogService.countCurrentlyParkedCars();
-        int reserved = reservationService.countPaidReservations();
+        int reserved = reservationService.countActiveReservations();
         int used = parkedCars + reserved;
         int available = parkingAvailabilityService.getAvailableNormalSpots();
         int usageRate = (int) ((used / (double) total) * 100);

@@ -5,6 +5,20 @@
 
 <mapper namespace="com.aipms.mapper.FireLogMapper">
 
+    <resultMap id="FireAlertMap" type="com.aipms.dto.FireAlertDto">
+        <id property="id" column="id"/>
+        <result property="label" column="label"/>
+        <result property="confidence" column="confidence"/>
+        <result property="videoUrl" column="video_url"/>
+        <result property="imagePath" column="image_path"/>
+        <result property="detectedAt" column="detected_at"/>
+        <result property="location" column="location"/>
+        <result property="adminJudgment" column="admin_judgment"/>
+        <result property="alertStatus" column="alert_status"/>
+        <result property="alertTime" column="alert_time"/>
+        <result property="notes" column="notes"/>
+    </resultMap>
+
     <insert id="insertFireLog" parameterType="com.aipms.domain.FireLog">
         INSERT INTO fire_alert_log (
             label,
@@ -66,27 +80,38 @@
             LIMIT 1
     </select>
 
-    <select id="findFireLogsPaged" resultType="com.aipms.domain.FireLog">
+    <select id="getPagedFireLogs" resultMap="FireAlertMap">
         SELECT
-            id,
-            label,
-            confidence,
-            video_url AS videoUrl,
-            image_path AS imagePath,
-            detected_at AS detectedAt,
-            created_at AS createdAt,
-            location,
-            admin_judgment AS adminJudgment,
-            alert_status AS alertStatus,
-            alert_time AS alertTime,
-            notes
+        id, label, confidence, video_url, image_path,
+        detected_at, location, admin_judgment, alert_status, alert_time, notes
         FROM fire_alert_log
+        WHERE 1=1
+        <if test="label != null and label != ''">
+            AND label = #{label}
+        </if>
+        <if test="location != null and location != ''">
+            AND location = #{location}
+        </if>
+        <if test="date != null and date != ''">
+            AND DATE_FORMAT(detected_at, '%Y-%m-%d') = #{date}
+        </if>
         ORDER BY detected_at DESC
-            LIMIT #{limit} OFFSET #{offset}
+        LIMIT #{limit} OFFSET #{page}
     </select>
 
     <select id="countFireLogs" resultType="int">
-        SELECT COUNT(*) FROM fire_alert_log
+        SELECT COUNT(*)
+        FROM fire_alert_log
+        WHERE 1=1
+        <if test="label != null and label != ''">
+            AND label = #{label}
+        </if>
+        <if test="location != null and location != ''">
+            AND location = #{location}
+        </if>
+        <if test="date != null and date != ''">
+            AND DATE_FORMAT(detected_at, '%Y-%m-%d') = #{date}
+        </if>
     </select>
 
 

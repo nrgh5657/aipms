@@ -2,6 +2,7 @@ package com.aipms.service;
 
 import com.aipms.domain.Member;
 import com.aipms.dto.MemberDto;
+import com.aipms.dto.MemberFilterRequestDto;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -41,4 +42,8 @@ public interface MemberService {
 
     //전체 회원수 카운트
     int countAllMembers();
+
+    List<Member> findFilteredMembers(MemberFilterRequestDto req);
+
+    int countFilteredMembers(MemberFilterRequestDto req);
 }

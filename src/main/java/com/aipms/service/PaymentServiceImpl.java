@@ -2,14 +2,19 @@ package com.aipms.service;
 
 import com.aipms.domain.ParkingLog;
 import com.aipms.domain.Payment;
+import com.aipms.domain.Reservation;
 import com.aipms.dto.*;
+import com.aipms.mapper.FeePolicyMapper;
 import com.aipms.mapper.ParkingLogMapper;
 import com.aipms.mapper.PaymentMapper;
+import com.aipms.mapper.ReservationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -21,6 +26,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final ParkingLogMapper parkingLogMapper;
     private final ParkingLogService parkingLogService;
     private final SubscriptionService subscriptionService;
+    private final ReservationMapper reservationMapper;
+    private final FeePolicyMapper feePolicyMapper;
 
     @Override
     public PaymentResultDto processPayment(PaymentRequestDto requestDto) {
@@ -80,12 +87,31 @@ public class PaymentServiceImpl implements PaymentService {
             return false;
         }
 
-        // 3. 요금 계산
-        int fee = parkingLogService.calculateFee(parkingLog.getEntryTime());
-            if (fee < 100) {
-                log.warn("🚨 요금이 너무 작아 최소 결제금액 100원으로 보정됨 (계산된 값: {})", fee);
-                fee = 100;
-            }
+
+        // 3. ✅ 요금 정책 기반 계산
+        FeePolicyDto policy = feePolicyMapper.findActivePolicyByType("시간제");
+        if (policy == null) {
+            log.warn("❌ 시간제 요금 정책이 존재하지 않습니다.");
+            return false;
+        }
+
+        int baseFee = policy.getBaseFee();              // ex. 1200원
+        int unitMinutes = policy.getUnitTime();      // ex. 10
+        Integer maxFee = policy.getMaxFee();            // ex. 7200
+
+        long minutes = ChronoUnit.MINUTES.between(parkingLog.getEntryTime(), parkingLog.getExitTime());
+        int units = (int) Math.ceil((double) minutes / unitMinutes);
+        int fee = baseFee * units;
+
+        if (maxFee != null) {
+            fee = Math.min(fee, maxFee);
+        }
+
+        // ✅ 최소 보정
+        if (fee < 100) {
+            log.warn("🚨 요금이 너무 작아 최소 결제금액 100원으로 보정됨 (계산된 값: {})", fee);
+            fee = 100;
+        }
 
         // 4. 결제 정보 생성
         Payment payment = new Payment();
@@ -153,6 +179,39 @@ public class PaymentServiceImpl implements PaymentService {
             return false;
         }
     }
+
+    @Transactional
+    @Override
+    public void payForReservation(DailyReservationPaymentDto dto) {
+
+        // 🔍 예약 유효성 확인
+        Reservation reservation = reservationMapper.findByIdAndMemberId(dto.getReservationId(), dto.getMemberId());
+        if (reservation == null || !"UNPAID".equals(reservation.getStatus())) {
+            throw new IllegalStateException("결제할 수 없는 예약입니다.");
+        }
+
+        // 💳 결제 정보 저장
+        Payment payment = new Payment();
+        payment.setMemberId(dto.getMemberId());
+        payment.setReservationId(dto.getReservationId());
+        payment.setTotalFee(reservation.getFee());
+        payment.setPaymentMethod(dto.getPaymentMethod());
+        payment.setGateway(dto.getGateway());
+        payment.setPaid(true);
+        payment.setStatus("결제 완료");
+        payment.setPaymentType("일주차");
+        payment.setMerchantUid(dto.getMerchantUid());
+        payment.setImpUid(dto.getImpUid());
+        payment.setPaymentTime(LocalDateTime.now());
+        payment.setCarNumber(reservation.getVehicleNumber());
+
+        paymentMapper.insertPayment(payment);
+
+        // 📌 예약 상태 변경
+        reservationMapper.updateStatus(dto.getReservationId(), "PAID");
+    }
+
+
 
     @Override
     public PageDto<AdminPaymentDto> getAdminPaymentList(AdminPaymentHistoryRequestDto req) {

@@ -19,4 +19,6 @@ public interface PaymentService {
 
     PageDto<AdminPaymentDto> getAdminPaymentList(AdminPaymentHistoryRequestDto req);
 
+    void payForReservation(DailyReservationPaymentDto dto);
+
 }

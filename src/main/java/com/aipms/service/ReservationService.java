@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ReservationService {
-    void makeReservation(ReservationDto dto);
+    void createDailyReservation(ReservationDto dto);
 
     List<ReservationDto> getReservationsByMember(Long memberId);
 
@@ -16,7 +16,7 @@ public interface ReservationService {
 
     List<ReservationDto> getAllReservations();
 
-    int countPaidReservations();
+    int countActiveReservations();
 
     ReservationDto getActiveReservation(Long memberId);
 
@@ -28,4 +28,8 @@ public interface ReservationService {
     boolean hasDailyReservationToday(Long memberId, LocalDateTime entryTime);
 
     boolean hasOverlappingReservation(Long memberId, LocalDateTime start, LocalDateTime end);
+
+    int cancelExpiredUnpaidReservations();
+
+    ReservationDto getReservationById(Long reservationId);
 }

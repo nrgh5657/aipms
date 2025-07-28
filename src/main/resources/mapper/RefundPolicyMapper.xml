@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.RefundPolicyMapper">
+
+    <select id="findActivePolicy" resultType="com.aipms.dto.RefundPolicyDto">
+        SELECT * FROM refund_policy WHERE active = true LIMIT 1
+    </select>
+
+    <select id="findById" resultType="com.aipms.dto.RefundPolicyDto">
+        SELECT * FROM refund_policy WHERE id = #{id}
+    </select>
+
+    <update id="updatePolicy" parameterType="com.aipms.dto.RefundPolicyDto">
+        UPDATE refund_policy
+        SET
+            refund_time_limit_minutes = #{refundTimeLimitMinutes},
+            penalty_before_2days = #{penaltyBefore2days},
+            penalty_before_1day = #{penaltyBefore1day},
+            penalty_same_or_after = #{penaltySameOrAfter},
+            apply_from = #{applyFrom},
+            active = #{active}
+        WHERE id = #{id}
+    </update>
+
+    <select id="existsActivePolicy" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM refund_policy WHERE active = true
+        )
+    </select>
+
+
+
+
+
+</mapper>

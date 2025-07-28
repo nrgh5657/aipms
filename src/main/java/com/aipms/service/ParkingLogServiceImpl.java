@@ -3,22 +3,20 @@ package com.aipms.service;
 import com.aipms.domain.Member;
 import com.aipms.domain.ParkingLog;
 import com.aipms.domain.Payment;
-import com.aipms.dto.ExitResponseDto;
-import com.aipms.dto.ParkingLogFilterRequestDto;
-import com.aipms.dto.ParkingLogWithMemberDto;
-import com.aipms.dto.ParkingStatusDto;
-import com.aipms.mapper.MemberMapper;
-import com.aipms.mapper.ParkingLogMapper;
-import com.aipms.mapper.PaymentMapper;
+import com.aipms.dto.*;
+import com.aipms.mapper.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ParkingLogServiceImpl implements ParkingLogService {
 
     private final ParkingLogMapper parkingLogMapper;
@@ -26,6 +24,9 @@ public class ParkingLogServiceImpl implements ParkingLogService {
     private final SubscriptionService subscriptionService;
     private final PaymentMapper paymentMapper;
     private final ReservationService reservationService;
+    private final ReservationMapper reservationMapper;
+    private final FeePolicyMapper feePolicyMapper;
+    private final FeePolicyService feePolicyService;
 
     @Override
     public ExitResponseDto insertLog(ParkingLog log) {
@@ -93,12 +94,34 @@ public class ParkingLogServiceImpl implements ParkingLogService {
         // 2. 결제 확인
         Payment payment = paymentMapper.selectPaymentByEntryId(log.getId());
         int paid = (payment != null && payment.isPaid()) ? payment.getTotalFee() : 0;
-        int actualFee = calculateFee(log.getEntryTime());
 
+        // ✅ 요금 정책 불러오기
+        FeePolicyDto policy = feePolicyMapper.findActivePolicyByType("시간제");
+        if (policy == null) {
+            return new ExitResponseDto(false, "시간제 요금 정책이 없습니다.", false, 0);
+        }
+
+        int baseFee = policy.getBaseFee();              // ex. 1200원
+        int unitMinutes = policy.getUnitTime();         // ex. 10분
+        Integer maxFee = policy.getMaxFee();            // ex. 7200
+
+        long minutes = ChronoUnit.MINUTES.between(log.getEntryTime(), now);
+        int units = (int) Math.ceil((double) minutes / unitMinutes);
+        int actualFee = baseFee * units;
+
+        if (maxFee != null) {
+            actualFee = Math.min(actualFee, maxFee);
+        }
+
+        if (actualFee < 100) {
+            actualFee = 100;
+        }
+
+        // 3. 차액 확인
         if (paid < actualFee) {
             int extraFee = actualFee - paid;
 
-            // 💡 출차는 아직 하지 않고 결제 요청 응답
+            // 💡 출차는 아직 하지 않고 차액 결제 요청
             return new ExitResponseDto(false,
                     "결제 금액보다 현재 요금이 많습니다. 차액 결제가 필요합니다.",
                     true,
@@ -106,7 +129,7 @@ public class ParkingLogServiceImpl implements ParkingLogService {
             );
         }
 
-        // 3. 요금 충분 → 출차 처리
+        // 4. 요금 충분 → 출차 처리
         log.setExitTime(now);
         parkingLogMapper.updateExitTime(log);
         return new ExitResponseDto(true, "출차 완료", false, 0);
@@ -122,8 +145,27 @@ public class ParkingLogServiceImpl implements ParkingLogService {
         ParkingLog log = parkingLogMapper.findLatestUnpaidByMemberId(memberId);
         if (log == null || log.getEntryTime() == null) return null;
 
-        long minutes = Duration.between(log.getEntryTime(), LocalDateTime.now()).toMinutes();
-        int fee = calculateFee(log.getEntryTime());
+        LocalDateTime now = LocalDateTime.now();
+        long minutes = Duration.between(log.getEntryTime(), now).toMinutes();
+
+        // ✅ 요금 정책 불러오기
+        FeePolicyDto policy = feePolicyMapper.findActivePolicyByType("시간제");
+        if (policy == null) return null; // 또는 -1로 표시 등 처리 가능
+
+        int baseFee = policy.getBaseFee();              // ex. 1200원
+        int unitMinutes = policy.getUnitTime();         // ex. 10
+        Integer maxFee = policy.getMaxFee();            // ex. 7200
+
+        int units = (int) Math.ceil((double) minutes / unitMinutes);
+        int fee = baseFee * units;
+
+        if (maxFee != null) {
+            fee = Math.min(fee, maxFee);
+        }
+
+        if (fee < 100) {
+            fee = 100;
+        }
 
         ParkingStatusDto dto = new ParkingStatusDto();
         dto.setId(log.getId());
@@ -152,12 +194,21 @@ public class ParkingLogServiceImpl implements ParkingLogService {
         int offset = (page - 1) * size;
         List<ParkingLogWithMemberDto> logs = parkingLogMapper.selectPagedLogs(size, offset);
 
-        // 주차 유형 결정 로직 유지
         for (ParkingLogWithMemberDto dto : logs) {
             String type = "일반";
-            if (dto.getMemberId() != null && dto.getSubscription() == 1) {
-                type = "월주차";
+
+            if (dto.getMemberId() != null) {
+                // 정기권
+                if ("월주차".equals(dto.getSubscription())) {
+                    type = "월주차";
+                }
+                // 정기권이 아닌데, 예약 내역이 존재하면 => 일주차
+                else if (reservationMapper.existsReservationForTime(
+                        dto.getMemberId(), dto.getEntryTime())) {
+                    type = "일주차";
+                }
             }
+
             dto.setParkingType(type);
         }
 
@@ -175,9 +226,28 @@ public class ParkingLogServiceImpl implements ParkingLogService {
     }
 
     @Override
-    public int calculateFee(LocalDateTime entryTime) {
-        if (entryTime == null) return 0;
-        long minutes = Duration.between(entryTime, LocalDateTime.now()).toMinutes();
-        return (int) Math.ceil(minutes / 30.0) * 1000; // 30분당 1000원 예시
+    public int calculateFee(ParkingLog pLog) {
+        LocalDateTime entry = pLog.getEntryTime();
+        LocalDateTime exit = pLog.getExitTime() != null ? pLog.getExitTime() : LocalDateTime.now();
+
+        FeePolicyDto policy = feePolicyService.getActivePolicyByType("시간제");
+        if (policy == null) {
+            log.warn("❌ 시간제 요금 정책 없음 → 기본 0원 처리");
+            return 0;
+        }
+
+        int unitMinutes = policy.getUnitTime();
+        int baseFee = policy.getBaseFee();
+        Integer maxFee = policy.getMaxFee();
+
+        long durationMinutes = Duration.between(entry, exit).toMinutes();
+        int units = (int) Math.ceil((double) durationMinutes / unitMinutes);
+        int fee = baseFee * units;
+
+        if (maxFee != null) {
+            fee = Math.min(fee, maxFee);
+        }
+
+        return Math.max(fee, 100);
     }
 }

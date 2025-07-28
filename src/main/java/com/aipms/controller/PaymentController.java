@@ -84,5 +84,19 @@ public class PaymentController {
         return paymentService.getAdminPaymentList(req);
     }
 
+    @PostMapping("/reservation")
+    public ResponseEntity<?> payForReservation(@RequestBody DailyReservationPaymentDto dto,
+                                               @AuthenticationPrincipal CustomUserDetails user) {
+        try {
+            dto.setMemberId(user.getMember().getMemberId());
+            paymentService.payForReservation(dto);
+
+            return ResponseEntity.ok(Map.of("success", true, "message", "결제가 완료되었습니다."));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "서버 오류 발생"));
+        }
+    }
 
 }

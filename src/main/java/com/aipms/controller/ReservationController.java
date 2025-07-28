@@ -4,6 +4,7 @@ import com.aipms.dto.*;
 import com.aipms.security.CustomUserDetails;
 import com.aipms.service.ReservationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,11 @@ public class ReservationController {
     private final ReservationService reservationService;
 
     @PostMapping("/apply")
-    public ResponseEntity<Map<String, Object>> apply(@RequestBody ReservationDto dto) {
-        reservationService.makeReservation(dto);
+    public ResponseEntity<Map<String, Object>> apply(@AuthenticationPrincipal CustomUserDetails user,
+                                                     @RequestBody ReservationDto dto) {
+        dto.setMemberId(user.getMember().getMemberId()); // ✅ 여기 추가!
+
+        reservationService.createDailyReservation(dto);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -120,5 +124,18 @@ public class ReservationController {
                                                      @RequestParam LocalDateTime endDate) {
         boolean overlap = reservationService.hasOverlappingReservation(user.getMember().getMemberId(), startDate, endDate);
         return ResponseEntity.ok(Map.of("available", !overlap));
+    }
+
+    @GetMapping("/{reservationId}")
+    public ResponseEntity<ReservationDto> getReservationById(@PathVariable Long reservationId,
+                                                             @AuthenticationPrincipal CustomUserDetails user) {
+        ReservationDto dto = reservationService.getReservationById(reservationId);
+
+        // 🔐 보안처리: 자기 예약인지 확인
+        if (!dto.getMemberId().equals(user.getMember().getMemberId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.ok(dto);
     }
 }

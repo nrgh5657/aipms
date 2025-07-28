@@ -2,6 +2,7 @@ package com.aipms.controller;
 
 import com.aipms.domain.Member;
 import com.aipms.dto.MemberDto;
+import com.aipms.dto.MemberFilterRequestDto;
 import com.aipms.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -53,16 +54,22 @@ public class MemberController {
         return ResponseEntity.ok(memberService.findAllMembers());
     }
 
-    //✅멤버 리스트 페이징 처리
     @GetMapping("/list")
     @ResponseBody
-    public Map<String, Object> getMemberList(
-            @RequestParam(defaultValue ="1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        int offset = (page - 1) * size;
+    public Map<String, Object> getFilteredMembers(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String membership
+    ) {
+        MemberFilterRequestDto req = new MemberFilterRequestDto();
+        req.setPage(page);
+        req.setSize(size);
+        req.setStatus(status);
+        req.setMembership(membership);
 
-        List<Member> members = memberService.findPagedMembers(offset, size);
-        int totalCount = memberService.countAllMembers();
+        List<Member> members = memberService.findFilteredMembers(req);
+        int totalCount = memberService.countFilteredMembers(req);
 
         Map<String, Object> result = new HashMap<>();
         result.put("content", members);

@@ -44,7 +44,7 @@ public class ParkingLogController {
             @RequestParam(defaultValue = "4") int size,
             @RequestParam(required = false) String carNumber,
             @RequestParam(required = false) String requester,
-            @RequestParam(required = false) Integer subscription
+            @RequestParam(required = false) String subscription
     ) {
         // 👉 서비스에 전달할 DTO
         ParkingLogFilterRequestDto filter = new ParkingLogFilterRequestDto();
@@ -83,7 +83,7 @@ public class ParkingLogController {
             return ResponseEntity.ok(noEntry);
         }
 
-        int amount = parkingLogService.calculateFee(currentLog.getEntryTime());
+        int amount = parkingLogService.calculateFee(currentLog);
 
         boolean hasSubscription = false;
         if (memberId != null) {

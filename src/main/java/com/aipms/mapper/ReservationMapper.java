@@ -40,4 +40,13 @@ public interface ReservationMapper {
     int existsTodayReservation(Long memberId, LocalDate date);
 
     int countOverlappingReservation(Long memberId, LocalDateTime start, LocalDateTime end);
+
+    boolean existsReservationForTime(Long memberId, LocalDateTime entryTime);
+
+    int countActiveReservations();
+
+    int cancelUnpaidExpiredReservations();
+
+    ReservationDto selectReservationById(Long reservationId);
+
 }

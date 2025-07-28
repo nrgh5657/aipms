@@ -13,4 +13,5 @@ public class Reservation {
     private LocalDateTime reservationEnd;
     private String status; // WAITING, APPROVED, CANCELLED
     private Integer fee;
+    private String type;
 }

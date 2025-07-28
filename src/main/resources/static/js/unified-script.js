@@ -2,20 +2,30 @@
 // 메인 페이지 (index.js)
 // ========================================
 
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('🏠 메인 페이지 로드됨');
+document.addEventListener('DOMContentLoaded', function () {
+  (async () => {
+    console.log('🏠 메인 페이지 로드됨');
 
-  // 공통 라이브러리 확인
-  if (!checkCommonLibraries()) {
-    console.error('❌ 공통 라이브러리가 로드되지 않았습니다.');
-    return;
-  }
+    // 공통 라이브러리 확인
+    if (!checkCommonLibraries()) {
+      console.error('❌ 공통 라이브러리가 로드되지 않았습니다.');
+      return;
+    }
 
-  // 메인 페이지 초기화
-  initializeMainPage();
+    // 메인 페이지 초기화
+    initializeMainPage();
 
-  console.log('✅ 메인 페이지 초기화 완료');
+    try {
+      await loadFeePolicies();  // ✅ Promise 처리
+      console.log('✅ 요금 정책 로딩 완료');
+    } catch (e) {
+      console.error('❌ 요금 정책 로딩 실패:', e);
+    }
+
+    console.log('✅ 메인 페이지 초기화 완료');
+  })();
 });
+
 
 
 function checkCommonLibraries() {
@@ -131,6 +141,63 @@ function animateCards(container) {
       card.classList.add('animate-in');
     }, index * 100);
   });
+}
+
+function getDisplayType(code) {
+  switch (code) {
+    case 'TIME': return '시간제';
+    case 'DAILY': return '일일제';
+    case 'MONTHLY': return '월정기권';
+    default: return code;
+  }
+}
+
+async function loadFeePolicies() {
+  try {
+    const res = await fetch('/admin/policy/fee/all');
+    const policies = await res.json(); // ← json 변수 선언 및 대입
+
+    console.log('✅ 정책 개수:', policies.length);
+    console.log('✅ 정책 전체:', policies);
+
+    policies.forEach(policy => {
+      console.log('📌 policyType:', policy.policyType);
+      const displayType = getDisplayType(policy.policyType);
+      const selector = `.price[data-type="${displayType}"]`;
+      const element = document.querySelector(selector);
+
+
+      console.log('📌 displayType:', displayType);
+      console.log('📌 selector:', selector);
+      console.log('📌 element:', element);
+
+      if (!element) return;
+
+      let displayText = '';
+      let suffix = '';
+
+      switch (policy.policyType) {
+        case 'TIME':
+          const unitHours = policy.unitTime / 60;
+          const hourlyFee = Math.round(policy.baseFee / unitHours);
+          displayText = `₩${hourlyFee.toLocaleString()}`;
+          suffix = '/시간';
+          break;
+        case 'DAILY':
+          displayText = `₩${policy.baseFee.toLocaleString()}`;
+          suffix = '/일';
+          break;
+        case 'MONTHLY':
+          displayText = `₩${policy.baseFee.toLocaleString()}`;
+          suffix = '/월';
+          break;
+      }
+
+      element.innerHTML = `${displayText}<span>${suffix}</span>`;
+    });
+  } catch (e) {
+    console.error("❌ 요금 정책 로딩 실패:", e);
+  }
 }
 
 // ========================================
