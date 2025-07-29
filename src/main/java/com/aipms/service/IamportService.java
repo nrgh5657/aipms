@@ -7,6 +7,7 @@ import com.siot.IamportRestClient.response.IamportResponse;
 import com.siot.IamportRestClient.response.Payment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -17,8 +18,11 @@ public class IamportService {
 
     private final IamportClient iamportClient;
 
-    public IamportService() {
-        this.iamportClient = new IamportClient("imp_apikey", "imp_secretkey");
+    public IamportService(
+            @Value("${iamport.api-key}") String apiKey,
+            @Value("${iamport.api-secret}") String apiSecret
+    ) {
+        this.iamportClient = new IamportClient(apiKey, apiSecret);
     }
 
     public boolean refund(String impUid, int amount) {

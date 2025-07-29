@@ -254,6 +254,41 @@
   </div>
 </main>
 
+<!-- 환불 안내 모달창 -->
+<div class="record-modal refund-modal" id="refundModal" style="display: none;">
+  <div class="record-modal-content">
+    <span class="close-btn" onclick="closeRefundModal()">&times;</span>
+    <h3>예약 환불 안내</h3>
+
+    <!-- 🔹 환불 정책 안내 문구 -->
+    <ul class="refund-policy-list">
+      <li>결제 후 <strong>60분 이내</strong> 환불 시 전액 환불됩니다.</li>
+      <li>예약일 <strong>2일 전까지</strong> 취소 시 전액 환불됩니다.</li>
+      <li>예약일 <strong>1일 전</strong> 취소 시 <strong>10%</strong> 위약금이 부과됩니다.</li>
+      <li><strong>예약 당일</strong> 취소 시 <strong>환불이 불가</strong>합니다.</li>
+    </ul>
+
+    <!-- 🔹 결제 및 환불 금액 -->
+    <div class="refund-amount-info">
+      <p>💳 결제 금액: <span id="refundOriginalAmount">10,000원</span></p>
+      <p>🧾 환불 금액: <strong id="refundAmountDisplay">9,000원</strong></p>
+    </div>
+
+    <!-- 🔹 환불 사유 입력 -->
+    <div class="refund-reason-section">
+      <label for="refundReason">환불 사유:</label>
+      <textarea id="refundReason" rows="3" placeholder="환불 사유를 입력해주세요"></textarea>
+    </div>
+
+    <!-- 🔹 버튼 영역 -->
+    <div class="modal-actions">
+      <button class="btn danger" onclick="confirmRefund()">환불 진행</button>
+      <button class="btn cancel" onclick="closeRefundModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+
 <footer>
   <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
 </footer>

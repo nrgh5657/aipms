@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface ReservationMapper {
@@ -18,8 +19,6 @@ public interface ReservationMapper {
 
     void updateStatus(Long reservationId, String status);
     List<Reservation> findAll();
-
-    int countPaidReservations();
 
     ReservationDto findUpcomingReservation(Long memberId, LocalDateTime now);
 
@@ -48,5 +47,16 @@ public interface ReservationMapper {
     int cancelUnpaidExpiredReservations();
 
     ReservationDto selectReservationById(Long reservationId);
+
+    List<ReservationDto> selectUnpaidDailyReservations(Long memberId);
+
+    List<ReservationDto> selectUnpaidMonthlyReservations(Long memberId);
+
+    int countMonthlyReservation(Long memberId, LocalDate startOfMonth);
+
+    int countActiveMonthlyReservations();
+
+    Map<LocalDate, Integer> getDailyReservationCountByDate(LocalDate startDate, LocalDate endDate);
+
 
 }

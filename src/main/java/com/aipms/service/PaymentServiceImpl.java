@@ -3,11 +3,9 @@ package com.aipms.service;
 import com.aipms.domain.ParkingLog;
 import com.aipms.domain.Payment;
 import com.aipms.domain.Reservation;
+import com.aipms.domain.Subscription;
 import com.aipms.dto.*;
-import com.aipms.mapper.FeePolicyMapper;
-import com.aipms.mapper.ParkingLogMapper;
-import com.aipms.mapper.PaymentMapper;
-import com.aipms.mapper.ReservationMapper;
+import com.aipms.mapper.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +26,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final SubscriptionService subscriptionService;
     private final ReservationMapper reservationMapper;
     private final FeePolicyMapper feePolicyMapper;
+    private final SubscriptionMapper subscriptionMapper;
+    private final MemberMapper memberMapper;
 
     @Override
     public PaymentResultDto processPayment(PaymentRequestDto requestDto) {
@@ -182,7 +182,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Transactional
     @Override
-    public void payForReservation(DailyReservationPaymentDto dto) {
+    public void payForDailyReservation(DailyReservationPaymentDto dto) {
 
         // 🔍 예약 유효성 확인
         Reservation reservation = reservationMapper.findByIdAndMemberId(dto.getReservationId(), dto.getMemberId());
@@ -211,6 +211,48 @@ public class PaymentServiceImpl implements PaymentService {
         reservationMapper.updateStatus(dto.getReservationId(), "PAID");
     }
 
+    @Override
+    public void payForMonthlyReservation(MonthlyReservationPaymentDto dto) {
+        // 1. 예약 조회 및 검증
+        Reservation reservation = reservationMapper.findByIdAndMemberId(dto.getReservationId(), dto.getMemberId());
+        if (reservation == null || !reservation.getStatus().equals("UNPAID")) {
+            throw new IllegalStateException("유효하지 않은 예약입니다.");
+        }
+
+        // 2. 결제 내역 저장
+        Payment payment = new Payment();
+        payment.setMemberId(dto.getMemberId());
+        payment.setReservationId(dto.getReservationId());
+        payment.setPaymentMethod(dto.getPaymentMethod());
+        payment.setGateway(dto.getGateway());
+        payment.setImpUid(dto.getImpUid());
+        payment.setMerchantUid(dto.getMerchantUid());
+        payment.setTotalFee(dto.getAmount());
+        payment.setPaymentType("정기권");
+        payment.setPaid(true);
+        payment.setStatus("결제 완료");
+        payment.setPaymentTime(LocalDateTime.now());
+        payment.setCarNumber(reservation.getVehicleNumber());
+        paymentMapper.insertPayment(payment);
+
+        // 3. 정기권 등록
+        Subscription sub = new Subscription();
+        sub.setMemberId(dto.getMemberId());
+        sub.setStartDate(reservation.getReservationStart());
+        sub.setEndDate(reservation.getReservationEnd());
+        sub.setActive(true); // 활성화
+        sub.setCustomerUid("user_" + dto.getMemberId()); // or DB에서 조회된 값
+
+        subscriptionMapper.insertSubscription(sub);
+
+        // 4. 예약 상태 변경
+        reservationMapper.updateStatus(dto.getReservationId(), "PAID");
+        
+        //5. 회원 정보 정기권 여부 업데이트
+        memberMapper.deleteSubscription(dto.getMemberId(), true);
+
+
+    }
 
 
     @Override

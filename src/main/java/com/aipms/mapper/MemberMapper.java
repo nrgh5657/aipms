@@ -58,8 +58,6 @@ public interface MemberMapper {
     //해당 멤버 코드 활성화
     void activateMember(@Param("memberCode") String memberCode);
     
-
-    
     //멤버 수정
     void update(Member member);
 
@@ -71,4 +69,6 @@ public interface MemberMapper {
     List<Member> selectFilteredMembers(String status, String membership, int size, int offset);
 
     int countFilteredMembers(String status, String membership);
+
+    void deleteSubscription(Long memberId, boolean b);
 }

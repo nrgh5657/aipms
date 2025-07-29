@@ -3111,6 +3111,329 @@ footer {
 
 
 
+#reservationModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 3000;
+}
+
+/* 전체 모달 오버레이 */
+.reservation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 2000;
+  backdrop-filter: blur(2px); /* ✅ 약간의 블러 효과 */
+}
+
+/* 모달 콘텐츠 박스 */
+.reservation-modal-content {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 420px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+/* 닫기 버튼 */
+.reservation-modal .close-btn {
+  display: block;
+  margin: 1.5rem auto 0;
+  background-color: #3182ce;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.reservation-modal .close-btn:hover {
+  background-color: #2563eb;
+}
+
+/* 예약 항목 */
+.reservation-item {
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reservation-item button {
+  background-color: #38a169;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.reservation-item button:hover {
+  background-color: #2f855a;
+}
+
+/*
+환불 모달 css와 버튼 css가 안먹는다는 말이 있어서 버튼까지 추가로 수정했어요.
+따로 css파일로 넣어도 되고 그냥 customer-style.css에 합쳐 넣어도 됩니다.
+*/
+
+
+/* 버튼 공통 스타일 */
+.row-cell button {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 6px 12px;
+  margin-right: 6px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* 상세 버튼 */
+.row-cell button:first-child {
+  background-color: #4CAF50;
+  color: white;
+}
+
+/* 영수증 버튼 */
+.row-cell button:nth-child(2) {
+  background-color: #2196F3;
+  color: white;
+}
+
+/* 줄바꿈 방지 */
+.row-cell {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* 버튼 전체를 왼쪽 정렬 */
+  gap: 6px;
+}
+
+/* hover 효과 */
+.row-cell button:hover {
+  opacity: 0.85;
+}
+
+
+
+
+/* 팝업 css */
+.record-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 모달 콘텐츠 */
+.record-modal-content {
+  background: #fff;
+  padding: 0;
+  border-radius: 12px;
+  width: 420px;
+  max-width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 모달 헤더 */
+.record-modal-content h3 {
+  margin: 0;
+  padding: 24px 28px 16px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2d3748;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* 닫기 버튼 */
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #718096;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f7fafc;
+  color: #4a5568;
+}
+
+/* 환불 정책 리스트 */
+.refund-policy-list {
+  list-style: none;
+  padding: 20px 28px 0;
+  margin: 0;
+}
+
+.refund-policy-list li {
+  padding: 12px 0;
+  font-size: 0.9rem;
+  color: #4a5568;
+  line-height: 1.5;
+  border-bottom: 1px solid #f7fafc;
+}
+
+.refund-policy-list li:last-child {
+  border-bottom: none;
+}
+
+.refund-policy-list li strong {
+  color: #2d3748;
+  font-weight: 600;
+}
+
+/* 환불 금액 정보 */
+.refund-amount-info {
+  background: #f8fafc;
+  padding: 20px;
+  margin: 20px 28px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.refund-amount-info p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #4a5568;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.refund-amount-info p:first-child {
+  margin-bottom: 8px;
+}
+
+.refund-amount-info strong {
+  font-weight: 700;
+  color: #2d3748;
+}
+
+/* 환불 사유 섹션 */
+.refund-reason-section {
+  padding: 0 28px 24px;
+}
+
+.refund-reason-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.refund-reason-section textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.refund-reason-section textarea:focus {
+  outline: none;
+  border-color: #4299e1;
+}
+
+.refund-reason-section textarea::placeholder {
+  color: #a0aec0;
+}
+
+/* 버튼 영역 */
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  padding: 20px 28px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.modal-actions .btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn.danger {
+  background: #e53e3e;
+  color: white;
+  border-color: #e53e3e;
+}
+
+.btn.danger:hover {
+  background: #c53030;
+  border-color: #c53030;
+}
+
+.btn.cancel {
+  background: white;
+  color: #4a5568;
+}
+
+.btn.cancel:hover {
+  background: #f7fafc;
+}
 
 /* 부드러운 등장 애니메이션 */
 @keyframes fadeIn {

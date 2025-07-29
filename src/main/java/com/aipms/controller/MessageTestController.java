@@ -18,19 +18,6 @@ public class MessageTestController {
     private final KakaoMessageService kakaoMessageService;
     private final FireLogService fireLogService;
 
-//    @GetMapping("/test/send-direct")
-//    @ResponseBody
-//    public String sendDirectMessage() {
-//        String kakaoId = "123456789L"; // 여기 실제 존재하는 kakaoId를 넣으세요
-//        try {
-//            kakaoMessageService.sendMessageToMe(kakaoId);
-//            return "✅ 메시지 전송 성공";
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return "❌ 전송 실패: " + e.getMessage();
-//        }
-//    }
-
 
     @PostMapping("/send-messages")
     @ResponseBody

@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -44,4 +45,7 @@ public interface ParkingLogMapper {
     List<ParkingLogWithMemberDto> selectFilteredLogs(ParkingLogFilterRequestDto filter);
 
     int countFilteredLogs(ParkingLogFilterRequestDto filter);
+
+
+    List<ParkingLog> getParkedCarCountByDate();
 }

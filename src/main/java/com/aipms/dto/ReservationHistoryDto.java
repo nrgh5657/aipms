@@ -12,4 +12,5 @@ public class ReservationHistoryDto {
     private String carNumber;
     private int fee;
     private String status;
+    private Integer expectedRefundAmount; // ✅ 추가
 }

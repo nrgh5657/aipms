@@ -21,19 +21,72 @@ public class ReservationController {
 
     private final ReservationService reservationService;
 
-    @PostMapping("/apply")
-    public ResponseEntity<Map<String, Object>> apply(@AuthenticationPrincipal CustomUserDetails user,
+    @PostMapping("/daily")
+    public ResponseEntity<Map<String, Object>> applyDaily(@AuthenticationPrincipal CustomUserDetails user,
                                                      @RequestBody ReservationDto dto) {
-        dto.setMemberId(user.getMember().getMemberId()); // ✅ 여기 추가!
-
-        reservationService.createDailyReservation(dto);
+        dto.setMemberId(user.getMember().getMemberId());
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("message", "예약 신청 완료");
 
-        return ResponseEntity.ok(response);
+        try {
+            reservationService.createDailyReservation(dto);
+            response.put("success", true);
+            response.put("message", "예약 신청 완료");
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalStateException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            // 💡 원인에 따라 reason 추가
+            String reason = switch (e.getMessage()) {
+                case "예약은 최소 하루 전부터 가능합니다." -> "DATE_PASSED";
+                case "종료일은 시작일보다 이후여야 합니다." -> "INVALID_DATE_RANGE";
+                case "해당 기간에 이미 예약이 존재합니다." -> "DUPLICATE_RESERVATION";
+                case "잔여 주차 공간이 없습니다." -> "NO_AVAILABLE_SPOTS";
+                case "일주차 요금 정책이 설정되어 있지 않습니다." -> "NO_POLICY";
+                default -> "UNKNOWN_ERROR";
+            };
+            response.put("reason", reason);
+
+            return ResponseEntity.ok(response); // ✅ 200 OK로 처리 (프론트는 success로 판단)
+        }
     }
+
+    @PostMapping("/monthly")
+    public ResponseEntity<Map<String, Object>> applyMonthly(@AuthenticationPrincipal CustomUserDetails user,
+                                                            @RequestBody ReservationDto dto) {
+        dto.setMemberId(user.getMember().getMemberId());
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            reservationService.createMonthlyReservation(dto);  // ✅ 예약 로직
+            response.put("success", true);
+            response.put("message", "월주차 예약이 완료되었습니다.");
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalStateException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            // 💬 메시지에 맞춰 reason 코드도 새로 구성
+            String reason = switch (e.getMessage()) {
+                case "현재 월주차 예약 가능 기간이 아닙니다." -> "OUT_OF_PERIOD";
+                case "이미 해당 월에 월주차가 예약되어 있습니다." -> "DUPLICATE_RESERVATION";
+                case "정기권 주차 공간이 부족합니다." -> "NO_AVAILABLE_SPOTS";
+                case "월주차 요금 정책이 설정되어 있지 않습니다." -> "NO_POLICY";
+                default -> "UNKNOWN_ERROR";
+            };
+            response.put("reason", reason);
+
+            return ResponseEntity.ok(response);
+        }
+    }
+
+
+
+
 
 
     @GetMapping("/{memberId}")
@@ -126,7 +179,7 @@ public class ReservationController {
         return ResponseEntity.ok(Map.of("available", !overlap));
     }
 
-    @GetMapping("/{reservationId}")
+    @GetMapping("pay/{reservationId}")
     public ResponseEntity<ReservationDto> getReservationById(@PathVariable Long reservationId,
                                                              @AuthenticationPrincipal CustomUserDetails user) {
         ReservationDto dto = reservationService.getReservationById(reservationId);
@@ -138,4 +191,24 @@ public class ReservationController {
 
         return ResponseEntity.ok(dto);
     }
+
+    @GetMapping("/unpaid/daily")
+    public ResponseEntity<List<ReservationDto>> getUnpaidDailyReservations(
+            @AuthenticationPrincipal CustomUserDetails user) {
+
+        Long memberId = user.getMember().getMemberId(); // ✅ 로그인 사용자 ID
+        List<ReservationDto> unpaidDailyReservations = reservationService.getUnpaidDailyReservations(memberId);
+        return ResponseEntity.ok(unpaidDailyReservations);
+    }
+
+    @GetMapping("/unpaid/monthly")
+    public ResponseEntity<List<ReservationDto>> getUnpaidMonthlyReservations(
+            @AuthenticationPrincipal CustomUserDetails user) {
+
+        Long memberId = user.getMember().getMemberId(); // ✅ 로그인 사용자 ID
+        List<ReservationDto> unpaidMonthlyReservations = reservationService.getUnpaidMonthlyReservations(memberId);
+        return ResponseEntity.ok(unpaidMonthlyReservations);
+    }
+
+
 }

@@ -39,9 +39,23 @@
         SELECT COUNT(*) > 0 FROM subscription WHERE member_id = #{memberId}
     </select>
 
-    <insert id="insertSubscription" parameterType="com.aipms.domain.Subscription" useGeneratedKeys="true" keyProperty="subscriptionId">
-        INSERT INTO subscription (member_id, customer_uid, start_date, end_date, active)
-        VALUES (#{memberId}, #{customerUid}, NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH), true)
+    <insert id="insertSubscription"
+            parameterType="com.aipms.domain.Subscription"
+            useGeneratedKeys="true"
+            keyProperty="subscriptionId">
+        INSERT INTO subscription (
+            member_id,
+            customer_uid,
+            start_date,
+            end_date,
+            active
+        ) VALUES (
+             #{memberId},
+             #{customerUid},
+             #{startDate},       -- ✅ 서비스에서 지정한 값 사용
+             #{endDate},         -- ✅ 서비스에서 지정한 값 사용
+             #{active}
+                 )
     </insert>
 
     <select id="findCustomerUidByMemberId" resultType="string" parameterType="long">
@@ -80,11 +94,11 @@
           AND end_date &gt;= NOW()
     </select>
 
-    <update id="deactivateSubscription">
-        UPDATE subscription
-        SET active = 0
-        WHERE subscription_id = #{subscriptionId}
-    </update>
+
+    <delete id="deleteByMemberId" parameterType="long">
+        DELETE FROM subscription
+        WHERE member_id = #{memberId}
+    </delete>
 
 
 </mapper>

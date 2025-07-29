@@ -55,16 +55,16 @@
 
         <div class="service-card">
           <div class="service-icon">🎫</div>
-          <h4>정기권 구매</h4>
+          <h4>월주차 결제</h4>
           <p>월/년 정기 주차권을 구매하여 할인 혜택을 받으세요</p>
           <button class="service-btn" id="subscribe-btn" >정기권 구매</button>
         </div>
 
         <div class="service-card">
           <div class="service-icon">🅿️</div>
-          <h4>예약 주차 결제</h4>
-          <p>예약한 일주차 요금을 결제하세요</p>
-          <button class="service-btn" onclick="payForReservation(reservation.id)">예약 결제</button>
+          <h4>일주차 결제</h4>
+          <p>예약한 일주차 요금을 여기서 결제하세요</p>
+          <button class="service-btn" id="reservationPayBtn">예약 결제</button>
         </div>
 
         <div class="service-card">
@@ -361,6 +361,22 @@
   <button id="confirmPaymentBtn">결제하기</button>
 </div>
 
+<div id="reservationModal" class="reservation-modal" style="display:none;">
+  <div class="reservation-modal-content">
+    <h3>예약 목록</h3>
+    <div id="reservationList"></div>
+    <button class="close-btn" onclick="closeReservationModal()">닫기</button>
+  </div>
+</div>
+
+<div id="monthlyReservationModal" class="reservation-modal" style="display:none;">
+  <div class="reservation-modal-content">
+    <h3>월주차 예약 목록</h3>
+    <div id="monthlyReservationList"></div>
+    <button class="close-btn" onclick="closeMonthlyReservationModal()">닫기</button>
+  </div>
+</div>
+
 <footer>
   <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
 </footer>
@@ -371,10 +387,12 @@
 <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
 <script src="/js/payment.js"></script>
 <script src="/js/currentParkingPay.js"></script>
-<script src="/js/reservation-payment.js"></script>
+<script src="/js/dailyPay.js"></script>
 <script src="/js/quickPay.js"></script>
-<script src="/js/subscriptionPay.js"></script>
+<script src="/js/monthlyPay.js"></script>
 <script src="/js/exit.js"></script>
 </body>
+
+
 </html>
 

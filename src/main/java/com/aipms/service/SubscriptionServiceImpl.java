@@ -54,11 +54,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public void cancelSubscription(Long subscriptionId) {
-        subscriptionMapper.cancelSubscription(subscriptionId);
-    }
-
-    @Override
     public List<SubscriptionDto> getAllSubscriptions() {
         return subscriptionMapper.findAll().stream().map(sub -> {
             SubscriptionDto dto = new SubscriptionDto();
@@ -76,61 +71,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         return subscriptionMapper.findCustomerUidByMemberId(memberId);
     }
 
-    @Override
-    public void registerSubscription(Long memberId, String customerUid, String merchantUid,
-                                     String impUid, int amount, String carNumber,
-                                     String paymentMethod, String gateway, String paymentType) {
-        Subscription current = subscriptionMapper.findActiveByMemberId(memberId);
-        LocalDateTime now = LocalDateTime.now();
-
-        LocalDateTime newStart;
-        LocalDateTime newEnd;
-
-        if (current != null && current.getEndDate().isAfter(now)) {
-            newStart = current.getStartDate();  // 기존 시작일 유지
-            newEnd = current.getEndDate().plusMonths(1);  // 종료일 연장
-        } else {
-            newStart = now;
-            newEnd = now.plusMonths(1);
-        }
-
-        // 1. 정기권 정보 저장
-        Subscription sub = new Subscription();
-        sub.setMemberId(memberId);
-        sub.setCustomerUid(customerUid);
-        sub.setActive(true);
-        sub.setStartDate(newStart);
-        sub.setEndDate(newEnd);
-
-        if (subscriptionMapper.existsByMemberId(memberId)) {
-            subscriptionMapper.updateSubscription(sub);
-        } else {
-            subscriptionMapper.insertSubscription(sub);
-        }
-
-        memberMapper.updateSubscriptionStatus(memberId, true);
-
-        // 🔁 subscription_id 확인
-        Long subscriptionId = sub.getSubscriptionId(); // 또는 getId(), getId() 이름에 따라
-
-        // ✅ 2. payment 테이블에도 결제 정보 저장
-        Payment payment = new Payment();
-        payment.setMemberId(memberId);
-        payment.setTotalFee(amount);
-        payment.setPaymentMethod(paymentMethod);
-        payment.setGateway(gateway);
-        payment.setPaid(true);
-        payment.setStatus("결제 완료");
-        payment.setPaymentType(paymentType);
-        payment.setMerchantUid(merchantUid);
-        payment.setImpUid(impUid);
-        payment.setPaymentTime(now);
-        payment.setCarNumber(carNumber);
-
-        payment.setSubscriptionId(subscriptionId);
-
-        paymentMapper.insertPayment(payment); // 기존 insert 구문 그대로 사용
-    }
 
 
 
@@ -183,48 +123,5 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         ParkingConfigDto config = parkingConfigMapper.getConfig();
         int current = subscriptionMapper.countActiveMonthlySubscriptions();
         return current < config.getFixedSubscriptionSpaces();
-    }
-
-    @Override
-    public void refundSubscription(Long memberId, String reason) {
-        Subscription subscription = subscriptionMapper.findActiveByMemberId(memberId);
-        if (subscription == null || subscription.getStartDate() == null) {
-            throw new IllegalStateException("활성화된 정기권이 없습니다.");
-        }
-
-        Payment payment = paymentMapper.findLatestSubscriptionPayment(memberId);
-        if (payment == null || !payment.getStatus().equals("결제 완료")) {
-            throw new IllegalStateException("결제 정보가 없습니다.");
-        }
-
-        // 1시간 이내 전액 환불
-        long minutesSincePayment = Duration.between(payment.getPaymentTime(), LocalDateTime.now()).toMinutes();
-        int totalFee = payment.getTotalFee();
-        int refundAmount;
-
-        if (minutesSincePayment <= 60) {
-            refundAmount = totalFee; // 전액 환불
-        } else {
-            // 당일 환불: 위약금 10% + 사용일수 차감
-            LocalDate today = LocalDate.now();
-            LocalDate start = subscription.getStartDate().toLocalDate();
-
-            long usedDays = ChronoUnit.DAYS.between(start, today);
-            if (usedDays < 0) usedDays = 0;
-            if (usedDays >= 30) throw new IllegalStateException("이미 사용 완료된 정기권은 환불할 수 없습니다.");
-
-            int penalty = (int) (totalFee * 0.1); // 10% 위약금
-            int dailyRate = totalFee / 30;
-            int usageFee = (int) (usedDays * dailyRate);
-            refundAmount = Math.max(totalFee - penalty - usageFee, 0);
-        }
-
-        // 아임포트 환불 처리
-        iamportService.refund(payment.getImpUid(), refundAmount);
-
-        // DB 업데이트
-        subscriptionMapper.deactivateSubscription(subscription.getSubscriptionId());
-        paymentMapper.markAsCancelled(payment.getPaymentId(), reason, refundAmount);
-
     }
 }

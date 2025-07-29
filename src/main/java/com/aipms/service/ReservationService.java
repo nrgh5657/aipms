@@ -1,5 +1,8 @@
 package com.aipms.service;
 
+import com.aipms.domain.Payment;
+import com.aipms.domain.Reservation;
+import com.aipms.dto.RefundPolicyDto;
 import com.aipms.dto.ReservationDto;
 import com.aipms.dto.ReservationHistoryDto;
 import com.aipms.dto.ReservationHistoryRequestDto;
@@ -9,6 +12,8 @@ import java.util.List;
 
 public interface ReservationService {
     void createDailyReservation(ReservationDto dto);
+
+    void createMonthlyReservation(ReservationDto dto);
 
     List<ReservationDto> getReservationsByMember(Long memberId);
 
@@ -32,4 +37,12 @@ public interface ReservationService {
     int cancelExpiredUnpaidReservations();
 
     ReservationDto getReservationById(Long reservationId);
+
+    List<ReservationDto> getUnpaidDailyReservations(Long memberId);
+
+    List<ReservationDto> getUnpaidMonthlyReservations(Long memberId);
+
+    Integer calculateExpectedRefundAmount(ReservationHistoryDto reservation, Payment payment, RefundPolicyDto policy);
+
+
 }

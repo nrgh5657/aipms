@@ -799,7 +799,15 @@ function createReservationHistoryItem(reservation) {
     <div class="history-actions">
       <button class="usage-btn usage-btn-detail" onclick="showReservationDetail('${reservation.id}')">상세</button>
       ${reservation.status === 'PAID' ? `
-        <button class="usage-btn usage-btn-receipt" onclick="cancelReservation('${reservation.id}')">취소</button>
+        <button class="usage-btn usage-btn-receipt"
+  onclick="confirmCancel(
+    'reservation',
+    ${reservation.id},
+    ${reservation.fee},
+    ${reservation.expectedRefundAmount ?? reservation.fee}
+  )">
+  취소
+</button
       ` : ''}
     </div>
   `;
@@ -1187,6 +1195,92 @@ function hideLoading() {
 function showToast(message, type) {
   console.log(`${type.toUpperCase()}: ${message}`);
   alert(message); // 실제로는 토스트 메시지를 구현
+}
+
+
+////결제, 예약 취소 팝업
+//records.js에 넣으면 됩니다.
+
+
+// 팝업 열기 함수
+function confirmCancel(type, id, originalAmount = 10000, refundAmount = 9000) {
+  const modal = document.getElementById('refundModal');
+  const reasonInput = document.getElementById('refundReason');
+
+  // 1. 제목 변경
+  const title = type === 'payment' ? '결제 취소 안내' : '예약 취소 안내';
+  const titleElement = modal.querySelector('h3');
+  if (titleElement) {
+    titleElement.innerText = title;
+  }
+
+  // 2. 동적 금액 표시
+  document.getElementById('refundOriginalAmount').innerText = originalAmount.toLocaleString() + '원';
+  document.getElementById('refundAmountDisplay').innerText = refundAmount.toLocaleString() + '원';
+
+  // 3. 사유 입력창 초기화 및 안내 문구 변경
+  reasonInput.placeholder = `${type === 'payment' ? '결제' : '예약'} 취소 사유를 입력해주세요`;
+  reasonInput.value = '';
+
+  // 4. ‘환불 진행’ 버튼 동작 설정
+  const confirmBtn = modal.querySelector('.modal-actions .btn.danger');
+  confirmBtn.onclick = function () {
+    const reason = reasonInput.value.trim();
+    if (!reason) {
+      alert('환불 사유를 입력해주세요.');
+      return;
+    }
+
+    closeRefundModal(); // 팝업 닫기
+    cancelItem(type, id, reason); // 실제 취소 처리
+  };
+
+
+  // 5. 팝업 띄우기
+  modal.style.display = 'flex';
+}
+
+// 팝업 닫기 함수
+function closeRefundModal() {
+  const modal = document.getElementById('refundModal');
+  modal.style.display = 'none';
+}
+
+async function cancelItem(type, id, reason) {
+  if (type !== 'reservation') {
+    alert('❌ 지원하지 않는 환불 유형입니다.');
+    return;
+  }
+
+  const isSure = confirm("정말 환불하시겠습니까?");
+  if (!isSure) return;
+
+  try {
+    const res = await fetch('api/reservations/refund', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        reservationId: Number(id),
+        reason
+      })
+    });
+
+    const result = await res.json();
+
+    if (res.ok && result.success) {
+      alert("✅ " + result.message);
+      location.reload();
+    } else {
+      alert("❌ 환불 실패: " + (result.message || "알 수 없는 오류"));
+    }
+
+  } catch (err) {
+    console.error("❌ 네트워크 오류:", err);
+    alert("서버 통신 오류가 발생했습니다.");
+  }
+
+  closeRefundModal();
 }
 
 // ========================================

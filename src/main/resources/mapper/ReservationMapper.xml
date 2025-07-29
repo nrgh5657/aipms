@@ -22,7 +22,7 @@
                    #{reservationEnd},
                    'UNPAID',
                    #{fee},
-                   'DAILY'
+                   #{type}
                )
     </insert>
 
@@ -175,6 +175,75 @@
         SELECT * FROM reservation
         WHERE reservation_id = #{reservationId}
     </select>
+
+    <select id="selectUnpaidDailyReservations" resultType="com.aipms.dto.ReservationDto">
+        SELECT
+            reservation_id,
+            member_id,
+            vehicle_number,
+            reservation_start,
+            reservation_end,
+            status,
+            fee,
+            type,
+            created_at
+        FROM reservation
+        WHERE member_id = #{memberId}
+          AND status = 'UNPAID'
+          AND type = 'DAILY'
+        ORDER BY created_at ASC
+    </select>
+
+    <select id="selectUnpaidMonthlyReservations" resultType="com.aipms.dto.ReservationDto">
+        SELECT
+            reservation_id,
+            member_id,
+            vehicle_number,
+            reservation_start,
+            reservation_end,
+            status,
+            fee,
+            type,
+            created_at
+        FROM reservation
+        WHERE member_id = #{memberId}
+          AND status = 'UNPAID'
+          AND type = 'MONTHLY'
+        ORDER BY created_at ASC
+    </select>
+
+    <select id="countMonthlyReservation" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE member_id = #{memberId}
+          AND type = 'MONTHLY'
+          AND status != 'CANCELLED'
+      AND reservation_start = #{startOfMonth}
+    </select>
+
+    <select id="countActiveMonthlyReservations" resultType="int">
+        SELECT COUNT(*) FROM reservation
+        WHERE type = 'MONTHLY'
+          AND status IN ('UNPAID', 'PAID')
+          AND reservation_end >= CURRENT_DATE()
+    </select>
+
+    <select id="getDailyReservationCountByDate" resultType="map">
+        SELECT
+        calendar.date AS `date`,
+        COUNT(r.reservation_id) AS `count`
+        FROM (
+        SELECT DATE_ADD(#{startDate}, INTERVAL seq DAY) AS date
+        FROM seq_0_to_30
+        WHERE DATE_ADD(#{startDate}, INTERVAL seq DAY) <= #{endDate}
+        ) calendar
+        LEFT JOIN reservation r
+        ON calendar.date BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+        AND r.status = 'PAID'
+        AND r.type = 'DAILY'
+        GROUP BY calendar.date
+    </select>
+
 
 
 </mapper>

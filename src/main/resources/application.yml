@@ -48,3 +48,7 @@ encrypt:
 ai:
   server:
     url: http://localhost:5001
+
+iamport:
+  api-key: 6417712446448056
+  api-secret: JzgHJA0JAAx7aKYTHt6NoLxrs1z5BArbbyroynldu111baOWYHsGsPnJBMaDwj9S1cOVYg7taYCyUlTP

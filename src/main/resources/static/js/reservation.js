@@ -229,7 +229,7 @@ async function submitDailyReservation(event) {
   if (!confirmed) return;
 
   // 예약 POST
-  const res = await apiPost('/api/reservations/apply', {
+  const res = await apiPost('/api/reservations/daily', {
     vehicleNumber: car,
     reservationStart: `${start}T00:00:00`,
     reservationEnd: `${end}T23:59:59`
@@ -239,7 +239,15 @@ async function submitDailyReservation(event) {
     alert("✅ 예약 완료! 결제를 진행해주세요.");
     window.location.href = '/payment'; // 💡 결제 페이지로 이동
   } else {
-    alert("❌ 예약에 실패했습니다.");
+    const reasonMap = {
+      "DUPLICATE_RESERVATION": "❌ 이미 해당 날짜에 예약이 존재합니다.",
+      "NO_AVAILABLE_SPOTS": "🚫 선택한 날짜에는 이용 가능한 주차 공간이 없습니다.",
+      "DATE_PASSED": "❌ 과거 또는 당일 날짜로는 예약할 수 없습니다.",
+      "NO_POLICY": "⚠️ 요금 정책이 설정되어 있지 않습니다.",
+      "INVALID_DATE_RANGE": "❌ 시작일은 종료일보다 앞서야 합니다."
+    };
+    const message = reasonMap[res?.reason] || "❌ 예약에 실패했습니다.";
+    alert(message);
   }
 }
 
@@ -248,44 +256,82 @@ async function submitDailyReservation(event) {
 // ========================================
 async function submitMonthlyReservation(event) {
   event.preventDefault();
-  let userData = null;
-  try {
-    userData = JSON.parse(serverUserData);
-  } catch {
-    alert("⚠️ 로그인 정보를 불러올 수 없습니다.");
-    return;
-  }
 
-  const memberId = userData?.memberId;
-  const startMonth = document.getElementById('monthly-start')?.value;
-  const period = parseInt(document.getElementById('monthly-period')?.value);
+  // ✅ 입력값 수집
   const car = document.getElementById('monthly-car')?.value;
+  const startMonth = document.getElementById('monthly-start')?.value; // "yyyy-MM"
+  const period = parseInt(document.getElementById('monthly-period')?.value);
 
-  if (!memberId || !startMonth || !period || !car) {
-    alert('❗ 정보를 모두 입력하세요.');
+  if (!car || !startMonth || !period) {
+    alert("❗ 모든 정보를 입력해주세요.");
     return;
   }
 
-  const startDate = `${startMonth}-01T00:00:00`;
+  // ✅ 전송용 시작일 문자열
+  const startDateStr = `${startMonth}-01T00:00:00`;
+
+  // ✅ 비교용 Date 객체 생성
+  const startDate = new Date(startDateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const expectedMonth = today.getMonth() + 1; // 0-index +1
+  const expectedYear = today.getFullYear();
+
+  const actualMonth = startDate.getMonth(); // 0-index
+  const actualYear = startDate.getFullYear();
+
+  // ✅ 다음 달 예약인지 확인
+  if (actualYear !== expectedYear || actualMonth !== expectedMonth) {
+    alert("❌ 월주차는 다음 달만 예약할 수 있습니다.");
+    return;
+  }
+
+  // ✅ 종료일 계산 (N개월 후 말일)
   const endDate = new Date(startDate);
   endDate.setMonth(endDate.getMonth() + period);
-  const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-01T00:00:00`;
+  endDate.setDate(0); // 0일 = 이전 달의 말일
+
+  // ✅ 날짜 포맷 함수
+  const format = (date) => date.toISOString().split("T")[0] + "T00:00:00";
 
   const payload = {
-    memberId,
     vehicleNumber: car,
-    reservationStart: startDate,
-    reservationEnd: endStr,
-    status: "WAITING"
+    reservationStart: startDateStr,        // 문자열 그대로 전송
+    reservationEnd: format(endDate),
+    type: "MONTHLY"
   };
 
-  const response = await apiPost('/api/reservations/apply', payload);
-  if (response?.success) {
-    alert("✅ 월 주차 신청 완료!");
+// ✅ 안내 메시지
+  const confirmMsg =
+      "📅 월주차 예약 안내\n\n" +
+      `${startMonth}부터 ${period}개월 간 예약됩니다.\n` +
+      "정기권 공간이 부족할 경우 예약이 제한될 수 있습니다.\n" +
+      "당일 자정까지 결제하지 않으면 예약은 자동 취소됩니다.\n\n" +
+      "계속 진행하시겠습니까?";
+
+  if (!confirm(confirmMsg)) return;
+
+  // ✅ 서버 요청
+  const res = await apiPost('/api/reservations/monthly', payload);
+
+  if (res?.success) {
+    alert("✅ 예약 완료! 결제를 진행해주세요.");
+    window.location.href = '/payment';
   } else {
-    alert("❌ 예약 실패: " + (response?.message || "서버 오류"));
+    const reasonMap = {
+      "DUPLICATE_RESERVATION": "❌ 이미 해당 월에 예약이 존재합니다.",
+      "NO_AVAILABLE_SPOTS": "🚫 정기권 공간이 부족합니다.",
+      "OUT_OF_PERIOD": "❌ 현재는 해당 월 예약이 불가능합니다.",
+      "NO_POLICY": "⚠️ 월주차 요금 정책이 설정되어 있지 않습니다.",
+    };
+    const message = reasonMap[res?.reason] || "❌ 예약에 실패했습니다.";
+    alert(message);
   }
 }
+
+
+
 
 // ========================================
 // API 유틸
