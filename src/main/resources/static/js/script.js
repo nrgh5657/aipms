@@ -4,6 +4,8 @@ let parkingData = [];
 let memberData = [];
 let paymentData = [];
 let systemLogs = [];
+let currentPolicyType = null;
+let currentPolicyId = null;
 
 // 주차 제한 상수
 const PARKING_LIMITS = {
@@ -230,6 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
   loadRefundPolicyCard(); // 환불 정책 카드 초기 로딩
   setupEventListeners();
   startRealTimeUpdates();
+  setupRefundButtonListener()
   
   // 페이지별 초기화
   initializePage();
@@ -1297,6 +1300,17 @@ function createPaymentTableRow(item) {
       : item.status?.includes('출차') ? 'status-approved'
           : item.status?.includes('결제') ? 'status-approved'
               : '';
+
+  // ✅ 환불 버튼 조건 렌더링
+  let actionButtonHTML = '';
+  if (item.reservationId && item.status === "결제 완료") {
+    actionButtonHTML = `<button class="action-btn danger refund-btn" data-id="${item.reservationId}" data-amount="${item.amount}">환불</button>`;
+  } else if (item.status?.includes("환불")) {
+    actionButtonHTML = `<button class="action-btn" disabled>환불 완료</button>`;
+  } else {
+    actionButtonHTML = `<span class="muted">-</span>`;
+  }
+
   console.log('🔍 결제 아이템:', item);
   row.innerHTML = `
     <td>${item.id}</td>
@@ -1308,11 +1322,49 @@ function createPaymentTableRow(item) {
     <td>${item.paidAt ? formatDate(item.paidAt) : '-'}</td> <!-- 수정됨 -->
     <td><span class="${statusClass}">${statusLabel}</span></td>
     <td>
-      <button class="action-btn" onclick="viewPaymentDetail('${item.id}')">상세</button>
+      ${actionButtonHTML}
     </td>
   `;
   
   return row;
+}
+
+// 환불 버튼 클릭 이벤트 위임 함수 (별도 분리)
+function setupRefundButtonListener() {
+  document.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('refund-btn') && !e.target.disabled) {
+      const reservationId = e.target.dataset.id;
+      const amount = e.target.dataset.amount;
+
+      if (!confirm(`정말 ${amount.toLocaleString()}원 환불하시겠습니까?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/payment/admin/refund', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reservationId: reservationId,
+            reason: '관리자 환불 처리'
+          }),
+          credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alert('✅ 환불이 완료되었습니다.');
+          fetchPaymentList(currentPaymentPage); // 테이블 새로고침
+        } else {
+          alert(`❌ 환불 실패: ${result.message}`);
+        }
+      } catch (error) {
+        console.error('환불 처리 중 오류 발생:', error);
+        alert('❌ 환불 처리 중 오류가 발생했습니다.');
+      }
+    }
+  });
 }
 
 // 시스템 로그 테이블 렌더링
@@ -1919,6 +1971,7 @@ function loadRefundPolicyCard() {
       .then(res => res.json())
       .then(data => {
         document.getElementById('refundLimitDisplay').innerText = data.refundTimeLimitMinutes + '분 이내';
+        document.getElementById('penalty2dDisplay').innerText= (data.penaltyBefore2days * 100).toFixed(0) + '%';
         document.getElementById('penalty1dDisplay').innerText = (data.penaltyBefore1day * 100).toFixed(0) + '%';
         document.getElementById('penaltySameDayDisplay').innerText =
             data.penaltySameOrAfter >= 1 ? '환불 불가' : (data.penaltySameOrAfter * 100).toFixed(0) + '%';
@@ -1934,18 +1987,18 @@ async function loadFeePolicies() {
     data.forEach(policy => {
       const { policyType, baseFee, unitTime, maxFee, discountRate, applyFrom } = policy;
 
-      if (policyType === '시간제') {
+      if (policyType === 'TIME') {
         document.getElementById('hourlyBase').innerText = `${baseFee.toLocaleString()}원/${unitTime}분`;
         document.getElementById('hourlyMax').innerText = maxFee ? `${maxFee.toLocaleString()}원` : '-';
         document.getElementById('hourlyApply').innerText = applyFrom;
       }
 
-      if (policyType === '일일제') {
+      if (policyType === 'DAILY') {
         document.getElementById('dailyBase').innerText = `${baseFee.toLocaleString()}원/일`;
         document.getElementById('dailyApply').innerText = applyFrom;
       }
 
-      if (policyType === '월정기권') {
+      if (policyType === 'MONTHLY') {
         document.getElementById('monthlyBase').innerText = `${baseFee.toLocaleString()}원/월`;
         document.getElementById('monthlyDiscount').innerText = `기존 요금 대비 ${Math.round(discountRate * 100)}% 절약`;
         document.getElementById('monthlyApply').innerText = applyFrom;
@@ -2006,8 +2059,261 @@ function saveNewPolicy() {
   closeModal();
 }
 
-function editPolicy(policyId) {
-  showAlert(`${policyId} 정책 편집 기능입니다.`);
+function editPolicy(policyId, policyType) {
+  currentPolicyId = policyId;       // 현재 편집 중인 정책 ID 저장
+  currentPolicyType = policyType;   // 현재 편집 중인 정책 타입 저장
+
+  fetch(`/admin/policy/fee/${policyId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (policyType === 'TIME') {
+          openTimePolicyModal(data);
+        } else if (policyType === 'DAILY') {
+          openDailyPolicyModal(data);
+        } else if (policyType === 'MONTHLY') {
+          openMonthlyPolicyModal(data);
+        } else {
+          alert('알 수 없는 정책 유형입니다.');
+        }
+      })
+      .catch(() => alert('정책 데이터를 불러오는데 실패했습니다.'));
+}
+
+function openTimePolicyModal(data) {
+  const modalContent = `
+    <div style="max-width: 500px;">
+      <h2>시간제 요금 정책 수정</h2>
+      <div style="margin: 20px 0;">
+        <div style="margin-bottom: 15px;">
+          <label for="policyName" style="display: block; margin-bottom: 5px; font-weight: 600;">요금 명칭:</label>
+          <input id="policyName" type="text" value="${data.name || ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="policyFee" style="display: block; margin-bottom: 5px; font-weight: 600;">기본 요금:</label>
+          <input id="policyFee" type="number" value="${data.baseFee || ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="maxFee" style="display: block; margin-bottom: 5px; font-weight: 600;">최대 요금:</label>
+          <input id="maxFee" type="number" value="${data.maxFee || ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="unitTime" style="display: block; margin-bottom: 5px; font-weight: 600;">단위 시간(분):</label>
+          <input id="unitTime" type="number" value="${data.unitTime || ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="startDate" style="display: block; margin-bottom: 5px; font-weight: 600;">적용 시작일:</label>
+          <input id="startDate" type="date" value="${data.applyFrom ? data.applyFrom.split('T')[0] : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="endDate" style="display: block; margin-bottom: 5px; font-weight: 600;">적용 종료일:</label>
+          <input id="endDate" type="date" value="${data.applyTo ? data.applyTo.split('T')[0] : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+          <button class="action-btn" onclick="closeModal()" style="margin-right: 10px;">뒤로</button>
+          <button class="action-btn primary" onclick="savePolicy(${data.id})">저장</button>
+        </div>
+      </div>
+    </div>
+  `;
+  showModal(modalContent);
+}
+
+function openDailyPolicyModal(data) {
+  const modalContent = `
+    <div style="max-width: 500px;">
+      <h2>일일제 요금 정책 수정</h2>
+      <div style="margin: 20px 0;">
+
+        <div style="margin-bottom: 15px;">
+          <label for="policyName" style="display: block; margin-bottom: 5px; font-weight: 600;">요금 명칭:</label>
+          <input id="policyName" type="text" value="${data.name || ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="policyFee" style="display: block; margin-bottom: 5px; font-weight: 600;">기본 요금:</label>
+          <input id="policyFee" type="number" value="${data.baseFee || ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="startDate" style="display: block; margin-bottom: 5px; font-weight: 600;">적용 시작일:</label>
+          <input id="startDate" type="date" value="${data.applyFrom ? data.applyFrom.split('T')[0] : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="endDate" style="display: block; margin-bottom: 5px; font-weight: 600;">적용 종료일:</label>
+          <input id="endDate" type="date" value="${data.applyTo ? data.applyTo.split('T')[0] : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+          <button class="action-btn" onclick="closeModal()" style="margin-right: 10px;">뒤로</button>
+          <button class="action-btn primary" onclick="savePolicy(${data.id})">저장</button>
+        </div>
+      </div>
+    </div>
+  `;
+  showModal(modalContent);
+}
+function openMonthlyPolicyModal(data) {
+  const modalContent = `
+    <div style="max-width: 500px;">
+      <h2>월정기권 요금 정책 수정</h2>
+      <div style="margin: 20px 0;">
+
+        <div style="margin-bottom: 15px;">
+          <label for="policyName" style="display: block; margin-bottom: 5px; font-weight: 600;">요금 명칭:</label>
+          <input id="policyName" type="text" value="${data.name || ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="policyFee" style="display: block; margin-bottom: 5px; font-weight: 600;">기본 요금:</label>
+          <input id="policyFee" type="number" value="${data.baseFee || ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="discountRate" style="display: block; margin-bottom: 5px; font-weight: 600;">할인율(%):</label>
+          <input id="discountRate" type="number" value="${data.discountRate ? Math.round(data.discountRate * 100) : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="startDate" style="display: block; margin-bottom: 5px; font-weight: 600;">적용 시작일:</label>
+          <input id="startDate" type="date" value="${data.applyFrom ? data.applyFrom.split('T')[0] : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="endDate" style="display: block; margin-bottom: 5px; font-weight: 600;">적용 종료일:</label>
+          <input id="endDate" type="date" value="${data.applyTo ? data.applyTo.split('T')[0] : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+          <button class="action-btn" onclick="closeModal()" style="margin-right: 10px;">뒤로</button>
+          <button class="action-btn primary" onclick="savePolicy(${data.id})">저장</button>
+        </div>
+      </div>
+    </div>
+  `;
+  showModal(modalContent);
+}
+
+async function savePolicy() {
+  const policyType = document.getElementById('policyType')?.value || currentPolicyType; // 모달에 없으면 변수로 관리
+  const policyId = currentPolicyId; // 수정 중인 정책 ID를 전역변수 또는 모달 상태로 관리
+
+  // 공통 필드
+  const data = {
+    id: policyId,
+    policyType: policyType,
+    name: document.getElementById('policyName').value,
+    baseFee: Number(document.getElementById('policyFee').value),
+    applyFrom: document.getElementById('startDate').value,
+    applyTo: document.getElementById('endDate').value,
+  };
+
+  // 타입별 추가 필드 분기
+  if (policyType === 'TIME') {
+    data.maxFee = Number(document.getElementById('maxFee').value);
+    data.unitTime = Number(document.getElementById('unitTime').value);
+  } else if (policyType === 'MONTHLY') {
+    data.discountRate = Number(document.getElementById('discountRate').value) / 100;
+  }
+  // 일일제는 별도 필드 없음
+
+  try {
+    const res = await fetch('/admin/policy/fee/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('저장 실패');
+    alert('저장 성공');
+    closeModal();
+    loadFeePolicies();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function fetchAndOpenRefundPolicyModal() {
+  try {
+    const res = await fetch('/admin/policy/refund/active'); // 환불 정책 API
+    if (!res.ok) throw new Error('환불 정책 불러오기 실패');
+    const data = await res.json();
+    openRefundPolicyModal(data);
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+function openRefundPolicyModal(data) {
+  const modalContent = `
+    <div style="max-width: 500px;">
+      <h2>환불 정책 수정</h2>
+      <div style="margin: 20px 0;">
+        <div style="margin-bottom: 15px;">
+          <label for="refundTimeLimit" style="display: block; margin-bottom: 5px; font-weight: 600;">전액 환불 가능 시간 제한(분):</label>
+          <input id="refundTimeLimit" type="number" value="${data.refundTimeLimitMinutes || ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="penalty2days" style="display: block; margin-bottom: 5px; font-weight: 600;">2일 전 환불 수수료율(%):</label>
+          <input id="penalty2days" type="number" step="0.1" value="${(data.penaltyBefore2days !== undefined && data.penaltyBefore2days !== null) ? (data.penaltyBefore2days * 100) : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="penalty1day" style="display: block; margin-bottom: 5px; font-weight: 600;">1일 전 환불 수수료율(%):</label>
+          <input id="penalty1day" type="number" step="0.1" value="${data.penaltyBefore1day ? data.penaltyBefore1day * 100 : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="penaltySameOrAfter" style="display: block; margin-bottom: 5px; font-weight: 600;">당일 이후 환불 불가 (%):</label>
+          <input id="penaltySameOrAfter" type="number" step="0.1" value="${data.penaltySameOrAfter ? data.penaltySameOrAfter * 100 : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;" disabled>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <label for="applyFrom" style="display: block; margin-bottom: 5px; font-weight: 600;">적용 시작일:</label>
+          <input id="applyFrom" type="date" value="${data.applyFrom ? data.applyFrom.split('T')[0] : ''}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+          <button class="action-btn" onclick="closeModal()" style="margin-right: 10px;">취소</button>
+          <button class="action-btn primary" onclick="saveRefundPolicy()">저장</button>
+        </div>
+      </div>
+    </div>
+  `;
+  showModal(modalContent);
+}
+
+async function saveRefundPolicy() {
+  const data = {
+    refundTimeLimitMinutes: Number(document.getElementById('refundTimeLimit').value),
+    penaltyBefore2days: Number(document.getElementById('penalty2days').value) / 100,
+    penaltyBefore1day: Number(document.getElementById('penalty1day').value) / 100,
+    penaltySameOrAfter: Number(document.getElementById('penaltySameOrAfter').value) / 100,
+    applyFrom: document.getElementById('applyFrom').value || null,  // 빈값이면 null로 처리
+    active: true
+  };
+
+  try {
+    const res = await fetch('/admin/policy/refund/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) throw new Error('환불 정책 수정 실패');
+
+    alert('환불 정책이 성공적으로 수정되었습니다.');
+    closeModal();
+    loadRefundPolicyCard();  // 수정 후 카드 UI 최신화
+  } catch (e) {
+    alert(e.message);
+  }
 }
 
 function togglePolicy(policyId) {

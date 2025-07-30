@@ -156,7 +156,8 @@
         p.total_fee AS amount,
         p.payment_method AS paymentMethod,
         p.payment_time AS paidAt,
-        p.status AS status  <!-- ✅ 여기만 수정 -->
+        p.status AS status, <!-- ✅ 여기만 수정 -->
+        p.reservation_id AS reservationId
         FROM payment p
         LEFT JOIN member m ON p.member_id = m.member_id
         LEFT JOIN subscription s ON s.member_id = m.member_id AND s.active = 1

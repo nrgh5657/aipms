@@ -22,7 +22,6 @@
             penalty_same_or_after = #{penaltySameOrAfter},
             apply_from = #{applyFrom},
             active = #{active}
-        WHERE id = #{id}
     </update>
 
     <select id="existsActivePolicy" resultType="boolean">

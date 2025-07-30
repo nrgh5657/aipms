@@ -14,4 +14,5 @@ public class AdminPaymentDto {
     private String paymentMethod;
     private LocalDateTime paidAt;
     private String status;
+    private Long reservationId;  // ✅ 이 필드가 있어야 프론트로 전달됨!
 }

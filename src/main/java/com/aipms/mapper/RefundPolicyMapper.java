@@ -13,7 +13,6 @@ public interface RefundPolicyMapper {
     // ID 기준 단건 조회 (수정 시)
     RefundPolicyDto findById(@Param("id") Long id);
 
-    // ID 기준 수정
     int updatePolicy(RefundPolicyDto policy);
 
     // 이미 active 정책이 존재하는지 확인 (새 정책 생성 시)

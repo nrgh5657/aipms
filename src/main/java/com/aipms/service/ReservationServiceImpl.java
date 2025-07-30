@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,9 +53,11 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         // ✅ 예약 기간 공간 검사 (기간 기반 체크로 변경)
-        boolean reservable = parkingAvailabilityService.isReservableForPeriod(start, end);
+        List<LocalDate> insufficientDates = new ArrayList<>();
+        boolean reservable = parkingAvailabilityService.isReservableForPeriod(start, end, insufficientDates);
+
         if (!reservable) {
-            throw new IllegalStateException("예약 기간 중 일부 날짜에 주차 공간이 부족합니다.");
+            throw new IllegalStateException("일반 주차 공간 부족: " + insufficientDates.toString());
         }
 
         // ✅ 요금 정책 조회
@@ -314,6 +317,7 @@ public class ReservationServiceImpl implements ReservationService {
         int monthlyFee = policy.getBaseFee();
         LocalDate startDate = requestedMonth.atDay(1);
         LocalDate endDate = requestedMonth.atEndOfMonth();
+
 
         // ✅ 예약 정보 저장 (결제 X)
         Reservation reservation = new Reservation();

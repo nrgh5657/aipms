@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -111,6 +112,22 @@ public class PaymentController {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", "서버 오류 발생"));
+        }
+    }
+
+    @PostMapping("/admin/refund")
+    public ResponseEntity<Map<String, Object>> refundPayment(@RequestBody PaymentRefundRequestDto refundRequest) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            paymentService.processAdminRefund(refundRequest.getReservationId(), refundRequest.getReason());
+            response.put("success", true);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 

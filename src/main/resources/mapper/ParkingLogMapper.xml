@@ -199,17 +199,16 @@
         </choose>
     </select>
 
-    <select id="getParkedCarCountByDate" resultType="map">
+    <select id="getParkedCarCountByDateList" resultType="map">
         SELECT
             DATE(p.entry_time) AS `date`,
             COUNT(*) AS `count`
         FROM parking_log p
         WHERE p.exit_time IS NULL
           AND p.parking_type != '월주차'
-          AND DATE(p.entry_time) BETWEEN #{startDate} AND #{endDate}
-        GROUP BY DATE(p.entry_time)
+          AND DATE(p.entry_time) <![CDATA[ BETWEEN #{startDate} AND #{endDate} ]]>
+    GROUP BY DATE(p.entry_time)
     </select>
-
 
 
 

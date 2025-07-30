@@ -23,7 +23,7 @@ public class ReservationController {
 
     @PostMapping("/daily")
     public ResponseEntity<Map<String, Object>> applyDaily(@AuthenticationPrincipal CustomUserDetails user,
-                                                     @RequestBody ReservationDto dto) {
+                                                          @RequestBody ReservationDto dto) {
         dto.setMemberId(user.getMember().getMemberId());
 
         Map<String, Object> response = new HashMap<>();
@@ -38,20 +38,38 @@ public class ReservationController {
             response.put("success", false);
             response.put("message", e.getMessage());
 
-            // 💡 원인에 따라 reason 추가
-            String reason = switch (e.getMessage()) {
-                case "예약은 최소 하루 전부터 가능합니다." -> "DATE_PASSED";
-                case "종료일은 시작일보다 이후여야 합니다." -> "INVALID_DATE_RANGE";
-                case "해당 기간에 이미 예약이 존재합니다." -> "DUPLICATE_RESERVATION";
-                case "잔여 주차 공간이 없습니다." -> "NO_AVAILABLE_SPOTS";
-                case "일주차 요금 정책이 설정되어 있지 않습니다." -> "NO_POLICY";
-                default -> "UNKNOWN_ERROR";
-            };
-            response.put("reason", reason);
+            String msg = e.getMessage();
+            String reason;
 
-            return ResponseEntity.ok(response); // ✅ 200 OK로 처리 (프론트는 success로 판단)
+            // ✅ "일반 주차 공간 부족: [2025-08-20, ...]" 메시지인 경우
+            if (msg.startsWith("일반 주차 공간 부족")) {
+                reason = "NO_AVAILABLE_SPOTS";
+
+                // ⛔ 부족한 날짜 리스트 추출 (문자열에서 파싱)
+                int start = msg.indexOf("[");
+                int end = msg.indexOf("]");
+                if (start != -1 && end != -1 && end > start) {
+                    String datesStr = msg.substring(start + 1, end);
+                    String[] dates = datesStr.split(",\\s*");
+                    response.put("insufficientDates", dates);  // → 프론트에 전달
+                }
+
+            } else {
+                // ✅ 기타 메시지 매핑
+                reason = switch (msg) {
+                    case "예약은 최소 하루 전부터 가능합니다." -> "DATE_PASSED";
+                    case "종료일은 시작일보다 이후여야 합니다." -> "INVALID_DATE_RANGE";
+                    case "해당 기간에 이미 예약이 존재합니다." -> "DUPLICATE_RESERVATION";
+                    case "일주차 요금 정책이 설정되어 있지 않습니다." -> "NO_POLICY";
+                    default -> "UNKNOWN_ERROR";
+                };
+            }
+
+            response.put("reason", reason);
+            return ResponseEntity.ok(response);
         }
     }
+
 
     @PostMapping("/monthly")
     public ResponseEntity<Map<String, Object>> applyMonthly(@AuthenticationPrincipal CustomUserDetails user,

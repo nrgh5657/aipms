@@ -350,3 +350,48 @@ ADD CONSTRAINT fk_payment_reservation
 
 ALTER TABLE payment
 ADD COLUMN subscription_id BIGINT NULL;
+
+ALTER TABLE reservation
+ADD COLUMN type VARCHAR(20) NOT NULL DEFAULT 'DAILY';
+
+CREATE TABLE fee_policy (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(20) NOT NULL,         -- 시간제(TIME), 일일(DAILY), 월정기권(MONTHLY)
+    name VARCHAR(100),                 -- 요금 명칭 (예: 월 정기권)
+    base_fee INT NOT NULL,             -- 기본 요금
+    max_fee INT,                       -- 최대 요금 (TIME 타입 전용)
+    unit_minutes INT,                  -- 단위 시간 (TIME 전용)
+    discount_rate DECIMAL(4, 2),       -- 정기권 할인율 (선택적)
+    apply_from DATE NOT NULL,          -- 적용 시작일
+    active BOOLEAN DEFAULT TRUE,       -- 활성 여부
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE refund_policy (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    refund_time_limit_minutes INT NOT NULL,     -- 결제 후 환불 가능 시간 (분)
+    penalty_before_2days DECIMAL(4, 2) NOT NULL, -- 2일 전 위약금율
+    penalty_before_1day DECIMAL(4, 2) NOT NULL,  -- 1일 전 위약금율
+    penalty_same_or_after DECIMAL(4, 2) NOT NULL,-- 예약 당일 또는 이후
+    apply_from DATE NOT NULL,                   -- 정책 적용 시작일
+    active BOOLEAN DEFAULT TRUE,                -- 현재 사용 중 여부
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 같은 요금 유형(type)은 동시에 1개만 active 하도록 보장
+ALTER TABLE fee_policy
+ADD CONSTRAINT uq_type_active UNIQUE (type, active);
+
+--날자별 예약 및 입차차량 카운트용
+CREATE TABLE seq_0_to_30 (
+  seq INT PRIMARY KEY
+);
+
+--날자별 예약 및 입차차량 카운트용
+INSERT INTO seq_0_to_30 (seq)
+SELECT a.N + b.N * 10 AS seq
+FROM
+  (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
+   UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) a,
+  (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2) b
+WHERE a.N + b.N * 10 <= 30;

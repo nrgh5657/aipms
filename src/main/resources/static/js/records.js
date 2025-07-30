@@ -1203,6 +1203,32 @@ function showToast(message, type) {
 
 
 // 팝업 열기 함수
+async function loadRefundPolicyText() {
+  try {
+    const res = await fetch('/admin/policy/refund/active');
+    const data = await res.json();
+
+    const list = document.querySelector('.refund-policy-list');
+    if (!list) return;
+
+    list.children[0].innerHTML = `결제 후 <strong>${data.refundTimeLimitMinutes}분 이내</strong> 환불 시 전액 환불됩니다.`;
+
+    const penalty2dPercent = (data.penaltyBefore2days * 100).toFixed(0);
+    list.children[1].innerHTML = `예약일 <strong>2일 전까지</strong> 취소 시 ${penalty2dPercent == 0 ? '전액 환불됩니다.' : `<strong>${penalty2dPercent}%</strong> 위약금이 부과됩니다.`}`;
+
+    const penalty1dPercent = (data.penaltyBefore1day * 100).toFixed(0);
+    list.children[2].innerHTML = `예약일 <strong>1일 전</strong> 취소 시 <strong>${penalty1dPercent}%</strong> 위약금이 부과됩니다.`;
+
+    list.children[3].innerHTML = data.penaltySameOrAfter >= 1
+        ? `<strong>예약 당일</strong> 취소 시 <strong>환불이 불가</strong>합니다.`
+        : `<strong>예약 당일</strong> 취소 시 <strong>${(data.penaltySameOrAfter * 100).toFixed(0)}%</strong> 위약금이 부과됩니다.`;
+
+  } catch (err) {
+    console.error('환불 정책 로딩 실패:', err);
+  }
+}
+
+// 팝업 열기 함수
 function confirmCancel(type, id, originalAmount = 10000, refundAmount = 9000) {
   const modal = document.getElementById('refundModal');
   const reasonInput = document.getElementById('refundReason');
@@ -1222,7 +1248,10 @@ function confirmCancel(type, id, originalAmount = 10000, refundAmount = 9000) {
   reasonInput.placeholder = `${type === 'payment' ? '결제' : '예약'} 취소 사유를 입력해주세요`;
   reasonInput.value = '';
 
-  // 4. ‘환불 진행’ 버튼 동작 설정
+  // 4. 환불 정책 안내 문구 동적 로드
+  loadRefundPolicyText();
+
+  // 5. ‘환불 진행’ 버튼 동작 설정
   const confirmBtn = modal.querySelector('.modal-actions .btn.danger');
   confirmBtn.onclick = function () {
     const reason = reasonInput.value.trim();
@@ -1235,8 +1264,7 @@ function confirmCancel(type, id, originalAmount = 10000, refundAmount = 9000) {
     cancelItem(type, id, reason); // 실제 취소 처리
   };
 
-
-  // 5. 팝업 띄우기
+  // 6. 팝업 띄우기
   modal.style.display = 'flex';
 }
 
@@ -1256,7 +1284,7 @@ async function cancelItem(type, id, reason) {
   if (!isSure) return;
 
   try {
-    const res = await fetch('api/reservations/refund', {
+    const res = await fetch('/api/reservations/refund', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

@@ -246,7 +246,15 @@ async function submitDailyReservation(event) {
       "NO_POLICY": "⚠️ 요금 정책이 설정되어 있지 않습니다.",
       "INVALID_DATE_RANGE": "❌ 시작일은 종료일보다 앞서야 합니다."
     };
-    const message = reasonMap[res?.reason] || "❌ 예약에 실패했습니다.";
+
+    let message = reasonMap[res?.reason] || "❌ 예약에 실패했습니다.";
+
+    // ✅ 날짜 부족 정보가 있다면 메시지에 추가
+    if (res?.reason === "NO_AVAILABLE_SPOTS" && Array.isArray(res.insufficientDates)) {
+      const dates = res.insufficientDates.join(', ');
+      message += `\n\n부족한 날짜: ${dates}`;
+    }
+
     alert(message);
   }
 }

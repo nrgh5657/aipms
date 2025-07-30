@@ -28,6 +28,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final FeePolicyMapper feePolicyMapper;
     private final SubscriptionMapper subscriptionMapper;
     private final MemberMapper memberMapper;
+    private final IamportService iamportService;
 
     @Override
     public PaymentResultDto processPayment(PaymentRequestDto requestDto) {
@@ -252,6 +253,40 @@ public class PaymentServiceImpl implements PaymentService {
         memberMapper.deleteSubscription(dto.getMemberId(), true);
 
 
+    }
+
+    @Override
+    public void processAdminRefund(Long reservationId, String reason) {
+        // 1. 예약 정보 조회 및 상태 확인
+        Reservation reservation = reservationMapper.findById(reservationId);
+        if (reservation == null || !"PAID".equals(reservation.getStatus())) {
+            throw new IllegalStateException("유효하지 않은 예약입니다.");
+        }
+
+        // 2. 결제 정보 조회 및 상태 확인
+        Payment payment = paymentMapper.findByReservationId(reservationId);
+        if (payment == null || !"결제 완료".equals(payment.getStatus())) {
+            throw new IllegalStateException("결제 정보가 없습니다.");
+        }
+
+        // 3. 환불 금액은 전액 환불로 가정
+        int refundAmount = payment.getTotalFee();
+
+        // 4. 아임포트 환불 요청
+        boolean success = iamportService.refund(payment.getImpUid(), refundAmount);
+        if (!success) {
+            throw new IllegalStateException("환불 처리에 실패했습니다.");
+        }
+
+        // 5. DB 상태 업데이트
+        paymentMapper.markAsCancelled(payment.getPaymentId(), reason, refundAmount);
+        reservationMapper.cancelReservation(reservationId, reason, refundAmount);
+
+        // 6. 정기권인 경우 관련 테이블 처리
+        if ("SUBSCRIPTION".equalsIgnoreCase(reservation.getType())) {
+            subscriptionMapper.deleteByMemberId(reservation.getMemberId());
+            memberMapper.updateSubscriptionStatus(reservation.getMemberId(), false);
+        }
     }
 
 

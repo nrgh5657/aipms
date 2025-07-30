@@ -47,5 +47,7 @@ public interface ParkingLogMapper {
     int countFilteredLogs(ParkingLogFilterRequestDto filter);
 
 
-    List<ParkingLog> getParkedCarCountByDate();
+    List<Map<String, Object>> getParkedCarCountByDateList(@Param("startDate") LocalDate startDate,
+                                                          @Param("endDate") LocalDate endDate);
+
 }

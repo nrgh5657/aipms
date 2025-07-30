@@ -127,10 +127,16 @@
               <span class="detail-label">적용 시작:</span>
               <span class="detail-value" id="hourlyApply">2025-07-01</span>
             </div>
+            <div class="policy-detail">
+            </div>
+            <div class="policy-detail">
+            </div>
+            <div class="policy-detail">
+            </div>
           </div>
           <div class="policy-actions">
-            <button class="btn-edit" onclick="editPolicy('hourly')">수정</button>
-            <button class="btn-toggle" onclick="togglePolicy('hourly')">비활성화</button>
+            <button class="btn-edit" onclick="editPolicy(1,'TIME')">수정</button>
+            <button class="btn-toggle" onclick="togglePolicy('TIME')">비활성화</button>
           </div>
         </div>
         
@@ -152,10 +158,16 @@
               <span class="detail-label">적용 시작:</span>
               <span class="detail-value" id="dailyApply">2025-07-01</span>
             </div>
+            <div class="policy-detail">
+            </div>
+            <div class="policy-detail">
+            </div>
+            <div class="policy-detail">
+            </div>
           </div>
           <div class="policy-actions">
-            <button class="btn-edit" onclick="editPolicy('daily')">수정</button>
-            <button class="btn-toggle" onclick="togglePolicy('daily')">비활성화</button>
+            <button class="btn-edit" onclick="editPolicy(2, 'DAILY')">수정</button>
+            <button class="btn-toggle" onclick="togglePolicy(2, 'DAILY')">비활성화</button>
           </div>
         </div>
         
@@ -177,10 +189,16 @@
               <span class="detail-label">적용 예정:</span>
               <span class="detail-value" id="monthlyApply">2025-08-01</span>
             </div>
+            <div class="policy-detail">
+            </div>
+            <div class="policy-detail">
+            </div>
+            <div class="policy-detail">
+            </div>
           </div>
           <div class="policy-actions">
-            <button class="btn-edit" onclick="editPolicy('monthly')">수정</button>
-            <button class="btn-toggle" onclick="togglePolicy('monthly')">활성화</button>
+            <button class="btn-edit" onclick="editPolicy(3, 'MONTHLY')">수정</button>
+            <button class="btn-toggle" onclick="togglePolicy(3, 'MONTHLY')">활성화</button>
           </div>
         </div>
 
@@ -193,6 +211,10 @@
             <div class="policy-detail">
               <span class="detail-label">환불 가능 시간:</span>
               <span class="detail-value" id="refundLimitDisplay">-</span>
+            </div>
+            <div class="policy-detail">
+              <span class="detail-label">2일 전 위약금:</span>
+              <span class="detail-value" id="penalty2dDisplay">-</span>
             </div>
             <div class="policy-detail">
               <span class="detail-label">1일 전 위약금:</span>
@@ -208,7 +230,7 @@
             </div>
           </div>
           <div class="policy-actions">
-            <button class="btn-edit" onclick="openRefundPolicyModal()">수정</button>
+            <button class="btn-edit" onclick="fetchAndOpenRefundPolicyModal()">환불 정책 수정</button>
             <button class="btn-toggle" onclick="togglePolicy('monthly')">활성화</button>
           </div>
         </div>

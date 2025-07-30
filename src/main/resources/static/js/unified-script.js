@@ -180,7 +180,7 @@ async function loadFeePolicies() {
         case 'TIME':
           const unitHours = policy.unitTime / 60;
           const hourlyFee = Math.round(policy.baseFee / unitHours);
-          displayText = `₩${hourlyFee.toLocaleString()}`;
+          displayText = `₩${policy.baseFee.toLocaleString()}`;
           suffix = '/시간';
           break;
         case 'DAILY':

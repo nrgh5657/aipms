@@ -30,6 +30,10 @@
         SELECT * FROM reservation WHERE member_id = #{memberId}
     </select>
 
+    <select id="findById" resultType="com.aipms.domain.Reservation">
+        SELECT * FROM reservation WHERE reservation_id = #{reservationId}
+    </select>
+
 
     <update id="updateStatus">
         UPDATE reservation SET status = #{status} WHERE reservation_id = #{reservationId}
@@ -230,20 +234,19 @@
 
     <select id="getDailyReservationCountByDate" resultType="map">
         SELECT
-        calendar.date AS `date`,
-        COUNT(r.reservation_id) AS `count`
+            calendar.date AS `date`,
+            COUNT(r.reservation_id) AS `count`
         FROM (
-        SELECT DATE_ADD(#{startDate}, INTERVAL seq DAY) AS date
-        FROM seq_0_to_30
-        WHERE DATE_ADD(#{startDate}, INTERVAL seq DAY) <= #{endDate}
-        ) calendar
-        LEFT JOIN reservation r
-        ON calendar.date BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
-        AND r.status = 'PAID'
-        AND r.type = 'DAILY'
+                 SELECT DATE_ADD(#{startDate}, INTERVAL seq DAY) AS date
+                 FROM seq_0_to_30
+                 WHERE DATE_ADD(#{startDate}, INTERVAL seq DAY) &lt;= #{endDate}
+             ) calendar
+                 LEFT JOIN reservation r
+                           ON calendar.date BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+            AND r.status = 'PAID'
+            AND r.type = 'DAILY'
         GROUP BY calendar.date
     </select>
-
 
 
 </mapper>

@@ -6,6 +6,7 @@ import com.aipms.dto.ReservationHistoryDto;
 import com.aipms.dto.ReservationHistoryRequestDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -56,7 +57,10 @@ public interface ReservationMapper {
 
     int countActiveMonthlyReservations();
 
-    Map<LocalDate, Integer> getDailyReservationCountByDate(LocalDate startDate, LocalDate endDate);
+    List<Map<String, Object>> getDailyReservationCountByDate(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 
-
+    Reservation findById(Long reservationId);
 }

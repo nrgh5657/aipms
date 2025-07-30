@@ -22,4 +22,7 @@ public interface PaymentService {
     void payForDailyReservation(DailyReservationPaymentDto dto);
 
     void payForMonthlyReservation(MonthlyReservationPaymentDto dto);
+
+
+    void processAdminRefund(Long reservationId, String reason);
 }

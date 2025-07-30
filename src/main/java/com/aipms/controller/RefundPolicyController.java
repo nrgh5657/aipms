@@ -23,9 +23,8 @@ public class RefundPolicyController {
         return ResponseEntity.ok(refundPolicyService.getPolicyById(id));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Void> updatePolicy(@PathVariable Long id, @RequestBody RefundPolicyDto dto) {
-        dto.setId(id);
+    @PostMapping("/update")
+    public ResponseEntity<Void> updatePolicy(@RequestBody RefundPolicyDto dto) {
         refundPolicyService.updatePolicy(dto);
         return ResponseEntity.ok().build();
     }
