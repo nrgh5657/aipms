@@ -114,7 +114,7 @@
             <div class="stat-icon">🔥</div>
             <div class="stat-content">
               <h3>화재 알림</h3>
-              <div class="stat-number" id="fireAlerts">2</div>
+              <div class="stat-number" id="fireAlertsStatus">2</div>
               <div class="stat-change">오늘 발생한 화재 감지</div>
             </div>
           </div>
@@ -124,7 +124,7 @@
             <div class="stat-content">
               <h3>승인 대기</h3>
               <div class="stat-number" id="pendingApprovals">7</div>
-              <div class="stat-change">처리 대기 중인 요청</div>
+              <div class="stat-change" >전일 대비 +12%</div>
             </div>
           </div>
 
@@ -132,8 +132,8 @@
             <div class="stat-icon">💰</div>
             <div class="stat-content">
               <h3>오늘 매출</h3>
-              <div class="stat-number" id="todayRevenue">₩2.1M</div>
-              <div class="stat-change">전일 대비 +12%</div>
+              <div class="stat-number" id="todayRevenueStatus">₩2.1M</div>
+              <div class="stat-change" id="revenueDiffStatus">전일 대비 +12%</div>
             </div>
           </div>
 
@@ -141,8 +141,8 @@
             <div class="stat-icon">🅿️</div>
             <div class="stat-content">
               <h3>주차장 점유율</h3>
-              <div class="stat-number" id="occupancyRate">75%</div>
-              <div class="stat-change">20대 중 15대 사용 중</div>
+              <div class="stat-number" id="occupancyRateStatus">75%</div>
+              <div class="stat-change" id="occupancyRatioStatus">20대 중 15대 사용 중</div>
             </div>
           </div>
         </div>
@@ -154,27 +154,27 @@
             <div class="parking-status-content">
               <div class="parking-status-item">
                 <span class="status-label">전체 주차 공간</span>
-                <span class="status-value">20대</span>
+                <span class="status-value" id="totalSpacesStatus">20대</span>
               </div>
               <div class="parking-status-item">
-                <span class="status-label">월주차 승인</span>
-                <span class="status-value" id="currentMonthly">5대</span>
+                <span class="status-label">월주차</span>
+                <span class="status-value" id="currentMonthlyStatus">5대</span>
               </div>
               <div class="parking-status-item">
-                <span class="status-label">일주차 승인</span>
-                <span class="status-value" id="currentDaily">8대</span>
+                <span class="status-label">일주차</span>
+                <span class="status-value" id="currentDailyStatus">8대</span>
               </div>
               <div class="parking-status-item">
                 <span class="status-label">이용 가능</span>
-                <span class="status-value" id="availableSpaces">7대</span>
+                <span class="status-value" id="availableSpacesStatus">7대</span>
               </div>
               <div class="parking-status-item">
                 <span class="status-label">월주차 한도</span>
-                <span class="status-value" id="monthlyParkingCount">5/8</span>
+                <span class="status-value" id="monthlyParkingCountStatus">5/8</span>
               </div>
               <div class="parking-status-item">
                 <span class="status-label">승인 대기</span>
-                <span class="status-value" id="waitingCount">4</span>
+                <span class="status-value" id="waitingCountStatus">4</span>
               </div>
             </div>
           </div>

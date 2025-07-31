@@ -355,6 +355,7 @@ function loadFireDetectionDataFromServer(page = currentPage, size = pageSize) {
       });
 }
 
+
 // 이벤트 리스너 설정
 function setupEventListeners() {
   // 필터 버튼 이벤트
@@ -420,6 +421,7 @@ function updateCCTVTimestamps() {
     }
   });
 }
+
 
 // 통계 업데이트
 function updateStats() {

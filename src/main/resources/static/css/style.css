@@ -621,10 +621,15 @@ body {
   color: #2f855a;
 }
 
-.cctv-item.offline {
+.cctv-item.fire {
   background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
   color: #c53030;
 }
+
+.cctv-item.offline {
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+}
+
 
 .traffic-stats {
   display: flex;
@@ -1093,6 +1098,8 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
+  position: absolute;
+  z-index: 10;
 }
 
 .cctv-controls button {

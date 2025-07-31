@@ -293,7 +293,8 @@ function getCurrentPageType() {
 // 대시보드 초기화
 function initializeDashboard() {
   console.log('대시보드 초기화');
-  updateStats();
+  loadAndRenderAdminDashboard();
+  loadCctvStatuses()
   updateParkingStatus();
 }
 
@@ -403,7 +404,6 @@ function setupEventListeners() {
 function startRealTimeUpdates() {
   setInterval(updateCurrentTime, 1000);
   setInterval(updateCCTVTimestamps, 5000);
-  setInterval(updateStats, 30000);
   setInterval(updateParkingStatus, 10000);
 }
 
@@ -429,20 +429,125 @@ function updateCCTVTimestamps() {
   });
 }
 
-// 통계 업데이트
-function updateStats() {
-  const stats = {
-    fireAlerts: Math.floor(Math.random() * 3),
-    pendingApprovals: parkingStatus.waitingMonthly + parkingStatus.waitingDaily,
-    todayRevenue: '₩' + (2.1 + Math.random() * 0.5).toFixed(1) + 'M',
-    occupancyRate: Math.round(((PARKING_LIMITS.TOTAL_SPACES - parkingStatus.availableSpaces) / PARKING_LIMITS.TOTAL_SPACES) * 100) + '%'
-  };
-  
-  updateElementIfExists('fireAlerts', stats.fireAlerts);
-  updateElementIfExists('pendingApprovals', stats.pendingApprovals);
-  updateElementIfExists('todayRevenue', stats.todayRevenue);
-  updateElementIfExists('occupancyRate', stats.occupancyRate);
+async function loadAndRenderAdminDashboard() {
+  try {
+    const res = await fetch('/api/adminDashboard/summary', {
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+    console.log(data);
+
+    // 🔥 화재 감지 수
+    updateElementIfExists('fireAlertsStatus', data.fireCount);
+
+    // 💰 오늘 매출
+    updateElementIfExists('todayRevenueStatus', formatCurrency(data.todayRevenue));
+
+    // 💰 전일 대비 증감
+    const diff = data.todayRevenue - data.yesterdayRevenue;
+    const sign = diff >= 0 ? '+' : '-';
+    updateElementIfExists('revenueDiffStatus', `${sign}${formatCurrency(Math.abs(diff))}`);
+
+    // 🅿️ 점유율
+    const occupancyText = `${data.occupancyRate ?? 0}%`;
+    updateElementIfExists('occupancyRateStatus', occupancyText);
+    updateElementIfExists('occupancyRatioStatus', `${data.totalSpaces}대 중 ${data.currentOccupancy}대 사용 중`);
+
+    // 📅 예약 수
+    updateElementIfExists('reservationDaily', data.dailyReservationCount);
+    updateElementIfExists('reservationMonthly', data.monthlyReservationCount);
+
+    // ✅ 추가 데이터 렌더링
+    updateElementIfExists('totalSpacesStatus', `${data.totalSpaces}대`);
+    updateElementIfExists('currentMonthlyStatus', `${data.monthlyReservationCount}대`);
+    updateElementIfExists('currentDailyStatus', `${data.dailyReservationCount}대`);
+
+    const available = data.normalSpaces - data.usedNormalSpaces;
+    updateElementIfExists('availableSpacesStatus', `${available}대`);
+
+    updateElementIfExists('monthlyParkingCountStatus', `${data.monthlyReservationCount}/${data.fixedSubscriptionSpaces}`);
+
+    updateElementIfExists('currentOccupancyStatus', `${data.currentOccupancy}대`); // 실시간 사용량 (화면에 있으면)
+
+  } catch (e) {
+    console.error('❌ 관리자 대시보드 요약 정보 로딩 실패:', e);
+  }
 }
+function updateElementIfExists(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = value;
+}
+
+function formatCurrency(amount) {
+  if (typeof amount !== 'number') return '-';
+  return '₩' + amount.toLocaleString();
+}
+
+async function loadCctvStatuses() {
+  try {
+    const res = await fetch('/api/adminDashboard/cctv-status');
+    const logs = await res.json();
+
+    const grid = document.querySelector('.cctv-grid');
+    grid.innerHTML = ''; // 초기화
+
+    let latestTime = null;
+
+    if (Array.isArray(logs) && logs.length > 0) {
+      logs.forEach(log => {
+        const item = document.createElement('div');
+        item.classList.add('cctv-item');
+        item.textContent = log.cameraName;
+
+        if (log.status.includes('화재')) {
+          item.classList.add('fire');       // 🔥 빨간색
+        } else if (log.status.includes('스트리밍 오류')) {
+          item.classList.add('offline');    // ⚠️ 회색
+        } else if (log.status.includes('정상')) {
+          item.classList.add('active');     // ✅ 초록색
+        }
+
+
+        grid.appendChild(item);
+
+        const checked = new Date(log.lastCheckedAt);
+        if (!latestTime || checked > latestTime) {
+          latestTime = checked;
+        }
+      });
+
+      if (latestTime) {
+        document.getElementById('lastFireCheck').textContent = formatTimeDifference(latestTime);
+      }
+    } else {
+      // 👉 로그 없을 경우 기본 더미 항목 3개 생성
+      const dummyCount = 3;
+      for (let i = 1; i <= dummyCount; i++) {
+        const dummy = document.createElement('div');
+        dummy.classList.add('cctv-item', 'offline');
+        dummy.textContent = `CCTV ${i}번 (정보 없음)`;
+        grid.appendChild(dummy);
+      }
+
+      document.getElementById('lastFireCheck').textContent = '정보 없음';
+    }
+
+  } catch (e) {
+    console.error('🚨 CCTV 상태 로딩 실패:', e);
+  }
+}
+
+// 시간 포맷 예시 ("방금 전", "x분 전")
+function formatTimeDifference(time) {
+  const now = new Date();
+  const diff = Math.floor((now - time) / 1000); // 초 단위
+
+  if (diff < 60) return '방금 전';
+  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+  return `${Math.floor(diff / 3600)}시간 전`;
+}
+
 
 // 주차 현황 업데이트
 function updateParkingStatus() {
@@ -562,16 +667,16 @@ function updateElementIfExists(id, value) {
 function renderFireTable() {
   const tableBody = document.getElementById('fireLogTable');
   if (!tableBody) return;
-  
+
   console.log('화재 테이블 렌더링 시작');
   tableBody.innerHTML = '';
-  
+
   if (fireDetectionData && fireDetectionData.length > 0) {
     fireDetectionData.forEach(item => {
       const row = createFireTableRow(item);
       tableBody.appendChild(row);
     });
-    
+
     const remainingRows = Math.max(0, 10 - fireDetectionData.length);
     for (let i = 0; i < remainingRows; i++) {
       const emptyRow = document.createElement('tr');
@@ -579,7 +684,7 @@ function renderFireTable() {
       emptyRow.style.height = '45px';
       tableBody.appendChild(emptyRow);
     }
-    
+
     console.log(`화재 테이블 렌더링 완료: ${fireDetectionData.length}개 항목`);
   }
 }
@@ -593,9 +698,9 @@ function createFireTableRow(item) {
       showFireDetail(item.id);
     }
   };
-  
+
   const resultClass = item.result === '화재' ? 'status-fire' : 'status-normal';
-  
+
   row.innerHTML = `
     <td>${item.id}</td>
     <td>${item.time}</td>
@@ -608,9 +713,51 @@ function createFireTableRow(item) {
     <td>${item.notes}</td>
     <td><button class="action-btn" onclick="event.stopPropagation(); editFireRecord('${item.id}')">수정</button></td>
   `;
-  
+
   return row;
 }
+
+async function resetAndDetectSingle(cameraId) {
+  const confirmed = confirm(`카메라 ${cameraId} 상태를 리셋하고 화재 재감지를 수행할까요?`);
+  if (!confirmed) return;
+
+  try {
+    const resetRes = await fetch(`http://localhost:5000/reset-fire?camera=${cameraId}`, {
+      method: "GET",
+      mode: "cors"
+    });
+
+    if (!resetRes.ok) {
+      alert(`❌ 상태 리셋 실패`);
+      return;
+    }
+
+    const detectRes = await fetch("http://localhost:5000/stream-fire-detect", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        video_url: "0",  // 또는 각 cameraId에 따라 다르게 매핑 가능
+        callback_url: "http://localhost:8080/fireDetect/detected",
+        camera_id: cameraId
+      })
+    });
+
+    if (!detectRes.ok) {
+      alert("❌ 감지 재시작 실패");
+      return;
+    }
+
+    alert(`✅ 카메라 ${cameraId} 리셋 및 재감지 요청 완료`);
+
+  } catch (error) {
+    console.error("🚨 처리 중 오류:", error);
+    alert("⚠️ 오류 발생: 콘솔 확인");
+  }
+}
+
+
 
 
 
@@ -1861,7 +2008,6 @@ function closeAlert() {
 
 // 기타 함수들 (각 버튼 클릭 시 실행)
 function refreshDashboard() {
-  updateStats();
   updateParkingStatus();
   showAlert('대시보드를 새로고침했습니다.');
 }
@@ -1970,7 +2116,7 @@ function loadRefundPolicyCard() {
   fetch('/admin/policy/refund/active')
       .then(res => res.json())
       .then(data => {
-        document.getElementById('refundLimitDisplay').innerText = data.refundTimeLimitMinutes + '분 이내';
+        document.getElementById('refundLimitDisplay').innerText = (data.refundTimeLimitMinutes) + '분 이내';
         document.getElementById('penalty2dDisplay').innerText= (data.penaltyBefore2days * 100).toFixed(0) + '%';
         document.getElementById('penalty1dDisplay').innerText = (data.penaltyBefore1day * 100).toFixed(0) + '%';
         document.getElementById('penaltySameDayDisplay').innerText =

@@ -1,6 +1,7 @@
 package com.aipms.service;
 
 import com.aipms.domain.CctvStatusLogVO;
+import com.aipms.dto.CctvLogDto;
 import com.aipms.dto.FireAlertDto;
 
 import java.util.List;
@@ -11,4 +12,6 @@ public interface CctvLogService {
     boolean isFireDetected(String cameraId);
 
     void saveFireLogAsRegular(FireAlertDto dto);
+
+    List<CctvLogDto> getLatestLogs();
 }

@@ -5,7 +5,7 @@
 
 <mapper namespace="com.aipms.mapper.FireLogMapper">
 
-    <resultMap id="FireAlertMap" type="com.aipms.dto.FireAlertDto">
+    <resultMap id="FireAlertMap" type="com.aipms.dto.FireAlertResponseDto">
         <id property="id" column="id"/>
         <result property="label" column="label"/>
         <result property="confidence" column="confidence"/>

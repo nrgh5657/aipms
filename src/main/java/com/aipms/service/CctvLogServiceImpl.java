@@ -1,6 +1,7 @@
 package com.aipms.service;
 
 import com.aipms.domain.CctvStatusLogVO;
+import com.aipms.dto.CctvLogDto;
 import com.aipms.dto.FireAlertDto;
 import com.aipms.mapper.CctvStatusLogMapper;
 import lombok.RequiredArgsConstructor;
@@ -43,19 +44,44 @@ public class CctvLogServiceImpl implements CctvLogService {
         }
         return false;
     }
-    public void saveFireLogAsRegular(FireAlertDto dto) {
-        CctvStatusLogVO log = new CctvStatusLogVO();
 
-        log.setCameraName("카메라 " + dto.getVideoUrl());  // camera_id로 대체 가능
-        log.setLocation("화재 감지 위치");                // 필요 시 dto에서 유추
-        log.setStatus("화재");
-        log.setRecordStatus("RECORDING");                  // 감지 중이므로
-        log.setLogType("REGULAR");
-        log.setLastConnected(LocalDateTime.now());
-        log.setLastCheckedAt(LocalDateTime.now());
-        log.setCreatedAt(LocalDateTime.now());
-
-        cctvStatusLogMapper.insertCctvLog(log);  // 단건 insert 쿼리 호출
+    // 카메라 ID → 카메라 이름 매핑
+    private String mapCameraIdToName(String cameraId) {
+        switch (cameraId) {
+            case "1": return "1층 주차장 동쪽";
+            case "2": return "1층 주차장 서쪽";
+            case "3": return "2층 주차장 중앙";
+            default: return "알 수 없음";
+        }
     }
 
+    //카메라 기반 위치 정보 생성
+    private String mapCameraIdToLocation(String cameraId) {
+        switch (cameraId) {
+            case "1": return "1층 주차장 동쪽";
+            case "2": return "1층 주차장 서쪽";
+            case "3": return "2층 주차장 중앙";
+            default: return "알 수 없음";
+        }
+    }
+
+    public void saveFireLogAsRegular(FireAlertDto dto) {
+        CctvStatusLogVO cctvLog = new CctvStatusLogVO();
+        cctvLog.setCameraName(mapCameraIdToName(dto.getCameraId()));   // ✅ 이름 매핑
+        cctvLog.setLocation(mapCameraIdToLocation(dto.getCameraId())); // ✅ 위치 매핑
+        cctvLog.setStatus("화재");
+        cctvLog.setRecordStatus("RECORDING");                  // 감지 중이므로
+        cctvLog.setLogType("REGULAR");
+        cctvLog.setLastConnected(LocalDateTime.now());
+        cctvLog.setLastCheckedAt(LocalDateTime.now());
+        cctvLog.setCreatedAt(LocalDateTime.now());
+
+        cctvStatusLogMapper.insertCctvLog(cctvLog);  // 단건 insert 쿼리 호출
+    }
+
+    @Override
+    public List<CctvLogDto> getLatestLogs() {
+        return cctvStatusLogMapper.getLatestLogsPerCctv();
+
+    }
 }

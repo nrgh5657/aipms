@@ -4,6 +4,7 @@ import com.aipms.domain.FireLog;
 import com.aipms.domain.Member;
 import com.aipms.dto.FireAlertDto;
 import com.aipms.dto.FireAlertLogRequestDto;
+import com.aipms.dto.FireAlertResponseDto;
 import com.aipms.dto.PageDto;
 import com.aipms.mapper.FireLogMapper;
 import com.aipms.mapper.MemberMapper;
@@ -61,9 +62,9 @@ public class FireLogServiceImpl implements FireLogService{
     //카메라 기반 위치 정보 생성
     private String mapCameraIdToLocation(String cameraId) {
         switch (cameraId) {
-            case "1": return "1층 주차장";
-            case "2": return "2층 주차장";
-            case "3": return "3층 주차장";
+            case "1": return "1층 주차장 동쪽";
+            case "2": return "1층 주차장 서쪽";
+            case "3": return "2층 주차장 중앙";
             default: return "알 수 없음";
         }
     }
@@ -88,7 +89,7 @@ public class FireLogServiceImpl implements FireLogService{
 
     //화재 감지 기록 페이징 처리
     @Override
-    public PageDto<FireAlertDto> getPagedFireLogs(FireAlertLogRequestDto req) {
+    public PageDto<FireAlertResponseDto> getPagedFireLogs(FireAlertLogRequestDto req) {
         // 전체 개수 조회 (조건 포함)
         int totalCount = fireLogMapper.countFireLogs(req);
 
@@ -97,7 +98,7 @@ public class FireLogServiceImpl implements FireLogService{
         req.setPage(offset); // ⚠️ XML에서는 LIMIT #{limit} OFFSET #{page}로 쓸 예정
 
         // 데이터 조회
-        List<FireAlertDto> logs = fireLogMapper.getPagedFireLogs(req);
+        List<FireAlertResponseDto> logs = fireLogMapper.getPagedFireLogs(req);
 
         return new PageDto<>(logs, totalCount, req.getPage() / req.getLimit(), req.getLimit());
     }

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.AdminDashboardSummaryMapper">
+
+    <select id="countTodayFireAlerts" resultType="int">
+        SELECT COUNT(*) FROM fire_alert_log
+        WHERE DATE(detected_at) = CURDATE()
+    </select>
+
+    <select id="sumTodayRevenue" resultType="int">
+        SELECT IFNULL(SUM(total_fee), 0)
+        FROM payment
+        WHERE DATE(payment_time) = CURDATE()
+    </select>
+
+    <select id="sumYesterdayRevenue" resultType="int">
+        SELECT IFNULL(SUM(total_fee), 0)
+        FROM payment
+        WHERE DATE(payment_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+    </select>
+
+    <select id="countCurrentlyParked" resultType="int">
+        SELECT COUNT(*) FROM parking_log
+        WHERE exit_time IS NULL
+    </select>
+
+    <select id="countTotalSpaces" resultType="int">
+        SELECT total_spaces FROM parking_config LIMIT 1
+    </select>
+
+    <select id="countTodayDailyReservations" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE type = 'DAILY'
+          AND status = 'PAID'
+          AND DATE(reservation_start) = CURDATE()
+    </select>
+
+    <select id="countActiveMonthlyReservations" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE type = 'MONTHLY'
+          AND status = 'PAID'
+          AND CURDATE() BETWEEN reservation_start AND reservation_end
+    </select>
+
+</mapper>

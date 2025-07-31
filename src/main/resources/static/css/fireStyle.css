@@ -1081,6 +1081,8 @@ body {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #e2e8f0;
+  position : relative;
+  z-index: 10;
 }
 
 .cctv-header h4 {
@@ -1132,6 +1134,12 @@ body {
   background: #1a202c;
   color: white;
   position: relative;
+  z-index: 1;
+}
+
+.video-placeholder {
+  position: relative; /* ✅ 있어도 괜찮음 */
+  z-index: 1;          /* ❌ 이게 문제일 수 있음 — 아예 없애거나 낮춰 */
 }
 
 .cctv-display.offline {

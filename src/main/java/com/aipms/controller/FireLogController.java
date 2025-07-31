@@ -3,6 +3,7 @@ package com.aipms.controller;
 import com.aipms.domain.FireLog;
 import com.aipms.dto.FireAlertDto;
 import com.aipms.dto.FireAlertLogRequestDto;
+import com.aipms.dto.FireAlertResponseDto;
 import com.aipms.dto.PageDto;
 import com.aipms.service.FireLogService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class FireLogController {
 
     //화재 감지 로그 페이징 처리
     @GetMapping("/logs/paged")
-    public ResponseEntity<PageDto<FireAlertDto>> getPagedFireLogs(
+    public ResponseEntity<PageDto<FireAlertResponseDto>> getPagedFireLogs(
             @RequestParam int page,
             @RequestParam int size,
             @RequestParam(required = false) String label,
@@ -33,7 +34,7 @@ public class FireLogController {
         req.setLocation(location);
         req.setDate(date);
 
-        PageDto<FireAlertDto> result = fireLogService.getPagedFireLogs(req);
+        PageDto<FireAlertResponseDto> result = fireLogService.getPagedFireLogs(req);
         return ResponseEntity.ok(result);
     }
 

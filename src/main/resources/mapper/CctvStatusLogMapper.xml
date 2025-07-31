@@ -21,4 +21,14 @@
         WHERE id = #{cameraId}
     </select>
 
+    <select id="getLatestLogsPerCctv" resultType="com.aipms.dto.CctvLogDto">
+        SELECT *
+        FROM cctv_status_log
+        WHERE (camera_name, last_checked_at) IN (
+            SELECT camera_name, MAX(last_checked_at)
+            FROM cctv_status_log
+            GROUP BY camera_name
+        )
+    </select>
+
 </mapper>

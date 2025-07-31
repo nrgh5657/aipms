@@ -28,9 +28,9 @@ public class CctvLogScheduler {
         log.info("📅 CCTV 정기로그 기록 시작");
 
         List<CctvStatusLogVO> logs = Arrays.asList(
-                createLog("1", "1층 주차장 - 동쪽", "1층 동쪽 구역", "http://192.168.10.81:8080/video"),
-                createLog("2", "1층 주차장 - 서쪽", "1층 서쪽 구역", "http://192.168.10.81:8080/video"),
-                createLog("3", "2층 주차장 - 중앙", "2층 중앙 구역", "http://192.168.10.81:8080/video")
+                createLog("1", "1층 주차장 동쪽", "1층 동쪽 구역", "http://192.168.10.81:8080/video"),
+                createLog("2", "1층 주차장 서쪽", "1층 서쪽 구역", "http://192.168.10.81:8080/video"),
+                createLog("3", "2층 주차장 중앙", "2층 중앙 구역", "http://192.168.10.81:8080/video")
         );
 
         cctvLogService.saveRegularLogs(logs);
@@ -44,7 +44,7 @@ public class CctvLogScheduler {
         vo.setLastCheckedAt(LocalDateTime.now());
         vo.setLogType("REGULAR");
 
-        boolean isStreaming = checkStreamOnline(streamUrl);
+        boolean isStreaming = checkStreamOnline(streamUrl, cameraId);
         vo.setRecordStatus(isStreaming ? "RECORDING" : "NOT_RECORDING");
 
         if (isStreaming) {
@@ -66,7 +66,12 @@ public class CctvLogScheduler {
         return vo;
     }
 
-    private boolean checkStreamOnline(String url) {
+    private boolean checkStreamOnline(String url, String cameraId) {
+        // 예외적으로 LOCAL 혹은 공유 웹캠인 경우 무조건 OK 처리
+        if ("LOCAL".equalsIgnoreCase(url) || "0".equals(url) || "2".equals(cameraId)) {
+            return true;
+        }
+
         try {
             URL stream = new URL(url);
             HttpURLConnection connection = (HttpURLConnection) stream.openConnection();
