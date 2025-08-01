@@ -131,4 +131,10 @@ public class PaymentController {
         }
     }
 
+    @GetMapping("/summary")
+    public ResponseEntity<PaymentSummaryDto> getPaymentSummary() {
+        PaymentSummaryDto summary = paymentService.getPaymentSummary();
+        return ResponseEntity.ok(summary);
+    }
+
 }

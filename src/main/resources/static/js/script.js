@@ -6,6 +6,7 @@ let paymentData = [];
 let systemLogs = [];
 let currentPolicyType = null;
 let currentPolicyId = null;
+let cctvCurrentFilters = {};
 
 // 주차 제한 상수
 const PARKING_LIMITS = {
@@ -228,8 +229,14 @@ document.addEventListener('DOMContentLoaded', function() {
   // 기본 설정
   updateCurrentTime();
   loadSampleData();
+  loadPaymentStats()
+  loadMemberStats();
+  loadTodayParkingStats()
+  loadSystemStatus()
   loadFeePolicies(); //요금 정책 카드 초기 로딩
   loadRefundPolicyCard(); // 환불 정책 카드 초기 로딩
+  loadSystemLogStats();
+  loadCctvLogs();
   setupEventListeners();
   startRealTimeUpdates();
   setupRefundButtonListener()
@@ -484,6 +491,25 @@ function formatCurrency(amount) {
   return '₩' + amount.toLocaleString();
 }
 
+async function loadSystemLogStats() {
+  try {
+    const res = await fetch('/api/cctv/countLog');
+    const data = await res.json();
+
+    updateElementIfExists('todayLogCount', data.todayLogs.toLocaleString());
+    updateElementIfExists('normalLog', data.normalCount);
+    updateElementIfExists('errorLog', data.errorCount);
+    updateElementIfExists('fireLog', data.fireLogCount);
+  } catch (e) {
+    console.error("❌ 시스템 로그 요약 로딩 실패", e);
+  }
+}
+
+function updateElementIfExists(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = value;
+}
+
 async function loadCctvStatuses() {
   try {
     const res = await fetch('/api/adminDashboard/cctv-status');
@@ -538,6 +564,49 @@ async function loadCctvStatuses() {
   }
 }
 
+
+function loadTodayParkingStats() {
+  fetch('/api/adminDashboard/parking-usage')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('todayEntryCount').textContent = data.entryCount;
+        document.getElementById('todayExitCount').textContent = data.exitCount;
+        document.getElementById('currentParkingCount').textContent = data.currentCount;
+      })
+      .catch(err => {
+        console.error('주차장 통계 로딩 실패:', err);
+      });
+}
+
+function loadSystemStatus() {
+  fetch('/api/adminDashboard/system-status')
+      .then(res => res.json())
+      .then(data => {
+        // 값 출력
+        document.getElementById('systemStatusLabel').textContent = data.statusMessage;
+        document.getElementById('cpuUsage').textContent = data.cpuUsage + '%';
+        document.getElementById('memoryUsage').textContent = data.memoryUsage + '%';
+        document.getElementById('diskUsage').textContent = data.diskUsage + '%';
+
+        // 상태에 따라 색상/클래스 바꾸기
+        const statusBox = document.getElementById('systemStatusBox');
+        if (data.statusMessage === '모든 시스템 정상') {
+          statusBox.classList.remove('danger');
+          statusBox.classList.add('safe');
+        } else {
+          statusBox.classList.remove('safe');
+          statusBox.classList.add('danger');
+        }
+      })
+      .catch(err => {
+        console.error('시스템 상태 로딩 실패:', err);
+      });
+}
+
+
+
+
+
 // 시간 포맷 예시 ("방금 전", "x분 전")
 function formatTimeDifference(time) {
   const now = new Date();
@@ -585,12 +654,10 @@ function updateParkingStatus() {
   updateElementIfExists('waitingCount', waitingMonthly + waitingDaily);
   updateElementIfExists('approvedCount', approvedMonthly + approvedDaily);
 
-  // 회원 관리 통계
-  updateElementIfExists('totalMembers', memberData.length);
-  updateElementIfExists('activeMembers', memberData.filter(m => m.status === '활성').length);
-  updateElementIfExists('monthlyMembers', memberData.filter(m => m.membership === '월주차').length);
-  updateElementIfExists('newMembers', Math.floor(Math.random() * 15) + 5);
 }
+
+
+
 
 // 용량 경고 표시
 function displayCapacityWarning() {
@@ -949,7 +1016,7 @@ async function loadParkingConfig() {
 // 입출차 로그
 (() => {
   const MIN_ROWS = 10;
-  const pageSize = 4;
+  const pageSize = 10;
 
   let currentPage = 1;
   let totalLogs = 0;
@@ -1215,7 +1282,7 @@ function fetchMemberList(page = 1) {
         totalPages = data.totalPages;
 
         renderMemberTable(members);
-        renderPagination(currentPage, totalPages);
+        renderMemberPagination(currentPage, totalPages);
       })
       .catch(err => console.error('회원 목록 로딩 실패:', err));
 }
@@ -1238,9 +1305,9 @@ function applyMemberFilters() {
   fetchMemberList(1); // ✅ 필터 초기화 시 첫 페이지로
 }
 
-// 페이징 렌더링
-function renderPagination(currentPage, totalPages) {
-  const pagination = document.getElementById('pagination');
+// 회원 목록 전용 페이징 렌더링
+function renderMemberPagination(currentPage, totalPages) {
+  const pagination = document.getElementById('memberPagination'); // ✅ 수정됨
   if (!pagination) return;
 
   pagination.innerHTML = '';
@@ -1270,6 +1337,7 @@ function renderPagination(currentPage, totalPages) {
   nextBtn.onclick = () => fetchMemberList(currentPage + 1);
   pagination.appendChild(nextBtn);
 }
+
 
 // 수정 모달 로직
 function findMemberById(id) {
@@ -1330,16 +1398,34 @@ document.getElementById('editForm').addEventListener('submit', function (e) {
       });
 });
 
+async function loadMemberStats() {
+  try {
+    const res = await fetch('/api/members/summary');
+    const data = await res.json();
+
+    updateElementIfExists('totalMembers', data.total.toLocaleString());
+    updateElementIfExists('activeMembers', data.active.toLocaleString());
+    updateElementIfExists('monthlyMembers', data.monthly.toLocaleString()); // ✅ ID 수정됨
+    updateElementIfExists('newMembers', data.newToday.toLocaleString());
+  } catch (e) {
+    console.error("❌ 회원 통계 로딩 실패", e);
+  }
+}
+
+
 
 
 
 //결제 리스트 불러오기
 function fetchPaymentList(page = 1) {
-  const typeParam = paymentFilterType === 'monthly'
-      ? '&subscription=1'
-      : paymentFilterType === 'normal'
-          ? '&subscription=0'
-          : '';
+  let typeParam = '';
+  if (paymentFilterType === 'monthlyParking') {
+    typeParam = '&type=MONTHLY';
+  } else if (paymentFilterType === 'dailyParking') {
+    typeParam = '&type=DAILY';
+  } else if (paymentFilterType === 'normalParking') {
+    typeParam = '&type=GENERAL';
+  }
 
   const keywordParam = paymentSearchKeyword ? `&keyword=${encodeURIComponent(paymentSearchKeyword)}` : '';
 
@@ -1514,92 +1600,138 @@ function setupRefundButtonListener() {
   });
 }
 
+
+async function loadPaymentStats() {
+  try {
+    const res = await fetch('/api/payment/summary');
+    const data = await res.json();
+
+    updateElementIfExists('todayPaymentTotal', `₩${data.paymentTodayRevenue.toLocaleString()}`);
+    updateElementIfExists('monthlyPaymentTotal', `₩${data.paymentMonthlyRevenue.toLocaleString()}`);
+    updateElementIfExists('pendingRefunds', `${data.paymentPendingRefunds}건`);
+    updateElementIfExists('failedPayments', `${data.paymentFailedPayments}건`);
+  } catch (e) {
+    console.error("❌ 결제 통계 로딩 실패", e);
+  }
+}
+
+
+async function loadCctvLogs(page = 1, filters = {}) {
+  const params = new URLSearchParams({
+    page,
+    size: 10,
+    ...filters
+  });
+
+  const res = await fetch(`/api/cctv/logs?${params.toString()}`);
+  const json = await res.json();
+  console.log("🔍 필터 적용 후 요청 파라미터:", params.toString());
+  console.log("📦 전달받은 filters:", filters);
+  renderSystemLogsTable(json.logs);
+  renderPagination(json.page, json.total, json.size);
+}
+
 // 시스템 로그 테이블 렌더링
-function renderSystemLogsTable() {
+function renderSystemLogsTable(logs) {
   const tableBody = document.getElementById('systemLogsTable');
   if (!tableBody) return;
-  
-  console.log('시스템 로그 테이블 렌더링 시작');
+
+  console.log('✅ CCTV 로그 렌더링 시작');
   tableBody.innerHTML = '';
-  
-  // 샘플 시스템 로그 데이터
-  const sampleLogs = [
-    {
-      id: 'LOG001',
-      time: '2025-07-10 14:30:25',
-      level: 'INFO',
-      module: '주차관리',
-      message: '시스템 정상 작동 중',
-      user: 'System',
-      ip: '127.0.0.1',
-      status: '정상'
-    },
-    {
-      id: 'LOG002',
-      time: '2025-07-10 14:25:10',
-      level: 'WARNING',
-      module: '화재감지',
-      message: 'CCTV 4번 연결 불안정',
-      user: 'System',
-      ip: '127.0.0.1',
-      status: '경고'
-    },
-    {
-      id: 'LOG003',
-      time: '2025-07-10 14:20:05',
-      level: 'ERROR',
-      module: '결제시스템',
-      message: '결제 서버 응답 지연',
-      user: 'System',
-      ip: '127.0.0.1',
-      status: '오류'
-    },
-    {
-      id: 'LOG004',
-      time: '2025-07-10 14:15:33',
-      level: 'INFO',
-      module: 'CCTV',
-      message: '전체 카메라 정상 동작',
-      user: 'System',
-      ip: '127.0.0.1',
-      status: '정상'
-    },
-    {
-      id: 'LOG005',
-      time: '2025-07-10 14:10:12',
-      level: 'INFO',
-      module: '주차관리',
-      message: '신규 주차 신청 접수',
-      user: 'Admin',
-      ip: '192.168.1.100',
-      status: '정상'
-    }
-  ];
-  
-  sampleLogs.forEach(item => {
+
+
+  logs.forEach((item, index) => {
     const row = document.createElement('tr');
-    
+
+    let levelText = 'NORMAL';
     let levelClass = 'status-normal';
-    if (item.level === 'WARNING') levelClass = 'status-waiting';
-    if (item.level === 'ERROR') levelClass = 'status-fire';
-    
+    let message = 'CCTV 정상 동작';
+
+    if (item.status?.includes('화재')) {
+      levelText = 'FIRE';
+      levelClass = 'status-fire';
+      message = '화재 감지됨';
+    } else if (item.status?.includes('오류')) {
+      levelText = 'ERROR';
+      levelClass = 'status-waiting';
+      message = '스트리밍 오류';
+    }
+
+    const location = item.location ?? '-';
+    const logId = item.id ?? '-';
+
     row.innerHTML = `
-      <td>${item.id}</td>
-      <td>${item.time}</td>
-      <td><span class="${levelClass}">${item.level}</span></td>
-      <td>${item.module}</td>
-      <td>${item.message}</td>
-      <td>${item.user}</td>
-      <td>${item.ip}</td>
-      <td>${item.status}</td>
-      <td><button class="action-btn" onclick="viewLogDetail('${item.id}')">상세</button></td>
+      <td>${logId}</td>
+      <td>${item.lastCheckedAt}</td>
+      <td><span class="${levelClass}">${levelText}</span></td>
+      <td>CCTV</td>
+      <td>${message}</td>
+      <td>System</td>
+      <td>${location}</td>
+      <td>${formatRecordingStatus(item.recordStatus)}</td> <!-- 🔄 여기 바뀜 -->
+      <td><button class="action-btn" onclick="viewLogDetail('${logId}')">상세</button></td>
     `;
-    
+
     tableBody.appendChild(row);
   });
-  
-  console.log(`시스템 로그 테이블 렌더링 완료: ${sampleLogs.length}개 항목`);
+
+  console.log(`✅ CCTV 로그 렌더링 완료: ${logs.length}개`);
 }
+
+function renderPagination(currentPage, totalItems, pageSize) {
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const container = document.getElementById('cctvPagination');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  const maxButtons = 7;
+  let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+  let endPage = startPage + maxButtons - 1;
+
+  if (endPage > totalPages) {
+    endPage = totalPages;
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+
+  // 이전 버튼
+  if (currentPage > 1) {
+    container.appendChild(createPageBtn('«', currentPage - 1));
+  }
+
+  // 번호 버튼
+  for (let i = startPage; i <= endPage; i++) {
+    const btn = createPageBtn(i, i, i === currentPage);
+    container.appendChild(btn);
+  }
+
+  // 다음 버튼
+  if (currentPage < totalPages) {
+    container.appendChild(createPageBtn('»', currentPage + 1));
+  }
+}
+
+function createPageBtn(label, page, active = false) {
+  const btn = document.createElement('button');
+  btn.textContent = label;
+  btn.className = 'page-btn' + (active ? ' active' : '');
+  btn.onclick = () => loadCctvLogs(page, cctvCurrentFilters); // 페이지 이동 시 재요청
+  return btn;
+}
+  
+
+
+function formatRecordingStatus(status) {
+  if (status === 'RECORDING') {
+    return '<span class="recording-ok">녹화 중</span>';
+  } else if (status === 'NOT_RECORDING') {
+    return '<span class="recording-off">녹화 안됨</span>';
+  } else {
+    return '-';
+  }
+}
+
+
 
 // 활성 필터 설정
 function setActiveFilter(activeBtn) {
@@ -1717,9 +1849,28 @@ function applyMemberFilters(filter = null) {
 }
 
 // 로그 필터 적용
-function applyLogFilters(filter = null) {
-  showAlert('로그 필터가 적용되었습니다.');
-  renderSystemLogsTable();
+// ✅ 로그 필터 적용
+function applyLogFilters() {
+  const keyword = document.getElementById('logMessageSearch')?.value;
+  const module = document.getElementById('logModuleFilter')?.value;
+  const date = document.getElementById('logDateFilter')?.value;
+
+  const activeBtn = document.querySelector('.filter-btn.active');
+  const selectedStatus = activeBtn?.getAttribute('data-filter');
+
+  cctvCurrentFilters = {};
+
+  if (selectedStatus && selectedStatus !== 'all') {
+    cctvCurrentFilters.status = selectedStatus;
+  }
+
+  if (keyword) cctvCurrentFilters.keyword = keyword;
+  if (module) cctvCurrentFilters.logType = module;
+  if (date) cctvCurrentFilters.date = date;  // 👉 백엔드에서 date 필터링을 추가하려면 이 부분 처리 필요
+
+  console.log('📦 적용된 필터:', cctvCurrentFilters);
+
+  loadCctvLogs(1, cctvCurrentFilters);  // ✅ 첫 페이지부터 다시 요청
 }
 
 // 전체 선택 토글
@@ -2544,8 +2695,6 @@ function showAdminRegister() {
 function logout() {
   if (confirm('로그아웃 하시겠습니까?')) {
     showAlert('로그아웃되었습니다.\n\n시스템을 안전하게 종료합니다.');
-    // 실제 로그아웃 로직
-    // window.location.href = 'login.html';
     const form = document.getElementById('logoutForm');
     if (form) {
       form.submit();

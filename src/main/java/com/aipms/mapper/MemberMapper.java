@@ -71,4 +71,10 @@ public interface MemberMapper {
     int countFilteredMembers(String status, String membership);
 
     void deleteSubscription(Long memberId, boolean b);
+
+    int countActiveMembers();
+
+    int countMonthlyMembers();
+
+    int countNewMembersToday();
 }

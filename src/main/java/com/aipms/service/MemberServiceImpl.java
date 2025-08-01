@@ -2,6 +2,7 @@ package com.aipms.service;
 
 import com.aipms.domain.Car;
 import com.aipms.dto.MemberFilterRequestDto;
+import com.aipms.dto.MemberSummaryDto;
 import com.aipms.mapper.CarMapper;
 import com.aipms.mapper.KakaoTokenMapper;
 import com.aipms.mapper.MemberMapper;
@@ -145,6 +146,16 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public int countFilteredMembers(MemberFilterRequestDto req) {
         return memberMapper.countFilteredMembers(req.getStatus(), req.getMembership());
+    }
+
+    @Override
+    public MemberSummaryDto getMemberSummary() {
+        MemberSummaryDto dto = new MemberSummaryDto();
+        dto.setTotal(memberMapper.countAllMembers());
+        dto.setActive(memberMapper.countActiveMembers());
+        dto.setMonthly(memberMapper.countMonthlyMembers());
+        dto.setNewToday(memberMapper.countNewMembersToday());
+        return dto;
     }
 
     //로그인 확인

@@ -12,8 +12,6 @@ public interface PaymentMapper {
 
     void insertPayment(Payment payment);
 
-    Payment selectPaymentById(Long paymentId);
-
     Payment selectPaymentByEntryId(Long entryId);
 
     AccountInfoResponseDto getAccountInfo(Long memberId);
@@ -34,7 +32,6 @@ public interface PaymentMapper {
     // ✅ 결제 내역 건수
     int countAdminPayments(@Param("req") AdminPaymentHistoryRequestDto req);
 
-    Payment selectByTransactionId(String transactionId);
 
     void updatePaidStatus(@Param("paymentId") Long paymentId, @Param("paid") int paid);
 
@@ -44,5 +41,12 @@ public interface PaymentMapper {
                         @Param("cancelReason") String cancelReason,
                         @Param("refundAmount") int refundAmount);
 
-    Payment findLatestSubscriptionPayment(Long memberId);
+
+    int getTodayRevenue();
+
+    int getMonthlyRevenue();
+
+    int countPendingRefunds();
+
+    int countFailedPayments();
 }

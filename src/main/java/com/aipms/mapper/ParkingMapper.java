@@ -17,8 +17,6 @@ public interface ParkingMapper {
     int countTotalSlots();
     int countOccupiedSlots();
     int increaseOccupiedCount(@Param("parkingId") Long parkingId);
-    int decreaseOccupiedCount(@Param("parkingId") Long parkingId);
     List<ParkingStatusDto> selectParkingStatus();
-    int sumTotalSpaces();
-    int sumOccupiedCount();
+
 }

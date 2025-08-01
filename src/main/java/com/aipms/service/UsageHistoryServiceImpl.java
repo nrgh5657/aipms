@@ -21,7 +21,6 @@ public class UsageHistoryServiceImpl implements UsageHistoryService {
 
     private final UsageHistoryMapper usageHistoryMapper;
     private final MemberMapper memberMapper;
-    private final ParkingLogMapper parkingLogMapper;
 
     @Override
     public List<UsageHistoryResponseDto> getHistory(Long memberId, LocalDate startDate, LocalDate endDate) {

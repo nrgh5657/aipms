@@ -150,17 +150,19 @@
         p.car_number AS carNumber,
         m.name AS payer,
         CASE
-        WHEN s.subscription_id IS NOT NULL THEN '월주차'
-        ELSE '일반'
+        WHEN p.reservation_id IS NULL THEN '일반'
+        WHEN r.type = 'MONTHLY' THEN '월주차'
+        WHEN r.type = 'DAILY' THEN '일주차'
         END AS paymentType,
         p.total_fee AS amount,
         p.payment_method AS paymentMethod,
         p.payment_time AS paidAt,
-        p.status AS status, <!-- ✅ 여기만 수정 -->
+        p.status AS status,
         p.reservation_id AS reservationId
         FROM payment p
         LEFT JOIN member m ON p.member_id = m.member_id
         LEFT JOIN subscription s ON s.member_id = m.member_id AND s.active = 1
+        LEFT JOIN reservation r ON p.reservation_id = r.reservation_id <!-- ✅ 이 줄 추가됨 -->
         <where>
             <if test="req.keyword != null and req.keyword != ''">
                 AND (
@@ -181,6 +183,20 @@
                     </when>
                     <when test="req.status == 'unpaid'">
                         AND p.paid = 0 AND p.status IS NULL
+                    </when>
+                </choose>
+            </if>
+            <!-- ✅ 추가된 필터 -->
+            <if test="req.type != null and req.type != '' and req.type != 'all'">
+                <choose>
+                    <when test="req.type == 'MONTHLY'">
+                        AND r.type = 'MONTHLY'
+                    </when>
+                    <when test="req.type == 'DAILY'">
+                        AND r.type = 'DAILY'
+                    </when>
+                    <when test="req.type == 'GENERAL'">
+                        AND p.reservation_id IS NULL
                     </when>
                 </choose>
             </if>
@@ -243,6 +259,40 @@
             LIMIT 1
     </select>
 
+    <!-- 오늘 매출 -->
+    <select id="getTodayRevenue" resultType="int">
+        SELECT IFNULL(SUM(total_fee), 0)
+        FROM payment
+        WHERE DATE(payment_time) = CURDATE()
+          AND status = '결제 완료'
+    </select>
+
+    <!-- 이번 달 매출 -->
+    <select id="getMonthlyRevenue" resultType="int">
+        SELECT IFNULL(SUM(total_fee), 0)
+        FROM payment
+        WHERE YEAR(payment_time) = YEAR(CURDATE())
+          AND MONTH(payment_time) = MONTH(CURDATE())
+          AND status = '결제 완료'
+    </select>
+
+    <!-- 이번 달 환불 완료 건수 (✅ SELECT 누락 보완) -->
+    <select id="countPendingRefunds" resultType="int">
+        SELECT COUNT(*)
+        FROM payment
+        WHERE YEAR(payment_time) = YEAR(CURDATE())
+          AND MONTH(payment_time) = MONTH(CURDATE())
+          AND status = '환불 완료'
+    </select>
+
+    <!-- 이번 달 결제 실패 + 취소 건수 -->
+    <select id="countFailedPayments" resultType="int">
+        SELECT COUNT(*)
+        FROM payment
+        WHERE YEAR(payment_time) = YEAR(CURDATE())
+          AND MONTH(payment_time) = MONTH(CURDATE())
+          AND status IN ('결제 실패', '결제 취소')
+    </select>
 
 
 

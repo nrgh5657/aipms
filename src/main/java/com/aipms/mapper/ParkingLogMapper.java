@@ -34,7 +34,6 @@ public interface ParkingLogMapper {
                                   @Param("paymentMethod") String paymentMethod,
                                   @Param("fee") int fee);
 
-    Long selectPaymentIdByEntryId(Long entryId);
 
     ParkingLog selectById(Long entryId);
 
@@ -50,4 +49,9 @@ public interface ParkingLogMapper {
     List<Map<String, Object>> getParkedCarCountByDateList(@Param("startDate") LocalDate startDate,
                                                           @Param("endDate") LocalDate endDate);
 
+    int countTodayEntries();
+
+    int countTodayExits();
+
+    int countCurrentParked();
 }

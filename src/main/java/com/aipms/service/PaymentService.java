@@ -25,4 +25,6 @@ public interface PaymentService {
 
 
     void processAdminRefund(Long reservationId, String reason);
+
+    PaymentSummaryDto getPaymentSummary();
 }

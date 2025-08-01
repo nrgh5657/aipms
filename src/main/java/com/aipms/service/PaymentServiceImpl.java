@@ -289,6 +289,16 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    @Override
+    public PaymentSummaryDto getPaymentSummary() {
+        PaymentSummaryDto dto = new PaymentSummaryDto();
+        dto.setPaymentTodayRevenue(paymentMapper.getTodayRevenue());
+        dto.setPaymentMonthlyRevenue(paymentMapper.getMonthlyRevenue());
+        dto.setPaymentPendingRefunds(paymentMapper.countPendingRefunds());
+        dto.setPaymentFailedPayments(paymentMapper.countFailedPayments());
+        return dto;
+    }
+
 
     @Override
     public PageDto<AdminPaymentDto> getAdminPaymentList(AdminPaymentHistoryRequestDto req) {

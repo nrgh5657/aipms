@@ -6,7 +6,7 @@ let paymentData = [];
 let systemLogs = [];
 let currentPage = 0;// 전역 변수로 현재 페이지 추적
 let totalPages =0;
-const pageSize = 3;   // 필요에 따라 조정 가능
+const pageSize = 10;   // 필요에 따라 조정 가능
 
 
 // 주차 제한 상수
@@ -588,41 +588,60 @@ window.addEventListener('DOMContentLoaded', () => {
   loadFireLogsPaged(pageFromURL, pageSize, filters);
 });
 
-function renderPagination(totalPages, currentPage) {
+function renderPagination(totalPages, currentPage, maxVisible = 5) {
   const paginationDiv = document.querySelector(".pagination");
   paginationDiv.innerHTML = '';
 
-  const prevBtn = document.createElement('button');
-  prevBtn.textContent = '이전';
-  prevBtn.onclick = () => {
-    if (currentPage > 0) {
-      const newPage = currentPage - 1;
-      window.history.replaceState({}, '', `?page=${newPage}`);
-      loadFireLogsPaged(currentPage - 1);
-    }
+  const createBtn = (label, targetPage, disabled = false, active = false) => {
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    if (disabled) btn.disabled = true;
+    if (active) btn.classList.add('active');
+    btn.onclick = () => {
+      if (targetPage !== currentPage) {
+        window.history.replaceState({}, '', `?page=${targetPage}`);
+        loadFireLogsPaged(targetPage);
+      }
+    };
+    return btn;
   };
-  paginationDiv.appendChild(prevBtn);
 
-  for (let i = 0; i < totalPages; i++) {
-    const pageBtn = document.createElement('button');
-    pageBtn.textContent = i + 1;
-    pageBtn.className = (i === currentPage) ? 'active' : '';
-    pageBtn.onclick = () => {
-      window.history.replaceState({}, '', `?page=${i}`);
-      loadFireLogsPaged(i);}
-    paginationDiv.appendChild(pageBtn);
+  // 이전 버튼
+  paginationDiv.appendChild(createBtn('이전', currentPage - 1, currentPage === 0));
+
+  const pageGroup = Math.floor(currentPage / maxVisible);
+  const startPage = pageGroup * maxVisible;
+  const endPage = Math.min(startPage + maxVisible, totalPages);
+
+  // 첫 페이지 버튼
+  if (startPage > 0) {
+    paginationDiv.appendChild(createBtn(1, 0));
   }
 
-  const nextBtn = document.createElement('button');
-  nextBtn.textContent = '다음';
-  nextBtn.onclick = () => {
-    if (currentPage < totalPages - 1){
-      const newPage = currentPage + 1;
-      window.history.replaceState({}, '', `?page=${newPage}`);
-      loadFireLogsPaged(currentPage + 1);
-    }
-  };
-  paginationDiv.appendChild(nextBtn);
+  // 앞 그룹 이동 버튼
+  if (startPage > 1) {
+    const jumpBackPage = startPage - 1;
+    paginationDiv.appendChild(createBtn('«', jumpBackPage));
+  }
+
+  // 현재 그룹 페이지 버튼들
+  for (let i = startPage; i < endPage; i++) {
+    paginationDiv.appendChild(createBtn(i + 1, i, false, i === currentPage));
+  }
+
+  // 뒤 그룹 이동 버튼
+  if (endPage < totalPages - 1) {
+    const jumpForwardPage = endPage;
+    paginationDiv.appendChild(createBtn('»', jumpForwardPage));
+  }
+
+  // 마지막 페이지 버튼
+  if (endPage < totalPages) {
+    paginationDiv.appendChild(createBtn(totalPages, totalPages - 1));
+  }
+
+  // 다음 버튼
+  paginationDiv.appendChild(createBtn('다음', currentPage + 1, currentPage === totalPages - 1));
 }
 
 

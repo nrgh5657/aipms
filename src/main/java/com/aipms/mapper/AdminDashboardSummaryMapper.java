@@ -15,9 +15,8 @@ public interface AdminDashboardSummaryMapper {
 
     int countCurrentlyParked();
 
-    int countTotalSpaces();
-
     int countTodayDailyReservations();
+
     int countActiveMonthlyReservations();
 
 }

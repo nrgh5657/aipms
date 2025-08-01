@@ -3,6 +3,7 @@ package com.aipms.service;
 import com.aipms.domain.Member;
 import com.aipms.dto.MemberDto;
 import com.aipms.dto.MemberFilterRequestDto;
+import com.aipms.dto.MemberSummaryDto;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -46,4 +47,6 @@ public interface MemberService {
     List<Member> findFilteredMembers(MemberFilterRequestDto req);
 
     int countFilteredMembers(MemberFilterRequestDto req);
+
+    MemberSummaryDto getMemberSummary();
 }

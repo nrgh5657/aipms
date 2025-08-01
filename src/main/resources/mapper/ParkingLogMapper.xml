@@ -210,6 +210,21 @@
     GROUP BY DATE(p.entry_time)
     </select>
 
+    <select id="countTodayEntries" resultType="int">
+        SELECT COUNT(*) FROM parking_log
+        WHERE DATE(entry_time) = CURRENT_DATE
+    </select>
+
+    <select id="countTodayExits" resultType="int">
+        SELECT COUNT(*) FROM parking_log
+        WHERE DATE(exit_time) = CURRENT_DATE
+    </select>
+
+    <select id="countCurrentParked" resultType="int">
+        SELECT COUNT(*) FROM parking_log
+        WHERE exit_time IS NULL
+    </select>
+
 
 
 </mapper>

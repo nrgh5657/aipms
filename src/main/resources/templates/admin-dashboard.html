@@ -203,37 +203,37 @@
             <div class="traffic-stats">
               <div class="traffic-item">
                 <span class="traffic-label">입차</span>
-                <div class="traffic-number">42</div>
+                <div class="traffic-number" id="todayEntryCount">0</div>
               </div>
               <div class="traffic-item">
                 <span class="traffic-label">출차</span>
-                <div class="traffic-number">38</div>
+                <div class="traffic-number" id="todayExitCount">0</div>
               </div>
               <div class="traffic-item">
                 <span class="traffic-label">현재</span>
-                <div class="traffic-number">15</div>
+                <div class="traffic-number" id="currentParkingCount">0</div>
               </div>
             </div>
           </div>
 
           <div class="monitoring-card">
             <h3>♻️ 시스템 상태</h3>
-            <div class="status-indicator safe">
+            <div class="status-indicator safe" id="systemStatusBox">
               <div class="status-dot"></div>
-              <span>모든 시스템 정상</span>
+              <span id="systemStatusLabel">모든 시스템 정상</span>
             </div>
             <div style="margin-top: 15px;">
               <div style="margin-bottom: 8px;">
                 <span style="font-size: 12px; color: #4a5568;">CPU 사용률</span>
-                <span style="float: right; font-size: 12px; font-weight: 600;">34%</span>
+                <span id="cpuUsage" style="float: right; font-size: 12px; font-weight: 600;">-</span>
               </div>
               <div style="margin-bottom: 8px;">
                 <span style="font-size: 12px; color: #4a5568;">메모리 사용률</span>
-                <span style="float: right; font-size: 12px; font-weight: 600;">67%</span>
+                <span id="memoryUsage" style="float: right; font-size: 12px; font-weight: 600;">-</span>
               </div>
               <div>
                 <span style="font-size: 12px; color: #4a5568;">디스크 사용률</span>
-                <span style="float: right; font-size: 12px; font-weight: 600;">45%</span>
+                <span id="diskUsage" style="float: right; font-size: 12px; font-weight: 600;">-</span>
               </div>
             </div>
           </div>

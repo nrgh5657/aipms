@@ -180,6 +180,23 @@
         WHERE member_id = #{memberId}
     </update>
 
+    <select id="countActiveMembers" resultType="int">
+        SELECT COUNT(*) FROM member
+        WHERE status = 'ACTIVE'
+    </select>
+
+    <select id="countMonthlyMembers" resultType="int">
+        SELECT COUNT(*) FROM member
+        WHERE subscription = 1
+    </select>
+
+    <select id="countNewMembersToday" resultType="int">
+        SELECT COUNT(*) FROM member
+        WHERE DATE(reg_date) = CURDATE()
+    </select>
+
+
+
 
 
 

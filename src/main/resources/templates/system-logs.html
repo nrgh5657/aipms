@@ -122,9 +122,9 @@
               <span class="status-text">정상</span>
             </div>
             <div class="status-item">
-              <div class="status-dot warning"></div>
+              <div class="status-dot online"></div>
               <span>결제 시스템</span>
-              <span class="status-text">경고</span>
+              <span class="status-text">정상</span>
             </div>
             <div class="status-item">
               <div class="status-dot online"></div>
@@ -138,36 +138,33 @@
       <div class="log-stats">
         <div class="log-stat">
           <span class="stat-label">오늘 로그</span>
-          <span class="stat-value">1,234</span>
+          <span class="stat-value" id="todayLogCount">1,234</span>
         </div>
         <div class="log-stat">
-          <span class="stat-label">경고</span>
-          <span class="stat-value">12</span>
+          <span class="stat-label">정상</span>
+          <span class="stat-value" id= "normalLog">12</span>
         </div>
         <div class="log-stat">
           <span class="stat-label">오류</span>
-          <span class="stat-value">3</span>
+          <span class="stat-value" id= "errorLog">3</span>
         </div>
         <div class="log-stat">
-          <span class="stat-label">디스크 사용량</span>
-          <span class="stat-value">68%</span>
+          <span class="stat-label">화재</span>
+          <span class="stat-value" id= "fireLog">3</span>
         </div>
       </div>
       
       <div class="filter-section">
         <div class="filter-group">
           <button class="filter-btn active" data-filter="all">전체</button>
-          <button class="filter-btn" data-filter="info">INFO</button>
-          <button class="filter-btn" data-filter="warning">WARNING</button>
-          <button class="filter-btn" data-filter="error">ERROR</button>
+          <button class="filter-btn" data-filter="정상">정상</button>
+          <button class="filter-btn" data-filter="스트리밍 오류">오류</button>
+          <button class="filter-btn" data-filter="화재">화재</button>
         </div>
         
         <div class="search-group">
           <select class="search-select" id="logModuleFilter">
             <option value="">모듈 선택</option>
-            <option value="주차관리">주차관리</option>
-            <option value="화재감지">화재감지</option>
-            <option value="결제시스템">결제시스템</option>
             <option value="CCTV">CCTV</option>
           </select>
           <input type="date" class="search-input" id="logDateFilter">
@@ -182,12 +179,12 @@
             <tr>
               <th>로그 ID</th>
               <th>시간</th>
-              <th>레벨</th>
+              <th>상태</th>
               <th>모듈</th>
               <th>메시지</th>
               <th>사용자</th>
-              <th>IP 주소</th>
-              <th>상태</th>
+              <th>위치</th>
+              <th>CCTV</th>
               <th>처리</th>
             </tr>
           </thead>
@@ -197,12 +194,7 @@
         </table>
       </div>
       
-      <div class="pagination">
-        <button onclick="changePage('prev')">이전</button>
-        <button class="active">1</button>
-        <button>2</button>
-        <button>3</button>
-        <button onclick="changePage('next')">다음</button>
+      <div class="pagination"id =cctvPagination>
       </div>
     </section>
   </main>

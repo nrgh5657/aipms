@@ -2,6 +2,8 @@ package com.aipms.service;
 
 import com.aipms.domain.CctvStatusLogVO;
 import com.aipms.dto.CctvLogDto;
+import com.aipms.dto.CctvLogSearchRequestDto;
+import com.aipms.dto.CctvLogStatisticsDto;
 import com.aipms.dto.FireAlertDto;
 import com.aipms.mapper.CctvStatusLogMapper;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -82,6 +85,36 @@ public class CctvLogServiceImpl implements CctvLogService {
     @Override
     public List<CctvLogDto> getLatestLogs() {
         return cctvStatusLogMapper.getLatestLogsPerCctv();
+
+    }
+
+    @Override
+    public List<CctvStatusLogVO> getAllLogs() {
+        return cctvStatusLogMapper.findAllLogs();
+    }
+
+    @Override
+    public Map<String, Object> getPagedLogs(CctvLogSearchRequestDto dto) {
+        int offset = (dto.getPage() - 1) * dto.getSize();
+        int total = cctvStatusLogMapper.countLogs(dto);
+        List<CctvStatusLogVO> logs = cctvStatusLogMapper.findPagedLogs(dto, offset, dto.getSize());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("total", total);
+        result.put("page", dto.getPage());
+        result.put("size", dto.getSize());
+        result.put("logs", logs);
+        return result;
+    }
+
+    @Override
+    public CctvLogStatisticsDto getLogSummary() {
+        CctvLogStatisticsDto dto = new CctvLogStatisticsDto();
+        dto.setTodayLogs(cctvStatusLogMapper.countTodayLogs());
+        dto.setNormalCount(cctvStatusLogMapper.countLogsByStatus("정상"));
+        dto.setErrorCount(cctvStatusLogMapper.countLogsByStatus("스트리밍 오류"));
+        dto.setFireLogCount(cctvStatusLogMapper.countLogsByStatus("화재"));
+        return dto;
 
     }
 }

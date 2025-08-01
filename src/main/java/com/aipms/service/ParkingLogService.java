@@ -30,4 +30,5 @@ public interface ParkingLogService {
     List<ParkingLogWithMemberDto> getFilteredLogs(ParkingLogFilterRequestDto filter);
 
     int countFilteredLogs(ParkingLogFilterRequestDto filter);
+
 }

@@ -23,7 +23,6 @@ public interface SubscriptionMapper {
 
     int countActiveMonthlySubscriptions();
 
-    void deactivateSubscription(Long subscriptionId);
 
     void deleteByMemberId(Long memberId);
 }

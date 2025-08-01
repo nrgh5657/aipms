@@ -1,12 +1,14 @@
 package com.aipms.service;
 
 import com.aipms.dto.AdminDashboardSummaryDto;
+import com.aipms.dto.ParkingLogUsageDto;
+import com.aipms.dto.SystemStatusDto;
 import com.aipms.mapper.AdminDashboardSummaryMapper;
 import com.aipms.mapper.ParkingConfigMapper;
+import com.aipms.mapper.ParkingLogMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
+import static com.aipms.util.SystemResourceUtil.*;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +16,7 @@ public class AdminDashboardSummaryServiceImpl implements AdminDashboardSummarySe
     private final AdminDashboardSummaryMapper adminDashboardSummaryMapper;
     private final ParkingConfigMapper parkingConfigMapper;
     private final ParkingAvailabilityService parkingAvailabilityService;
+    private final ParkingLogMapper parkingLogMapper;
 
     @Override
     public AdminDashboardSummaryDto getSummary() {
@@ -50,5 +53,25 @@ public class AdminDashboardSummaryServiceImpl implements AdminDashboardSummarySe
         dto.setOccupancyRate(rate);
 
         return dto;
+    }
+
+    @Override
+    public ParkingLogUsageDto getTodayParkingLogUsage() {
+        int entryCount = parkingLogMapper.countTodayEntries();
+        int exitCount = parkingLogMapper.countTodayExits();
+        int currentCount = parkingLogMapper.countCurrentParked();
+
+        return new ParkingLogUsageDto(entryCount, exitCount, currentCount);
+    }
+
+    @Override
+    public SystemStatusDto getSystemStatus() {
+        int cpu = (int) (getCpuUsage() * 100);
+        int memory = (int) (getMemoryUsage() * 100);
+        int disk = (int) (getDiskUsage() * 100);
+
+        String status = (cpu < 85 && memory < 85 && disk < 90) ? "모든 시스템 정상" : "점검 필요";
+
+        return new SystemStatusDto(status, cpu, memory, disk);
     }
 }

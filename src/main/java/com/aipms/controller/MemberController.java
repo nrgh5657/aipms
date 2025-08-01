@@ -3,6 +3,7 @@ package com.aipms.controller;
 import com.aipms.domain.Member;
 import com.aipms.dto.MemberDto;
 import com.aipms.dto.MemberFilterRequestDto;
+import com.aipms.dto.MemberSummaryDto;
 import com.aipms.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -120,6 +121,12 @@ public class MemberController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("활성화 중 오류 발생: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<MemberSummaryDto> getSummary() {
+        MemberSummaryDto summary = memberService.getMemberSummary();
+        return ResponseEntity.ok(summary);
     }
 
 

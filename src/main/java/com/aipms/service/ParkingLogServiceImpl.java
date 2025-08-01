@@ -189,6 +189,8 @@ public class ParkingLogServiceImpl implements ParkingLogService {
     }
 
 
+
+
     @Override
     public List<ParkingLogWithMemberDto> getPagedLogs(int page, int size) {
         int offset = (page - 1) * size;
