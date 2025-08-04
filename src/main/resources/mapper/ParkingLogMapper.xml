@@ -225,6 +225,19 @@
         WHERE exit_time IS NULL
     </select>
 
+    <select id="findLogsBetween" resultType="com.aipms.domain.ParkingLog">
+        SELECT
+            id,
+            car_number,
+            member_id,
+            entry_time,
+            exit_time,
+            fee,
+            parking_type
+        FROM parking_log
+        WHERE entry_time BETWEEN #{start} AND #{end}
+    </select>
+
 
 
 </mapper>

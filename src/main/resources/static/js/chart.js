@@ -1,11 +1,70 @@
 document.addEventListener('DOMContentLoaded', () => {
-    renderDonutChart('donut1', '75%', ['사용 중', '남음'], [75, 25], ['#22c55e', '#e5e7eb']);
-    renderDonutChart('donut2', '50%', ['월주차', '일반'], [50, 50], ['#10b981', '#e5e7eb']);
-    renderDonutChart('donut3', '60%', ['예약', '미예약'], [60, 40], ['#f97316', '#e5e7eb']);
-    renderEntryRevenueChart();
+    const usageRate = 25;
+    const usageColor = getColorByUsageRate(usageRate);
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+
+    document.getElementById('dateInput').value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('monthInput').value = `${yyyy}-${mm}`;
+    document.getElementById('yearInput').value = yyyy;
+
+    loadDashboardDonuts();
+    loadChartData();
+    onViewModeChange();
+    renderMonthlyRevenueComparisonChart();
 });
 
-// ✅ 도넛 차트 렌더링
+function getDonutConfigs(data) {
+    return [
+        {
+            id: 'donut1',
+            value: data.usageRate,
+            labels: ['사용 중', '남음'],
+            data: [data.usedSpaces, data.availableSpaces], // ✅ 실제 주차 수
+            getColors: (val) => [getColorByUsageRate(val), '#e5e7eb'],
+            centerLabel: (val) => `${val}%`
+        },
+        {
+            id: 'donut2',
+            value: data.monthlyRate,
+            labels: ['월주차', '일반'],
+            data: [data.monthlyMembers, data.normalMembers], // ✅ 실제 회원 수
+            colors: ['#3b82f6', '#e5e7eb'],
+            centerLabel: (val) => `${val}%`
+        },
+        {
+            id: 'donut3',
+            value: data.reservationRate,
+            labels: ['예약', '미예약'],
+            data: [data.reservedToday, data.unreservedToday], // ✅ 실제 예약 수
+            colors: ['#1e3a8a', '#e5e7eb'],
+            centerLabel: (val) => `${val}%`
+        }
+    ];
+}
+
+async function loadDashboardDonuts() {
+    try {
+        const res = await fetch('/api/management/parking/donut');
+        const data = await res.json();
+
+        console.log('📊 도넛 통계 데이터:', data);
+
+        const donutConfigs = getDonutConfigs(data);
+
+        donutConfigs.forEach(cfg => {
+            const colors = cfg.colors || cfg.getColors(cfg.value);
+            const center = cfg.centerLabel ? cfg.centerLabel(cfg.value) : `${cfg.value}%`;
+            renderDonutChart(cfg.id, center, cfg.labels, cfg.data, colors); // ✅ 수정됨
+        });
+
+    } catch (err) {
+        console.error('❌ 도넛 통계 로딩 실패:', err);
+    }
+}
+
 function renderDonutChart(canvasId, label, labels, data, colors) {
     new Chart(document.getElementById(canvasId), {
         type: 'doughnut',
@@ -25,27 +84,85 @@ function renderDonutChart(canvasId, label, labels, data, colors) {
         }
     });
 
-    // 중앙 숫자 설정 (선택적으로 변경)
     const center = document.querySelector(`#${canvasId}`).parentElement.querySelector('.center-number');
     if (center) center.innerText = label;
 }
 
-function renderEntryRevenueChart() {
+function getColorByUsageRate(rate) {
+    if (rate >= 80) return '#ef4444';
+    else if (rate >= 60) return '#f97316';
+    else if (rate >= 40) return '#facc15';
+    else return '#10b981';
+}
+
+let entryRevenueChartInstance = null;
+
+async function loadChartData() {
+    const mode = document.getElementById('viewModeSelect').value;
+    let dateInput = document.getElementById('dateInput').value;
+    let monthInput = document.getElementById('monthInput').value;
+    let year = document.getElementById('yearInput').value;
+
+    const today = new Date();
+    const todayDate = today.toISOString().split('T')[0];       // YYYY-MM-DD
+    const todayMonth = todayDate.substring(0, 7);               // YYYY-MM
+    const todayYear = today.getFullYear();                      // YYYY
+
+    let url = '/api/management/parking/entry-revenue';
+    let params = new URLSearchParams();
+
+    if (mode === 'daily') {
+        if (!dateInput) dateInput = todayDate;
+        params.append('mode', 'daily');
+        params.append('date', dateInput); // ex) 2025-08-04
+    } else if (mode === 'monthly') {
+        if (!monthInput) monthInput = todayMonth;
+        params.append('mode', 'monthly');
+        params.append('date', monthInput); // ex) 2025-08
+    } else if (mode === 'yearly') {
+        if (!year) year = todayYear;
+        params.append('mode', 'yearly');
+        params.append('year', year); // ex) 2025
+    }
+
+    try {
+        const res = await fetch(`${url}?${params.toString()}`);
+        const data = await res.json();
+
+        if (!data || !data.labels) {
+            console.warn('⛔ 유효하지 않은 응답');
+            return;
+        }
+
+        renderEntryRevenueChart(data);
+    } catch (err) {
+        console.error('❌ 혼합 그래프 데이터 로딩 실패:', err);
+    }
+}
+
+
+function renderEntryRevenueChart(chartData) {
     const ctx = document.getElementById('entryRevenueChart').getContext('2d');
 
-    const labels = Array.from({ length: 24 }, (_, i) => `${i}`);
+    const {
+        labels,
+        entryCountsNormal,
+        entryCountsDaily,
+        entryCountsMonthly,
+        revenues
+    } = chartData;
 
-    // ✅ 입차 수를 일반/일주차/월주차로 분리
-    const entryCountsNormal = [1, 2, 1, 0, 0, 0, 1, 2, 3, 4, 6, 7, 6, 5, 5, 4, 3, 3, 2, 2, 1, 1, 1, 1];
-    const entryCountsDaily = [0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 4, 4, 3, 3, 3, 2, 2, 1, 1, 1, 0, 0];
-    const entryCountsMonthly = [0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 2, 2, 2, 1, 1, 0, 0, 0];
-
-    const revenues = [500, 1000, 800, 0, 0, 0, 2000, 4000, 6000, 8000, 7000, 7500, 7200, 7000, 6500, 6000, 5000, 4500, 4000, 3000, 2000, 1500, 1200, 1000];
+    console.log("📊 chartData:", chartData);
 
     const revenueMax = Math.max(...revenues);
     const revenueSuggestedMax = Math.ceil(revenueMax * 1.2);
 
-    new Chart(ctx, {
+    // ✅ 기존 차트 제거 (있을 경우)
+    if (entryRevenueChartInstance) {
+        entryRevenueChartInstance.destroy();
+    }
+
+    entryRevenueChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
             labels,
@@ -56,7 +173,7 @@ function renderEntryRevenueChart() {
                     backgroundColor: '#4ade80',
                     stack: 'entry',
                     yAxisID: 'y',
-                    z:1,
+                    z: 1,
                     order: 2
                 },
                 {
@@ -65,7 +182,7 @@ function renderEntryRevenueChart() {
                     backgroundColor: '#60a5fa',
                     stack: 'entry',
                     yAxisID: 'y',
-                    z:1,
+                    z: 1,
                     order: 2
                 },
                 {
@@ -78,7 +195,6 @@ function renderEntryRevenueChart() {
                     order: 2
                 },
                 {
-                    // ✅ 마지막에 둬야 실제로 가장 위에 렌더됨
                     type: 'line',
                     label: '수익 (₩)',
                     data: revenues,
@@ -88,7 +204,7 @@ function renderEntryRevenueChart() {
                     tension: 0.4,
                     fill: false,
                     yAxisID: 'y1',
-                    z: 10, // ✅ 이거 추가
+                    z: 10,
                     order: 0
                 }
             ]
@@ -99,17 +215,14 @@ function renderEntryRevenueChart() {
             plugins: {
                 legend: {
                     position: 'top',
-                    labels: {
-                        font: { size: 12 }
-                    }
+                    labels: { font: { size: 12 } }
                 },
                 tooltip: {
                     mode: 'index',
                     intersect: false
                 }
             },
-
-            elements: {  // ✅ 여기로 빼줘야 적용됨
+            elements: {
                 bar: {
                     borderSkipped: false,
                     barPercentage: 0.7,
@@ -119,7 +232,6 @@ function renderEntryRevenueChart() {
                     tension: 0.4
                 }
             },
-
             interaction: {
                 mode: 'index',
                 intersect: false
@@ -147,6 +259,12 @@ function renderEntryRevenueChart() {
             }
         }
     });
+}
+function onViewModeChange() {
+    const mode = document.getElementById('viewModeSelect').value;
+    document.getElementById('dateInput').style.display = mode === 'daily' ? 'inline-block' : 'none';
+    document.getElementById('monthInput').style.display = mode === 'monthly' ? 'inline-block' : 'none';
+    document.getElementById('yearInput').style.display = mode === 'yearly' ? 'inline-block' : 'none';
 }
 
 
@@ -196,6 +314,65 @@ function renderWeeklyEntryChart(labels, data) {
         }
     });
 }
+
+
+function renderMonthlyRevenueComparisonChart() {
+    const ctx = document.getElementById('monthlyRevenueComparisonChart').getContext('2d');
+
+    const labels = ['1~7일', '8~14일', '15~21일', '22~28일', '29~31일'];
+
+    // ✅ 더미 수익 데이터 (랜덤)
+    const currentMonthRevenue = labels.map(() => Math.floor(Math.random() * 250000) + 100000);
+    const prevMonthRevenue = labels.map(() => Math.floor(Math.random() * 200000) + 80000);
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '이번 달 수익',
+                    data: currentMonthRevenue,
+                    borderColor: '#60a5fa',
+                    backgroundColor: 'rgba(96,165,250,0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 3
+                },
+                {
+                    label: '지난 달 수익',
+                    data: prevMonthRevenue,
+                    borderColor: '#f87171',
+                    backgroundColor: 'rgba(248,113,113,0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `₩${ctx.raw.toLocaleString()}`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => `₩${(value / 1000).toFixed(0)}K`
+                    }
+                }
+            }
+        }
+    });
+}
+
+
 
 
 

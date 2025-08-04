@@ -63,4 +63,6 @@ public interface ReservationMapper {
     );
 
     Reservation findById(Long reservationId);
+
+    int countActiveMonthlyMembers();
 }

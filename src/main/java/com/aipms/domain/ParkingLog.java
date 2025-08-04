@@ -21,5 +21,6 @@ public class ParkingLog {
     private Integer fee;
     private Long paymentId;
     private String imagePath;
+    private Long reservationId; // 예약 기반 입차 여부 식별용
 
 }

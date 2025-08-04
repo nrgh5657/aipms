@@ -249,5 +249,14 @@
         GROUP BY calendar.date
     </select>
 
+    <select id="countActiveMonthlyMembers" resultType="int">
+        SELECT COUNT(DISTINCT member_id)
+        FROM reservation
+        WHERE type = 'MONTHLY'
+          AND status = 'PAID'
+          AND CURDATE() BETWEEN DATE(reservation_start) AND DATE(reservation_end)
+    </select>
+
+
 
 </mapper>

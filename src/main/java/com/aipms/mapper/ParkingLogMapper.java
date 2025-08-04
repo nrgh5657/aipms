@@ -54,4 +54,6 @@ public interface ParkingLogMapper {
     int countTodayExits();
 
     int countCurrentParked();
+
+    List<ParkingLog> findLogsBetween(LocalDateTime start, LocalDateTime end);
 }

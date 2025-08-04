@@ -82,4 +82,6 @@
         SELECT IFNULL(SUM(occupied_count),0) FROM parking
     </select>
 
+
+
 </mapper>
