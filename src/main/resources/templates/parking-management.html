@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Parking Management System - 주차 관리</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/chart.css">
 </head>
 <body>
 
@@ -143,42 +144,86 @@
           <span class="stat-value" id="totalLimit">13/20</span>
         </div>
       </div>
-      
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)"></th>
-              <th>요청 ID</th>
-              <th>차량번호</th>
-              <th>신청자</th>
-              <th>주차 유형</th>
-              <th>신청 월</th>
-              <th>신청 날짜</th>
-              <th>상태</th>
-              <th>신청일</th>
-              <th>승인일</th>
-              <th>결제 상태</th>
-              <th>처리</th>
-            </tr>
-          </thead>
-          <tbody id="parkingTable">
-            <!-- 동적으로 생성됨 -->
-          </tbody>
-        </table>
-      </div>
-      
-      <!-- 용량 경고 메시지가 여기에 동적으로 추가됨 -->
-      
+      <h3 class="section-title">📊 주차 통계 요약</h3>
 
-      <!--페이징:기능은 없음-->
-      <div class="pagination">
-        <button onclick="changePage('prev')">이전</button>
-        <button class="active">1</button>
-        <button>2</button>
-        <button>3</button>
-        <button onclick="changePage('next')">다음</button>
+      <!-- 1행: 도넛 + 혼합 그래프 -->
+      <div class="card-row-wrapper">
+        <!-- 카드 1: 도넛 3개 -->
+        <div class="dashboard-card donut-card">
+          <h3 class="chart-title-label">주차 현황</h3>
+          <div class="donut-row">
+            <div class="donut-chart-wrapper">
+              <canvas id="donut1"></canvas>
+              <div class="center-number">75%</div>
+              <p class="chart-title">전체 주차 공간</p>
+            </div>
+            <div class="donut-chart-wrapper">
+              <canvas id="donut2"></canvas>
+              <div class="center-number">57%</div>
+              <p class="chart-title">회원 유형 비율</p>
+            </div>
+            <div class="donut-chart-wrapper">
+              <canvas id="donut3"></canvas>
+              <div class="center-number">60%</div>
+              <p class="chart-title">오늘 예약 상태</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 카드 2: 혼합 그래프 -->
+        <div class="dashboard-card chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title-label">시간대별 입차 수</h3>
+
+            <div class="filter-bar">
+              <select id="viewModeSelect" onchange="onViewModeChange()">
+                <option value="daily">일별 보기</option>
+                <option value="monthly">월별 보기</option>
+              </select>
+
+              <input type="date" id="dateInput" />
+              <input type="number" id="yearInput" min="2020" max="2030" style="display: none;" placeholder="연도 입력" />
+              <button onclick="loadChartData()">조회</button>
+            </div>
+          </div>
+          <canvas id="entryRevenueChart"></canvas>
+        </div>
       </div>
+
+      <!-- 2행: 요일 그래프 + 요약 -->
+      <div class="card-row-wrapper">
+        <!-- 카드 3: 요일별 입차 수 그래프 -->
+        <div class="dashboard-card weekly-chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title-label">요일별 평균 입차 수</h3>
+          </div>
+          <canvas id="weeklyEntryChart"></canvas>
+        </div>
+
+        <!-- 카드 4: 요약 정보 -->
+        <div class="dashboard-card summary-card">
+          <h3 class="chart-title-label">이번 달 요약</h3>
+          <div class="summary-grid">
+            <div class="mini-summary-card">
+              <p class="summary-label">💰 총 수익</p>
+              <p class="summary-value" id="totalRevenue">₩0</p>
+            </div>
+            <div class="mini-summary-card">
+              <p class="summary-label">⏱ 평균 체류 시간</p>
+              <p class="summary-value" id="avgDuration">0시간 0분</p>
+            </div>
+            <div class="mini-summary-card">
+              <p class="summary-label">🚗 총 입차 수</p>
+              <p class="summary-value" id="totalEntries">-</p>
+            </div>
+            <div class="mini-summary-card">
+              <p class="summary-label">📅 예약 이용률</p>
+              <p class="summary-value" id="reservationRate">-</p>
+            </div>
+          </div>
+        </div>
+
+
     </section>
   </main>
 
@@ -196,8 +241,9 @@
       <button class="alert-close-btn" onclick="closeAlert()">확인</button>
     </div>
   </div>
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/script.js"></script>
+  <script src ="/js/chart.js"></script>
 </body>
 <!-- 한도 수정 팝업 -->
 <!-- 월 한도 수정 팝업 -->
