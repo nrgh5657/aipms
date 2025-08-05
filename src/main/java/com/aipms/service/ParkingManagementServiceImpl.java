@@ -1,12 +1,12 @@
 package com.aipms.service;
 
+import com.aipms.domain.Parking;
 import com.aipms.domain.ParkingLog;
+import com.aipms.dto.DayOfWeekEntryStatDto;
 import com.aipms.dto.DonutStatsDto;
 import com.aipms.dto.EntryRevenueChartResponseDto;
-import com.aipms.mapper.MemberMapper;
-import com.aipms.mapper.ParkingConfigMapper;
-import com.aipms.mapper.ParkingLogMapper;
-import com.aipms.mapper.ReservationMapper;
+import com.aipms.dto.ParkingManagementSummaryDto;
+import com.aipms.mapper.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -25,12 +25,16 @@ public class ParkingManagementServiceImpl implements ParkingManagementService {
     private final ParkingLogMapper parkingLogMapper;
     private final MemberMapper memberMapper;
     private final ReservationMapper reservationMapper;
+    private final ParkingManagementMapper parkingManagementMapper;
+    private final PaymentMapper paymentMapper;
 
-    public ParkingManagementServiceImpl(ParkingConfigMapper parkingConfigMapper, ParkingLogMapper parkingLogMapper, MemberMapper memberMapper, ReservationMapper reservationMapper) {
+    public ParkingManagementServiceImpl(ParkingConfigMapper parkingConfigMapper, ParkingLogMapper parkingLogMapper, MemberMapper memberMapper, ReservationMapper reservationMapper, ParkingManagementMapper parkingManagementMapper, PaymentMapper paymentMapper) {
         this.parkingConfigMapper = parkingConfigMapper;
         this.parkingLogMapper = parkingLogMapper;
         this.memberMapper = memberMapper;
         this.reservationMapper = reservationMapper;
+        this.parkingManagementMapper = parkingManagementMapper;
+        this.paymentMapper = paymentMapper;
     }
 
     @Override
@@ -213,9 +217,77 @@ public class ParkingManagementServiceImpl implements ParkingManagementService {
     }
 
 
+    @Override
+    public List<DayOfWeekEntryStatDto> getAverageEntryByWeekday(Integer month) {
+        int targetMonth = (month != null && month >= 1 && month <= 12)
+                ? month
+                : LocalDate.now().getMonthValue();
 
+        return parkingLogMapper.getAverageEntryByWeekday(targetMonth);
+    }
 
+    @Override
+    public Map<String, List<Long>> getMonthlyRevenueComparison(int year, int month) {
+        List<Long> current = new ArrayList<>();
+        List<Long> previous = new ArrayList<>();
 
+        int[][] weekRanges = {
+                {1, 7}, {8, 14}, {15, 21}, {22, 28}, {29, 31}
+        };
 
+        for (int[] range : weekRanges) {
+            int start = range[0];
+            int end = range[1];
+
+            // 이번 달
+            Long currSum = parkingManagementMapper.getWeeklyRevenueOfMonth(year, month, start, end);
+            current.add(currSum != null ? currSum : 0L);
+
+            // 지난 달
+            int prevMonth = (month == 1) ? 12 : month - 1;
+            int prevYear = (month == 1) ? year - 1 : year;
+
+            Long prevSum = parkingManagementMapper.getWeeklyRevenueOfMonth(prevYear, prevMonth, start, end);
+            previous.add(prevSum != null ? prevSum : 0L);
+        }
+
+        Map<String, List<Long>> result = new HashMap<>();
+        result.put("current", current);
+        result.put("previous", previous);
+        return result;
+    }
+
+    @Override
+    public Map<String, List<Long>> getYearlyRevenueComparison(int year) {
+        List<Map<String, Object>> currentRaw = parkingManagementMapper.getMonthlyRevenueOfYear(year);
+        List<Map<String, Object>> previousRaw = parkingManagementMapper.getMonthlyRevenueOfYear(year - 1);
+
+        List<Long> current = new ArrayList<>(Collections.nCopies(12, 0L));
+        List<Long> previous = new ArrayList<>(Collections.nCopies(12, 0L));
+
+        for (Map<String, Object> row : currentRaw) {
+            int month = ((Number) row.get("month")).intValue();
+            long total = ((Number) row.get("total")).longValue();
+            current.set(month - 1, total);
+        }
+
+        for (Map<String, Object> row : previousRaw) {
+            int month = ((Number) row.get("month")).intValue();
+            long total = ((Number) row.get("total")).longValue();
+            previous.set(month - 1, total);
+        }
+
+        Map<String, List<Long>> result = new HashMap<>();
+        result.put("current", current);
+        result.put("previous", previous);
+        return result;
+    }
+
+    @Override
+    public ParkingManagementSummaryDto getDashboardSummary() {
+        int entryCount = parkingLogMapper.getEntryCountThisMonth();
+        Long revenue = (long) paymentMapper.getMonthlyRevenue();
+        return new ParkingManagementSummaryDto(entryCount, revenue != null ? revenue : 0);
+    }
 
 }

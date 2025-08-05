@@ -238,6 +238,25 @@
         WHERE entry_time BETWEEN #{start} AND #{end}
     </select>
 
+    <select id="getAverageEntryByWeekday" resultType="com.aipms.dto.DayOfWeekEntryStatDto">
+        SELECT
+            DAYOFWEEK(entry_time) AS weekday,
+            COUNT(*) / COUNT(DISTINCT DATE(entry_time)) AS averageCount
+        FROM parking_log
+        WHERE MONTH(entry_time) = #{month}
+          AND YEAR(entry_time) = YEAR(CURDATE())
+        GROUP BY DAYOFWEEK(entry_time)
+        ORDER BY weekday
+    </select>
+
+    <select id="getEntryCountThisMonth" resultType="int">
+        SELECT COUNT(*)
+        FROM parking_log
+        WHERE MONTH(entry_time) = MONTH(NOW())
+          AND YEAR(entry_time) = YEAR(NOW())
+    </select>
+
+
 
 
 </mapper>

@@ -653,8 +653,29 @@ function updateParkingStatus() {
 
   updateElementIfExists('waitingCount', waitingMonthly + waitingDaily);
   updateElementIfExists('approvedCount', approvedMonthly + approvedDaily);
-
 }
+
+function loadDashboardSummary() {
+  fetch('/api/management/parking/summary')
+      .then(res => res.json())
+      .then(data => {
+        const entryCountEl = document.getElementById('entryCarCount');
+        const revenueEl = document.getElementById('revenue');
+
+        if (entryCountEl) {
+          entryCountEl.textContent = data.entryCount;
+        }
+        if (revenueEl) {
+          revenueEl.textContent = data.revenue.toLocaleString();
+        }
+      })
+      .catch(console.error);
+}
+
+// 페이지 로딩 후 실행
+document.addEventListener('DOMContentLoaded', () => {
+  loadDashboardSummary();
+});
 
 
 

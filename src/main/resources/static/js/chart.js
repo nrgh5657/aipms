@@ -1,3 +1,5 @@
+let revenueChartInstance = null; // 전역 Chart 인스턴스
+
 document.addEventListener('DOMContentLoaded', () => {
     const usageRate = 25;
     const usageColor = getColorByUsageRate(usageRate);
@@ -12,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadDashboardDonuts();
     loadChartData();
+    loadWeekdayEntryChart()
     onViewModeChange();
     renderMonthlyRevenueComparisonChart();
 });
@@ -269,9 +272,42 @@ function onViewModeChange() {
 
 
 
-const labels = ['월', '화', '수', '목', '금', '토', '일'];
-const values = [12, 15, 10, 8, 20, 25, 18];
-window.weeklyEntryChart = renderWeeklyEntryChart(labels, values);
+async function loadWeekdayEntryChart() {
+    const select = document.getElementById('weekdayMonthSelect');
+    const month = select ? select.value : (new Date().getMonth() + 1); // fallback
+
+    try {
+        const res = await fetch(`/api/management/parking/weekday-avg-entry?month=${month}`);
+        const data = await res.json();
+
+        const labels = ['월', '화', '수', '목', '금', '토', '일'];
+        const values = Array(7).fill(0);
+
+        data.forEach(d => {
+            const index = (d.weekday + 5) % 7;
+            values[index] = d.averageCount;
+        });
+
+        if (window.weeklyEntryChart && typeof window.weeklyEntryChart.destroy === 'function') {
+            window.weeklyEntryChart.destroy();
+        }
+
+        window.weeklyEntryChart = renderWeeklyEntryChart(labels, values);
+
+    } catch (e) {
+        console.error('📛 요일별 평균 입차 수 불러오기 실패:', e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const select = document.getElementById('weekdayMonthSelect');
+    if (select) {
+        const currentMonth = new Date().getMonth() + 1;
+        select.value = currentMonth;
+    }
+
+    loadWeekdayEntryChart();
+});
 
 function renderWeeklyEntryChart(labels, data) {
     const ctx = document.getElementById('weeklyEntryChart').getContext('2d');
@@ -315,24 +351,57 @@ function renderWeeklyEntryChart(labels, data) {
     });
 }
 
+function updateRevenueChart() {
+    const mode = document.getElementById('revenueModeSelect').value;
+    const year = document.getElementById('revenueYearSelect').value;
+    const month = document.getElementById('revenueMonthSelect').value;
 
-function renderMonthlyRevenueComparisonChart() {
+    // ✅ 월모드일 때만 month 파라미터 포함
+    let url = `/api/management/parking/revenue-comparison?mode=${mode}&year=${year}`;
+    if (mode === 'month') {
+        url += `&month=${month}`;
+    }
+
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            renderMonthlyRevenueComparisonChart(mode, data);
+        })
+        .catch(err => {
+            console.error("📛 수익 비교 데이터 로딩 실패", err);
+        });
+
+    // ✅ 필터 UI 전환
+    toggleMonthSelect(mode); // ← 이거 꼭 있어야 함
+}
+
+
+function renderMonthlyRevenueComparisonChart(mode, data) {
     const ctx = document.getElementById('monthlyRevenueComparisonChart').getContext('2d');
 
-    const labels = ['1~7일', '8~14일', '15~21일', '22~28일', '29~31일'];
+    // ✅ 라벨은 모드에 따라 다르게 설정
+    const labels = mode === 'month'
+        ? ['1~7일', '8~14일', '15~21일', '22~28일', '29~31일']
+        : ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
 
-    // ✅ 더미 수익 데이터 (랜덤)
-    const currentMonthRevenue = labels.map(() => Math.floor(Math.random() * 250000) + 100000);
-    const prevMonthRevenue = labels.map(() => Math.floor(Math.random() * 200000) + 80000);
+    // ✅ 데이터도 라벨 개수에 맞춰 동기화
+    const currentRevenue = data.current || new Array(labels.length).fill(0);
+    const previousRevenue = data.previous || new Array(labels.length).fill(0);
 
-    new Chart(ctx, {
+    // ✅ 기존 차트 파괴
+    if (revenueChartInstance) {
+        revenueChartInstance.destroy();
+    }
+
+    // ✅ 새 차트 생성
+    revenueChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [
                 {
-                    label: '이번 달 수익',
-                    data: currentMonthRevenue,
+                    label: mode === 'month' ? '이번 달 수익' : '올해 수익',
+                    data: currentRevenue,
                     borderColor: '#60a5fa',
                     backgroundColor: 'rgba(96,165,250,0.1)',
                     tension: 0.4,
@@ -340,8 +409,8 @@ function renderMonthlyRevenueComparisonChart() {
                     pointRadius: 3
                 },
                 {
-                    label: '지난 달 수익',
-                    data: prevMonthRevenue,
+                    label: mode === 'month' ? '지난 달 수익' : '지난해 수익',
+                    data: previousRevenue,
                     borderColor: '#f87171',
                     backgroundColor: 'rgba(248,113,113,0.1)',
                     tension: 0.4,
@@ -371,6 +440,39 @@ function renderMonthlyRevenueComparisonChart() {
         }
     });
 }
+
+function generateYearOptions(selectId, range = 5) {
+    const select = document.getElementById(selectId);
+    const currentYear = new Date().getFullYear();
+    select.innerHTML = ''; // 기존 옵션 제거
+
+    for (let i = 0; i < range; i++) {
+        const year = currentYear - i;
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = `${year}년`;
+        select.appendChild(option);
+    }
+
+    select.value = currentYear;
+}
+
+function toggleMonthSelect(mode) {
+    const monthSelect = document.getElementById('revenueMonthSelect');
+    monthSelect.style.display = (mode === 'month') ? 'inline-block' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    generateYearOptions('revenueYearSelect', 5); // 최근 5년 동적 생성
+
+    const today = new Date();
+    document.getElementById('revenueMonthSelect').value = today.getMonth() + 1;
+    document.getElementById('revenueModeSelect').value = 'month';
+
+    toggleMonthSelect('month');
+    updateRevenueChart();
+});
+
 
 
 

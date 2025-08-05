@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.ParkingManagementMapper">
+
+
+    <!-- 📌 월 기준 주간 수익 (1~7, 8~14, ..., 29~말일 구간별 총액) -->
+    <select id="getWeeklyRevenueOfMonth" resultType="long">
+        SELECT
+            COALESCE(SUM(total_fee), 0) AS total
+        FROM payment
+        WHERE paid = true
+            AND status = '결제 완료'
+            AND YEAR(payment_time) = #{year}
+          AND MONTH(payment_time) = #{month}
+          AND DAY(payment_time) BETWEEN #{startDay} AND #{endDay}
+    </select>
+
+    <!-- 📌 연도 기준 월별 수익 -->
+    <select id="getMonthlyRevenueOfYear" resultType="map">
+        SELECT MONTH(payment_time) AS month, SUM(total_fee) AS total
+        FROM payment
+        WHERE paid = true
+          AND status = '결제 완료'
+          AND YEAR(payment_time) = #{year}
+        GROUP BY MONTH(payment_time)
+        ORDER BY MONTH(payment_time)
+    </select>
+
+
+</mapper>

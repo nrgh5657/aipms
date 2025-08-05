@@ -1,6 +1,7 @@
 package com.aipms.mapper;
 
 import com.aipms.domain.ParkingLog;
+import com.aipms.dto.DayOfWeekEntryStatDto;
 import com.aipms.dto.ParkingLogFilterRequestDto;
 import com.aipms.dto.ParkingLogWithMemberDto;
 import com.aipms.dto.UsageHistoryDto;
@@ -56,4 +57,9 @@ public interface ParkingLogMapper {
     int countCurrentParked();
 
     List<ParkingLog> findLogsBetween(LocalDateTime start, LocalDateTime end);
+
+
+    List<DayOfWeekEntryStatDto> getAverageEntryByWeekday(int targetMonth);
+
+    int getEntryCountThisMonth();
 }
