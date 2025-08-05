@@ -422,7 +422,13 @@ function renderMonthlyRevenueComparisonChart(mode, data) {
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'top' },
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,     // ⬅️ 범례 아이콘을 기본 사각형 대신 선택한 스타일로
+                        pointStyle: 'line'       // ⬅️ 원하는 아이콘 모양 ('line', 'rect', 'rectRounded', 'dash', etc.)
+                    }
+                },
                 tooltip: {
                     callbacks: {
                         label: ctx => `₩${ctx.raw.toLocaleString()}`
