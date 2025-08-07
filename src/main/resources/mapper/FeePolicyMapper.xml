@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.FeePolicyMapper">
+    <resultMap id="FeePolicyMap" type="com.aipms.dto.FeePolicyDto">
+        <id property="id" column="id"/>
+        <result property="policyType" column="type"/>
+        <result property="name" column="name"/>
+        <result property="baseFee" column="base_fee"/>
+        <result property="unitTime" column="unit_minutes"/>
+        <result property="maxFee" column="max_fee"/>
+        <result property="discountRate" column="discount_rate"/>
+        <result property="applyFrom" column="apply_from"/>
+        <result property="active" column="active"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="FeePolicyMap">
+        SELECT * FROM fee_policy ORDER BY apply_from DESC
+    </select>
+
+    <select id="findById" parameterType="long" resultMap="FeePolicyMap">
+        SELECT * FROM fee_policy WHERE id = #{id}
+    </select>
+
+    <select id="findActiveByType" parameterType="string" resultMap="FeePolicyMap">
+        SELECT * FROM fee_policy WHERE type = #{policyType} AND active = true
+    </select>
+
+
+    <select id="findActivePolicyByType" resultMap="FeePolicyMap" parameterType="string">
+        SELECT *
+        FROM fee_policy
+        WHERE type = #{policyType}
+          AND active = true
+        ORDER BY id DESC
+            LIMIT 1
+    </select>
+
+    <update id="updatePolicy" parameterType="com.aipms.dto.FeePolicyDto">
+        UPDATE fee_policy
+        SET base_fee = #{baseFee},
+            unit_minutes = #{unitTime},
+            max_fee = #{maxFee},
+            discount_rate = #{discountRate},
+            apply_from = #{applyFrom}
+        WHERE id = #{id}
+    </update>
+
+
+    <select id="selectBaseFeeByType" resultType="int">
+        SELECT base_fee
+        FROM fee_policy
+        WHERE type = #{type} AND active = 1
+            LIMIT 1
+    </select>
+
+
+
+
+
+</mapper>

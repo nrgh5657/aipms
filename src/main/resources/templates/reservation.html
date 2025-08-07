@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트파킹 - 주차 예약</title>
+  <link rel="stylesheet" href="/css/customer-style.css">
+  <script th:inline="javascript">
+    const serverUserData = /*[[${userDataJson}]]*/ null;
+  </script>
+</head>
+<body>
+<header>
+  <div class="top-bar">
+    <div class="logo">
+      <a th:href="@{/}" >
+        <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img">
+      </a>
+    </div>
+
+    <div class="user-info">
+      <span class="welcome">안녕하세요, <strong id="user-name" th:text="${myInfo.memberInfo.name}">사용자</strong>님!</span>
+      <span class="user-grade" id="membership-grade">
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'VIP'}">💎 VIP</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Gold'}">🥇 Gold</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Silver'}">🥈 Silver</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Bronze'}">🥉 Bronze</span>
+                <span th:if="${myInfo.membershipInfo == null || myInfo.membershipInfo.membershipGrade == null}">일반회원</span>
+            </span>
+      <form id="logoutForm" th:action="@{/logout}" method="post" th:csrf="true">
+        <a href="/logout" class="logout-btn">로그아웃</a>
+      </form>
+    </div>
+  </div>
+  <nav class="main-menu">
+    <ul>
+      <li><a th:href="@{/reservation}">🅿️ 주차 예약</a></li>
+      <li><a th:href="@{/payment}">💳 요금 결제</a></li>
+      <li><a th:href="@{/my-records}">📊 이용 내역</a></li>
+      <li><a th:href="@{/my-info}">⚙️ 내 정보</a></li>
+      <li><a th:href="@{/support}">🎧 고객지원</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <section class="page-header">
+    <h2>주차 예약 신청</h2>
+    <p>원하는 날짜와 시간에 편리하게 주차하세요!</p>
+  </section>
+
+  <div class="reservation-container">
+    <!-- 예약 타입 선택 -->
+    <section class="reservation-type">
+      <h3>예약 유형 선택</h3>
+      <div class="type-tabs">
+        <button class="tab-btn active" onclick="switchTab('daily')">일일 주차</button>
+        <button class="tab-btn" onclick="switchTab('monthly')">월 주차</button>
+      </div>
+    </section>
+
+    <!-- 일일 주차 폼 -->
+    <section id="daily-form" class="reservation-form active">
+      <form class="booking-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="daily-start">시작 날짜</label>
+            <input type="date" id="daily-start" required>
+          </div>
+          <div class="form-group">
+            <label for="daily-end">종료 날짜</label>
+            <input type="date" id="daily-end" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="daily-car">차량번호</label>
+            <input type="text" id="daily-car" placeholder="예: 12가3456" required>
+          </div>
+        </div>
+
+        <div class="price-estimate">
+          <h4>예상 요금</h4>
+          <div class="price-breakdown">
+            <span>일수: <strong id="daily-days">0일</strong></span>
+            <span>일일 요금: <strong id="daily-unit-price">₩20,000</strong></span>
+            <span class="total">총 요금: <strong id="daily-total">₩0</strong></span>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" onclick="submitDailyReservation(event)">일일 주차 신청</button>
+      </form>
+    </section>
+
+    <!-- 월 주차 폼 -->
+    <section id="monthly-form" class="reservation-form">
+      <form class="booking-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="monthly-start">시작 월</label>
+            <input type="month" id="monthly-start" required>
+          </div>
+          <div class="form-group">
+            <label for="monthly-period">이용 기간</label>
+            <select id="monthly-period" required>
+              <option value="">선택하세요</option>
+              <option value="1">1개월</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="monthly-car">차량번호</label>
+            <input type="text" id="monthly-car" placeholder="예: 12가3456" required>
+          </div>
+        </div>
+
+        <div class="price-estimate">
+          <h4>예상 요금</h4>
+          <div class="price-breakdown">
+            <span>월 요금: <strong id="monthly-unit-price">₩150,000</strong></span>
+            <span>기간: <strong id="monthly-months">0개월</strong></span>
+            <span class="total">총 요금: <strong id="monthly-total">₩0</strong></span>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" onclick="submitMonthlyReservation(event)">월 주차 신청</button>
+      </form>
+    </section>
+  </div>
+
+  <!-- 실시간 주차장 현황 -->
+  <section class="parking-status">
+    <h3>🚗 실시간 주차장 현황</h3>
+    <div class="status-grid">
+      <div class="zone-status">
+        <h4>A구역</h4>
+        <div class="availability">
+          <span class="available">15</span>/<span class="total">50</span>
+        </div>
+        <div class="zone-rate">가용률: 30%</div>
+      </div>
+      <div class="zone-status">
+        <h4>B구역</h4>
+        <div class="availability">
+          <span class="available">8</span>/<span class="total">60</span>
+        </div>
+        <div class="zone-rate">가용률: 13%</div>
+      </div>
+      <div class="zone-status">
+        <h4>C구역</h4>
+        <div class="availability">
+          <span class="available">25</span>/<span class="total">40</span>
+        </div>
+        <div class="zone-rate">가용률: 63%</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
+</footer>
+
+<!-- 공통 라이브러리 로드 -->
+<script src="/common/utils.js"></script>
+<script src="/common/api.js"></script>
+<script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+<script src="/js/reservation.js"></script>
+</body>
+</html>

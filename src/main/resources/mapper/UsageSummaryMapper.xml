@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.UsageSummaryMapper">
+
+    <select id="getSummaryByMemberId" resultType="com.aipms.dto.UsageSummaryDto">
+        SELECT
+            COUNT(*) AS totalCount,
+            SUM(TIMESTAMPDIFF(MINUTE, entry_time, exit_time)) AS totalMinutes,  -- ✅ 수정
+            SUM(IFNULL(p.total_fee, 0)) AS totalPaid,
+            AVG(TIMESTAMPDIFF(MINUTE, entry_time, exit_time)) AS averageMinutes  -- ✅ 수정
+        FROM parking_log pl
+                 LEFT JOIN payment p ON pl.payment_id = p.payment_id
+        WHERE pl.member_id = #{memberId}
+          AND pl.exit_time IS NOT NULL
+    </select>
+
+</mapper>

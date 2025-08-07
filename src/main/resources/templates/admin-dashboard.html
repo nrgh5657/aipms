@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Parking Management System - 대시보드</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- 헤더: 맨위 상단 파트 -->
+  <header class="header">
+    <div class="header-top">
+      <div class="header-info">
+        <span id="currentScreen">화면ID: Dashboard_001</span>
+        <span id="screenName">화면명: 관리자 통합 대시보드</span>
+      </div>
+      <div class="header-info">
+        <span>사용자: <span id="adminName">Admin</span></span>
+        <span id="currentDate">작성일: 2025-07-10</span>
+      </div>
+    </div>
+
+    <!-- 헤더: 메인 헤더(제목, 버튼 등) -->
+    <div class="main-header">
+      <div class="logo-container">
+        <div class="system-title">🅿 AI 주차 관리 시스템</div>
+       </div>
+
+      <div class="header-actions">
+        <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
+        <button class="header-btn" onclick="showNotifications()">🔔 알림</button>
+        <button class="header-btn" onclick="showSettings()">⚙️ 설정</button>
+        <button class="header-btn" onclick="showAdminRegister()">👥 관리자 등록</button>
+        <button class="header-btn logout" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+    
+    <nav class="nav-tabs">
+      <a href="/management/admin" class="nav-tab active">대시보드</a>
+      <a href="/management/parking" class="nav-tab">주차 관리</a>
+      <a href="/management/fee" class="nav-tab">요금 관리</a>
+      <a href="/management/fireManage" class="nav-tab">화재 관리</a>
+      <a href="/management/member" class="nav-tab">회원 관리</a>
+      <a href="/management/systemLogs" class="nav-tab">시스템 로그</a>
+    </nav>
+  </header>
+
+  <!-- 좌측 사이드바-->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h3>관리 메뉴</h3>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <h4>🅿️ 주차 관리</h4>
+        <ul>
+          <li><a href="/management/parking">주차 현황 확인</a></li>
+          <li><a href="/management/parkingLog">차량 입출차 로그</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>💰 요금 관리</h4>
+        <ul>
+          <li><a href="/management/fee">요금 정책 관리</a></li>
+          <li><a href="/management/fee">환불 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>🔥 화재 관리</h4>
+        <ul>
+          <li><a href="/management/fireManage">화재 기록 관리</a></li>
+          <li><a href="/management/fireCctv">CCTV 영상 확인</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>👥 회원 관리</h4>
+        <ul>
+          <li><a href="/management/member">회원 정보 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>📊 시스템 로그</h4>
+        <ul>
+          <li><a href="/management/systemLogs">시스템 상태</a></li>
+        </ul>
+      </div>
+    </nav>
+  </aside>
+<!--공통된 디자인: 디자인 수정하지 말 것-->
+
+
+
+  <!-- 메인 컨테이너 -->
+  <main class="main-content">
+    <!-- 대시보드 개요 -->
+    <section class="dashboard-overview" id="dashboard-overview">
+      <div class="content-section">
+        <div class="section-header">
+          <h2>📊 관리자 대시보드</h2>
+          <div class="section-actions">
+            <button class="action-btn" onclick="refreshDashboard()">새로고침</button>
+            <button class="action-btn primary" onclick="exportDashboardData()">리포트 내보내기</button>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card alert">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-content">
+              <h3>화재 알림</h3>
+              <div class="stat-number" id="fireAlertsStatus">2</div>
+              <div class="stat-change">오늘 발생한 화재 감지</div>
+            </div>
+          </div>
+
+          <div class="stat-card pending">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+              <h3>승인 대기</h3>
+              <div class="stat-number" id="pendingApprovals">7</div>
+              <div class="stat-change" >전일 대비 +12%</div>
+            </div>
+          </div>
+
+          <div class="stat-card revenue">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+              <h3>오늘 매출</h3>
+              <div class="stat-number" id="todayRevenueStatus">₩2.1M</div>
+              <div class="stat-change" id="revenueDiffStatus">전일 대비 +12%</div>
+            </div>
+          </div>
+
+          <div class="stat-card occupancy">
+            <div class="stat-icon">🅿️</div>
+            <div class="stat-content">
+              <h3>주차장 점유율</h3>
+              <div class="stat-number" id="occupancyRateStatus">75%</div>
+              <div class="stat-change" id="occupancyRatioStatus">20대 중 15대 사용 중</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 주차장 현황 -->
+        <div class="parking-status-section">
+          <div class="parking-status-card">
+            <h3>🅿 실시간 주차장 현황</h3>
+            <div class="parking-status-content">
+              <div class="parking-status-item">
+                <span class="status-label">전체 주차 공간</span>
+                <span class="status-value" id="totalSpacesStatus">20대</span>
+              </div>
+              <div class="parking-status-item">
+                <span class="status-label">월주차</span>
+                <span class="status-value" id="currentMonthlyStatus">5대</span>
+              </div>
+              <div class="parking-status-item">
+                <span class="status-label">일주차</span>
+                <span class="status-value" id="currentDailyStatus">8대</span>
+              </div>
+              <div class="parking-status-item">
+                <span class="status-label">이용 가능</span>
+                <span class="status-value" id="availableSpacesStatus">7대</span>
+              </div>
+              <div class="parking-status-item">
+                <span class="status-label">월주차 한도</span>
+                <span class="status-value" id="monthlyParkingCountStatus">5/8</span>
+              </div>
+              <div class="parking-status-item">
+                <span class="status-label">승인 대기</span>
+                <span class="status-value" id="waitingCountStatus">4</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 실시간 모니터링 -->
+        <div class="monitoring-section">
+          <div class="monitoring-card">
+            <h3>🔥 화재 감지 시스템</h3>
+            <div class="status-indicator safe">
+              <div class="status-dot"></div>
+              <span>시스템 정상 작동</span>
+            </div>
+            <div class="last-check">마지막 점검: <span id="lastFireCheck">방금 전</span></div>
+            
+            <div class="cctv-grid">
+              <div class="cctv-item active">CCTV 1번</div>
+              <div class="cctv-item active">CCTV 2번</div>
+              <div class="cctv-item active">CCTV 3번</div>
+              <div class="cctv-item offline">CCTV 4번</div>
+            </div>
+          </div>
+
+          <div class="monitoring-card">
+            <h3>🚗 오늘 주차장 이용</h3>
+            <div class="traffic-stats">
+              <div class="traffic-item">
+                <span class="traffic-label">입차</span>
+                <div class="traffic-number" id="todayEntryCount">0</div>
+              </div>
+              <div class="traffic-item">
+                <span class="traffic-label">출차</span>
+                <div class="traffic-number" id="todayExitCount">0</div>
+              </div>
+              <div class="traffic-item">
+                <span class="traffic-label">현재</span>
+                <div class="traffic-number" id="currentParkingCount">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="monitoring-card">
+            <h3>♻️ 시스템 상태</h3>
+            <div class="status-indicator safe" id="systemStatusBox">
+              <div class="status-dot"></div>
+              <span id="systemStatusLabel">모든 시스템 정상</span>
+            </div>
+            <div style="margin-top: 15px;">
+              <div style="margin-bottom: 8px;">
+                <span style="font-size: 12px; color: #4a5568;">CPU 사용률</span>
+                <span id="cpuUsage" style="float: right; font-size: 12px; font-weight: 600;">-</span>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <span style="font-size: 12px; color: #4a5568;">메모리 사용률</span>
+                <span id="memoryUsage" style="float: right; font-size: 12px; font-weight: 600;">-</span>
+              </div>
+              <div>
+                <span style="font-size: 12px; color: #4a5568;">디스크 사용률</span>
+                <span id="diskUsage" style="float: right; font-size: 12px; font-weight: 600;">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 모달 영역 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent">
+      <!-- 동적으로 생성됨 -->
+    </div>
+  </div>
+
+  <!-- 알림 메시지 팝업 -->
+  <div class="alert-popup" id="alertPopup">
+    <div class="alert-content">
+      <div class="alert-icon">✅</div>
+      <div class="alert-message" id="alertMessage"></div>
+      <button class="alert-close-btn" onclick="closeAlert()">확인</button>
+    </div>
+  </div>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>

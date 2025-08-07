@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.UsageHistoryMapper">
+
+    <select id="getPagedUsageHistory" resultType="com.aipms.dto.UsageHistoryDto">
+        SELECT
+        pl.entry_time,
+        pl.exit_time,
+        m.car_number AS carNumber,
+        IFNULL(pmt.total_fee, 0) AS fee
+        FROM parking_log pl
+        JOIN member m ON pl.member_id = m.member_id
+        LEFT JOIN payment pmt ON pl.payment_id = pmt.payment_id
+        WHERE m.member_id = #{memberId}
+
+        <if test="startDate != null and endDate != null">
+            AND DATE(pl.entry_time) BETWEEN #{startDate} AND #{endDate}
+        </if>
+
+        <if test="type != null and type != ''">
+            <choose>
+                <when test="type == 'NORMAL'">
+                    AND pl.reservation_id IS NULL
+                </when>
+                <when test="type == 'SUBSCRIPTION'">
+                    AND EXISTS (
+                    SELECT 1 FROM subscription s
+                    WHERE s.member_id = m.member_id
+                    AND pl.entry_time BETWEEN s.start_date AND s.end_date
+                    )
+                </when>
+            </choose>
+        </if>
+
+        <if test="status != null and status != ''">
+            <choose>
+                <when test="status == 'IN_PROGRESS'">
+                    AND pl.exit_time IS NULL
+                </when>
+                <when test="status == 'COMPLETED'">
+                    AND pl.exit_time IS NOT NULL
+                </when>
+            </choose>
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            AND m.car_number LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+
+        ORDER BY pl.entry_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countUsageHistory" resultType="int">
+        SELECT COUNT(*)
+        FROM parking_log pl
+        JOIN member m ON pl.member_id = m.member_id
+        WHERE m.member_id = #{memberId}
+
+        <if test="startDate != null and endDate != null">
+            AND DATE(pl.entry_time) BETWEEN #{startDate} AND #{endDate}
+        </if>
+
+        <if test="type != null and type != ''">
+            <choose>
+                <when test="type == 'NORMAL'">
+                    AND pl.reservation_id IS NULL
+                </when>
+                <when test="type == 'SUBSCRIPTION'">
+                    AND EXISTS (
+                    SELECT 1 FROM subscription s
+                    WHERE s.member_id = m.member_id
+                    AND pl.entry_time BETWEEN s.start_date AND s.end_date
+                    )
+                </when>
+            </choose>
+        </if>
+
+        <if test="status != null and status != ''">
+            <choose>
+                <when test="status == 'IN_PROGRESS'">
+                    AND pl.exit_time IS NULL
+                </when>
+                <when test="status == 'COMPLETED'">
+                    AND pl.exit_time IS NOT NULL
+                </when>
+            </choose>
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            AND m.car_number LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <select id="selectRecentUsageHistoryByMemberId" resultType="com.aipms.dto.UsageHistoryDto">
+        SELECT
+            pl.entry_time AS entryTime,
+            pl.exit_time AS exitTime,
+            pl.car_number AS carNumber,
+            IFNULL(p.total_fee, 0) AS fee
+        FROM parking_log pl
+                 LEFT JOIN payment p ON p.entry_id = pl.id
+        WHERE pl.member_id = #{memberId}
+        ORDER BY pl.entry_time DESC
+            LIMIT 3
+    </select>
+
+
+
+
+</mapper>
+

@@ -1,0 +1,310 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f8fafc;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: #1f2937;
+}
+
+/* 전체 화면 넓이 개선 */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+    padding-bottom: 50px;
+    position: relative;
+}
+
+
+.header {
+    background-color: #2267F0;
+    padding: 30px 20px;
+    text-align: center;
+    border-radius: 0 0 20px 20px;
+    color: white;
+}
+
+.header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* 🚗 업로드 섹션 */
+.search-section {
+    background: #ffffff;
+    max-width: 700px;
+    margin: 40px auto 0;
+    padding: 30px 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.search-section h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #2267F0;
+}
+
+.search-subtitle {
+    color: #6b7280;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+/* 파일 업로드 + 버튼 */
+.search-input-wrapper input[type="file"] {
+    display: block;
+    margin: 0 auto 20px;
+    padding: 14px;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    background-color: #f1f5f9;
+    cursor: pointer;
+    transition: border-color 0.3s;
+    width: 80%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.search-input-wrapper input[type="file"]:hover {
+    border-color: #2267F0;
+}
+
+.search-btn {
+    background-color: #2267F0;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.search-btn:hover {
+    background-color: #1c4ebb;
+}
+
+/* OCR 결과 영역 */
+
+#ocrResult {
+    margin-top: 30px;
+    background: #ffffff;
+    padding: 30px 20px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    display: block; /* 기본은 JS에서 제어 */
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+#ocrPlateNumber {
+    font-size: 22px;
+    color: #0f172a;
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: block;
+}
+
+#ocrPlateImage {
+    width: 100%;
+    max-width: 480px;
+    height: auto;
+    border: 2px solid #cbd5e1;
+    border-radius: 16px;
+    margin: 0 auto;
+    display: block;
+    object-fit: contain;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+
+
+
+.parking-info {
+    display: none;
+    padding: 0 20px;
+}
+
+.license-plate-section {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.plate-image {
+    width: 120px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.plate-info {
+    flex: 1;
+}
+
+.plate-number {
+    font-size: 20px;
+    font-weight: 700;
+    color: #191f28;
+    margin-bottom: 4px;
+}
+
+.plate-type {
+    font-size: 14px;
+    color: #6b7684;
+}
+
+.info-grid {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #f1f3f4;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 16px;
+    color: #6b7684;
+}
+
+.info-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #191f28;
+}
+
+.total-section {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 32px 24px 80px;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.total-label {
+    font-size: 16px;
+    color: #6b7684;
+    margin-bottom: 8px;
+}
+
+.total-amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0064ff;
+    margin-bottom: 4px;
+}
+
+.total-currency {
+    font-size: 16px;
+    color: #6b7684;
+}
+
+.payment-button {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #f1f3f4;
+}
+
+.pay-btn {
+    width: 100%;
+    padding: 18px;
+    background: #0064ff;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 100, 255, 0.3);
+}
+
+.pay-btn:hover {
+    background: #0056e0;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 100, 255, 0.4);
+}
+
+.pay-btn:active {
+    transform: translateY(0);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7684;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease;
+}

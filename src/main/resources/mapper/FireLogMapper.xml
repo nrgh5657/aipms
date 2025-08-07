@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.FireLogMapper">
+
+    <resultMap id="FireAlertMap" type="com.aipms.dto.FireAlertResponseDto">
+        <id property="id" column="id"/>
+        <result property="label" column="label"/>
+        <result property="confidence" column="confidence"/>
+        <result property="videoUrl" column="video_url"/>
+        <result property="imagePath" column="image_path"/>
+        <result property="detectedAt" column="detected_at"/>
+        <result property="location" column="location"/>
+        <result property="adminJudgment" column="admin_judgment"/>
+        <result property="alertStatus" column="alert_status"/>
+        <result property="alertTime" column="alert_time"/>
+        <result property="notes" column="notes"/>
+    </resultMap>
+
+    <insert id="insertFireLog" parameterType="com.aipms.domain.FireLog">
+        INSERT INTO fire_alert_log (
+            label,
+            confidence,
+            video_url,
+            image_path,
+            location,
+            admin_judgment,
+            alert_status,
+            alert_time,
+            notes,
+            detected_at,
+            created_at
+        )
+        VALUES (
+                   #{label},
+                   #{confidence},
+                   #{videoUrl},
+                   #{imagePath},
+                   #{location},
+                   #{adminJudgment},
+                   #{alertStatus},
+                   #{alertTime},
+                   #{notes},
+                   #{detectedAt},
+                   #{createdAt}
+               )
+    </insert>
+
+    <select id="findAllFireLogs" resultType="com.aipms.domain.FireLog">
+        SELECT
+            id,
+            label,
+            confidence,
+            video_url AS videoUrl,
+            image_path AS imagePath,
+            detected_at AS detectedAt,
+            created_at AS createdAt,
+            location,
+            admin_judgment AS adminJudgment,
+            alert_status AS alertStatus,
+            alert_time AS alertTime,
+            notes
+        FROM fire_alert_log
+        ORDER BY detected_at DESC
+    </select>
+
+    <update id="updateLogs" parameterType="com.aipms.domain.FireLog">
+        UPDATE fire_alert_log
+        SET notes = #{notes},
+            admin_judgment = #{adminJudgment}
+        WHERE id = #{id}
+    </update>
+
+    <select id="findLatestLog" resultType="com.aipms.dto.FireAlertDto">
+        SELECT id, location, detected_at, confidence
+        FROM fire_alert_log
+        ORDER BY detected_at DESC
+            LIMIT 1
+    </select>
+
+    <select id="getPagedFireLogs" resultMap="FireAlertMap">
+        SELECT
+        id, label, confidence, video_url, image_path,
+        detected_at, location, admin_judgment, alert_status, alert_time, notes
+        FROM fire_alert_log
+        WHERE 1=1
+        <if test="label != null and label != ''">
+            AND label = #{label}
+        </if>
+        <if test="location != null and location != ''">
+            AND location = #{location}
+        </if>
+        <if test="date != null and date != ''">
+            AND DATE_FORMAT(detected_at, '%Y-%m-%d') = #{date}
+        </if>
+        ORDER BY detected_at DESC
+        LIMIT #{limit} OFFSET #{page}
+    </select>
+
+    <select id="countFireLogs" resultType="int">
+        SELECT COUNT(*)
+        FROM fire_alert_log
+        WHERE 1=1
+        <if test="label != null and label != ''">
+            AND label = #{label}
+        </if>
+        <if test="location != null and location != ''">
+            AND location = #{location}
+        </if>
+        <if test="date != null and date != ''">
+            AND DATE_FORMAT(detected_at, '%Y-%m-%d') = #{date}
+        </if>
+    </select>
+
+
+</mapper>

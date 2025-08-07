@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.CctvStatusLogMapper">
+
+    <insert id="insertCctvLog" parameterType="com.aipms.domain.CctvStatusLogVO">
+        INSERT INTO cctv_status_log (
+            camera_name, location, status, record_status,
+            log_type, last_connected, last_checked_at, created_at
+        ) VALUES (
+                     #{cameraName}, #{location}, #{status}, #{recordStatus},
+                     #{logType}, #{lastConnected}, #{lastCheckedAt}, #{createdAt}
+                 )
+    </insert>
+
+    <select id="findParkingIdByCameraId" resultType="long">
+        SELECT parking_id
+        FROM cctv_status_log
+        WHERE id = #{cameraId}
+    </select>
+
+    <select id="getLatestLogsPerCctv" resultType="com.aipms.dto.CctvLogDto">
+        SELECT *
+        FROM cctv_status_log
+        WHERE (camera_name, last_checked_at) IN (
+            SELECT camera_name, MAX(last_checked_at)
+            FROM cctv_status_log
+            GROUP BY camera_name
+        )
+    </select>
+
+    <select id="findAllLogs" resultType="com.aipms.domain.CctvStatusLogVO">
+        SELECT
+            id,
+            camera_name,
+            location,
+            status,
+            last_checked_at,
+            last_connected,
+            record_status,
+            log_type,
+            created_at
+        FROM cctv_log
+        ORDER BY last_checked_at DESC
+    </select>
+
+    <select id="findPagedLogs" resultType="com.aipms.domain.CctvStatusLogVO">
+        SELECT
+        id, camera_name, location, status,
+        last_checked_at, last_connected,
+        record_status, log_type, created_at
+        FROM cctv_status_log
+        <where>
+            <if test="dto.status != null and dto.status != ''">
+                AND status = #{dto.status}
+            </if>
+            <if test="dto.logType != null and dto.logType != ''">
+                AND log_type = #{dto.logType}
+            </if>
+            <if test="dto.cameraName != null and dto.cameraName != ''">
+                AND camera_name LIKE CONCAT('%', #{dto.cameraName}, '%')
+            </if>
+            <if test="dto.keyword != null and dto.keyword != ''">
+                AND (
+                camera_name LIKE CONCAT('%', #{dto.keyword}, '%')
+                OR location LIKE CONCAT('%', #{dto.keyword}, '%')
+                OR status LIKE CONCAT('%', #{dto.keyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY last_checked_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countLogs" resultType="int">
+        SELECT COUNT(*) FROM cctv_status_log
+        <where>
+            <if test="dto.status != null and dto.status != ''">
+                AND status = #{dto.status}
+            </if>
+            <if test="dto.logType != null and dto.logType != ''">
+                AND log_type = #{dto.logType}
+            </if>
+            <if test="dto.cameraName != null and dto.cameraName != ''">
+                AND camera_name LIKE CONCAT('%', #{dto.cameraName}, '%')
+            </if>
+            <if test="dto.keyword != null and dto.keyword != ''">
+                AND (
+                camera_name LIKE CONCAT('%', #{dto.keyword}, '%')
+                OR location LIKE CONCAT('%', #{dto.keyword}, '%')
+                OR status LIKE CONCAT('%', #{dto.keyword}, '%')
+                )
+            </if>
+        </where>
+    </select>
+
+    <select id="countTodayLogs" resultType="int">
+        SELECT COUNT(*) FROM cctv_status_log
+        WHERE DATE(last_checked_at) = CURDATE()
+    </select>
+
+    <select id="countLogsByStatus" resultType="int" parameterType="string">
+        SELECT COUNT(*) FROM cctv_status_log
+        WHERE status = #{status}
+    </select>
+
+</mapper>

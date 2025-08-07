@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.OrderMapper">
+
+    <select id="findAmountByMerchantUid" parameterType="string" resultType="int">
+        SELECT total_fee
+        FROM orders
+        WHERE merchant_uid = #{merchantUid}
+    </select>
+
+
+    <insert id="insertOrder">
+        INSERT INTO orders (merchant_uid, total_fee)
+        VALUES (#{merchantUid}, #{totalFee})
+    </insert>
+
+</mapper>

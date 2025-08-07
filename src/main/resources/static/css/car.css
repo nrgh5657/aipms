@@ -1,0 +1,324 @@
+/* 공통 변수 정의 */
+:root {
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+    --color-primary: #4299e1;
+    --color-primary-dark: #3182ce;
+    --color-accent: #48bb78;
+    --color-text: #2d3748;
+    --color-muted: #718096;
+    --color-bg: #f8fafc;
+    --color-danger: #ef4444;
+    --color-danger-dark: #dc2626;
+    --color-border: #e2e8f0;
+    --color-success: #48bb78;
+    --color-warning: #ed8936;
+    --color-error: #e53e3e;
+    --radius: 12px;
+    --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --input-padding: 0.75rem;
+    --input-radius: 8px;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.8rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.3rem;
+    --font-size-xl: 1.5rem;
+}
+
+/* 기본 레이아웃 설정 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--color-bg);
+    min-height: 100vh;
+    line-height: 1.6;
+    color: var(--color-text);
+}
+
+.container,
+main,
+.password-form-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+}
+
+/* 카드 및 입력 박스 통합 */
+.card,
+.info-card {
+    background: white;
+    padding: var(--spacing-lg);
+    border-radius: var(--radius);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+    max-width: 1200px;
+    margin: 0 auto var(--spacing-lg);
+}
+
+.card:hover,
+.info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-primary);
+}
+
+.info-card h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text);
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: var(--spacing-xs);
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+/* 버튼 공통 스타일 */
+button,
+.btn,
+.save-btn,
+.cancel-btn,
+.edit-btn,
+.delete-btn {
+    padding: var(--input-padding) var(--spacing-md);
+    border-radius: var(--input-radius);
+    border: none;
+    font-family: var(--font-main);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    min-height: 44px;
+}
+
+/* 기본 버튼 (Primary) */
+.btn,
+.save-btn {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.btn:hover,
+.save-btn:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+}
+
+/* 취소 버튼 */
+.cancel-btn {
+    background-color: var(--color-muted);
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: #5a6672;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(113, 128, 150, 0.3);
+}
+
+/* 수정 버튼 */
+.edit-btn {
+    background-color: var(--color-success);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    min-height: 36px;
+}
+
+.edit-btn:hover {
+    background-color: #38a169;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(72, 187, 120, 0.3);
+}
+
+.edit-btn:active {
+    transform: translateY(0px);
+    box-shadow: 0 1px 3px rgba(72, 187, 120, 0.4);
+}
+
+/* 삭제 버튼 */
+.delete-btn {
+    background-color: var(--color-danger);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    min-height: 36px;
+}
+
+.delete-btn:hover {
+    background-color: var(--color-danger-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(239, 68, 68, 0.3);
+}
+
+.delete-btn:active {
+    transform: translateY(0px);
+    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.4);
+}
+
+/* 버튼 그룹 스타일 */
+.button-group {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: flex-end;
+    margin-top: var(--spacing-sm);
+}
+
+/* 비활성화된 버튼 */
+button:disabled,
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 600px;
+    padding: var(--spacing-lg);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    animation: modalSlideIn 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.modal-header h3 {
+    font-size: var(--font-size-lg);
+    color: var(--color-text);
+    margin: 0;
+}
+
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -60%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.form-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    margin-top: var(--spacing-lg);
+}
+
+.form-actions .cancel-btn,
+.form-actions .save-btn {
+    flex: 1;
+    min-width: 150px;
+    max-width: 150px;
+    text-align: center;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .password-form-container,
+    .container {
+        padding: var(--spacing-sm);
+    }
+
+    .info-card {
+        padding: var(--spacing-md);
+    }
+
+    .info-card h3 {
+        font-size: var(--font-size-base);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions button {
+        width: 100%;
+        max-width: none;
+    }
+
+    .action-buttons {
+        justify-content: center;
+    }
+
+    .button-group {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .save-btn {
+        padding: var(--input-padding) var(--spacing-md);
+        font-size: var(--font-size-base);
+    }
+
+    .edit-btn,
+    .delete-btn {
+        padding: var(--spacing-xs);
+        min-width: 40px;
+        font-size: var(--font-size-xs);
+    }
+}

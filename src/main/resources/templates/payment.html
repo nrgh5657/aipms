@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트파킹 - 결제 서비스</title>
+  <link rel="stylesheet" href="/css/customer-style.css">
+  <script th:inline="javascript">
+    const serverUserData = /*[(${userDataJson})]*/ null;
+  </script>
+</head>
+<body>
+<header>
+  <div class="top-bar">
+    <div class="logo">
+      <a th:href="@{/}" >
+        <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img">
+      </a>
+    </div>
+
+    <div class="user-info">
+      <span class="welcome">안녕하세요, <strong id="user-name" th:text="${myInfo.memberInfo.name}">사용자</strong>님!</span>
+      <span class="user-grade" id="membership-grade">
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'VIP'}">💎 VIP</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Gold'}">🥇 Gold</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Silver'}">🥈 Silver</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Bronze'}">🥉 Bronze</span>
+                <span th:if="${myInfo.membershipInfo == null || myInfo.membershipInfo.membershipGrade == null}">일반회원</span>
+            </span>
+      <form id="logoutForm" th:action="@{/logout}" method="post" th:csrf="true">
+        <a href="/logout" class="logout-btn">로그아웃</a>
+      </form>
+    </div>
+  </div>
+  <nav class="main-menu">
+    <ul>
+      <li><a th:href="@{/reservation}">🅿️ 주차 예약</a></li>
+      <li><a th:href="@{/payment}">💳 요금 결제</a></li>
+      <li><a th:href="@{/my-records}">📊 이용 내역</a></li>
+      <li><a th:href="@{/my-info}">⚙️ 내 정보</a></li>
+      <li><a th:href="@{/support}">🎧 고객지원</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <section class="page-header">
+    <h2>결제 서비스</h2>
+    <p>다양한 결제 방법으로 편리하게 이용하세요!</p>
+  </section>
+
+  <div class="payment-container">
+    <!-- 결제 서비스 옵션 -->
+    <section class="payment-services">
+      <h3>결제 서비스 선택</h3>
+      <div class="service-grid">
+        <div class="service-card">
+          <div class="service-icon">🚗</div>
+          <h4>현재 주차 결제</h4>
+          <p>지금 주차중인 차량의 요금을 결제합니다</p>
+          <button class="service-btn" data-action="current-parking">현재 주차 결제</button>
+
+        </div>
+
+        <div class="service-card">
+          <div class="service-icon">🎫</div>
+          <h4>월주차 결제</h4>
+          <p>월/년 정기 주차권을 구매하여 할인 혜택을 받으세요</p>
+          <button class="service-btn" id="subscribe-btn" >정기권 구매</button>
+        </div>
+
+        <div class="service-card">
+          <div class="service-icon">🅿️</div>
+          <h4>일주차 결제</h4>
+          <p>예약한 일주차 요금을 여기서 결제하세요</p>
+          <button class="service-btn" id="reservationPayBtn">예약 결제</button>
+        </div>
+
+        <div class="service-card">
+          <div class="service-icon">⚡</div>
+          <h4>빠른 결제</h4>
+          <p>QR코드로 빠르게 결제하세요</p>
+          <button class="service-btn" data-action="quickPay">QR 결제</button>
+        </div>
+
+        <div class="service-card">
+          <div class="service-icon">💳</div>
+          <h4>정기권 자동결제</h4>
+          <p>정기권 자동결제(TEST)</p>
+          <button class="service-btn"  id="trigger-auto-pay-btn">정기권 자동 결제</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 내 포인트 & 잔액 -->
+    <section class="balance-info">
+      <h3>내 계정 정보</h3>
+      <div class="balance-grid">
+        <div class="balance-card">
+          <div class="balance-label">적립 포인트</div>
+          <div class="balance-amount point">2,450P</div>
+          <small>다음달 소멸 예정: 450P</small>
+        </div>
+        <div class="balance-card">
+          <div class="balance-label">선불 잔액</div>
+          <div class="balance-amount prepaid">₩15,000</div>
+          <small>충전일: 2025-06-20</small>
+        </div>
+        <div class="balance-card">
+          <div class="balance-label">이번달 사용액</div>
+          <div class="balance-amount usage">₩45,500</div>
+          <small>지난달 대비 15% 절약</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- 쿠폰 선택 섹션 -->
+    <section class="coupon-section">
+      <h3>쿠폰 사용</h3>
+
+      <!-- 보유 쿠폰 목록 -->
+      <div class="coupon-list">
+        <h4>보유 쿠폰</h4>
+        <div class="coupon-items">
+          <div class="coupon-item" data-coupon="WELCOME20">
+            <div class="coupon-info">
+              <div class="coupon-badge new">NEW</div>
+              <div class="coupon-details">
+                <h5>신규 가입 축하 쿠폰</h5>
+                <p>20% 할인 (최대 5,000원)</p>
+                <small>유효기간: 2025-08-31까지</small>
+              </div>
+            </div>
+            <button class="coupon-use-btn" onclick="applyCoupon('WELCOME20', 0.2, 5000)">사용</button>
+          </div>
+
+          <div class="coupon-item" data-coupon="MONTH10">
+            <div class="coupon-info">
+              <div class="coupon-details">
+                <h5>월간 정기 할인 쿠폰</h5>
+                <p>10% 할인 (최대 3,000원)</p>
+                <small>유효기간: 2025-07-31까지</small>
+              </div>
+            </div>
+            <button class="coupon-use-btn" onclick="applyCoupon('MONTH10', 0.1, 3000)">사용</button>
+          </div>
+
+          <div class="coupon-item" data-coupon="SUMMER15">
+            <div class="coupon-info">
+              <div class="coupon-details">
+                <h5>여름 이벤트 쿠폰</h5>
+                <p>15% 할인 (최대 4,000원)</p>
+                <small>유효기간: 2025-08-15까지</small>
+              </div>
+            </div>
+            <button class="coupon-use-btn" onclick="applyCoupon('SUMMER15', 0.15, 4000)">사용</button>
+          </div>
+
+          <div class="coupon-item used" data-coupon="VIP5">
+            <div class="coupon-info">
+              <div class="coupon-badge used">사용완료</div>
+              <div class="coupon-details">
+                <h5>VIP 회원 쿠폰</h5>
+                <p>5% 할인 (최대 2,000원)</p>
+                <small>사용일: 2025-06-25</small>
+              </div>
+            </div>
+            <button class="coupon-use-btn" disabled>사용완료</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 쿠폰 코드 입력 -->
+      <div class="coupon-input-section">
+        <h4>쿠폰 코드 입력</h4>
+        <div class="coupon-input-form">
+          <input type="text" id="coupon-code" placeholder="쿠폰 코드를 입력하세요" maxlength="20">
+          <button class="coupon-apply-btn" onclick="applyCouponCode()">적용</button>
+        </div>
+        <p class="coupon-guide">
+          💡 쿠폰 코드는 대소문자를 구분합니다. 정확히 입력해주세요.
+        </p>
+      </div>
+
+      <!-- 적용된 쿠폰 -->
+      <div class="applied-coupon" id="applied-coupon" style="display: none;">
+        <div class="applied-coupon-info">
+          <div class="applied-icon">✅</div>
+          <div class="applied-details">
+            <strong id="applied-coupon-name">적용된 쿠폰</strong>
+            <p id="applied-coupon-benefit">할인 혜택</p>
+          </div>
+          <div class="applied-discount">
+            <span id="applied-discount-amount">-₩0</span>
+            <button class="remove-coupon-btn" onclick="removeCoupon()">✕</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 할인 혜택 -->
+    <section class="discount-benefits">
+      <h3>할인 혜택</h3>
+      <div class="benefit-list">
+        <div class="benefit-item">
+          <div class="benefit-icon">🌟</div>
+          <div class="benefit-info">
+            <h4>골드 멤버십</h4>
+            <p>모든 주차 요금 5% 할인</p>
+          </div>
+          <span class="benefit-status active">적용중</span>
+        </div>
+
+        <div class="benefit-item">
+          <div class="benefit-icon">🎫</div>
+          <div class="benefit-info">
+            <h4>월 정기권</h4>
+            <p>B구역 무제한 이용 가능</p>
+          </div>
+          <span class="benefit-status active">2025-07-31까지</span>
+        </div>
+
+        <div class="benefit-item">
+          <div class="benefit-icon">🎁</div>
+          <div class="benefit-info">
+            <h4>신규 가입 혜택</h4>
+            <p>첫 결제 시 추가 3% 할인</p>
+          </div>
+          <span class="benefit-status available">사용가능</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 등록된 결제방법 -->
+    <section class="payment-method">
+      <h3>등록된 결제 방법</h3>
+      <div class="registered-methods">
+        <div class="method-item">
+          <div class="method-info">
+            <span class="method-icon">💳</span>
+            <div class="method-details">
+              <strong>신한카드 (*1234)</strong>
+              <small>주 결제수단</small>
+            </div>
+          </div>
+          <button class="method-action">수정</button>
+        </div>
+
+        <div class="method-item">
+          <div class="method-info">
+            <span class="method-icon">🏦</span>
+            <div class="method-details">
+              <strong>신한은행 (*5678)</strong>
+              <small>자동이체 설정</small>
+            </div>
+          </div>
+          <button class="method-action">수정</button>
+        </div>
+
+        <div class="method-item">
+          <div class="method-info">
+            <span class="method-icon">💛</span>
+            <div class="method-details">
+              <strong>카카오페이</strong>
+              <small>간편결제</small>
+            </div>
+          </div>
+          <button class="method-action">수정</button>
+        </div>
+      </div>
+
+      <button class="add-method-btn" onclick="addPaymentMethod()">+ 새 결제수단 추가</button>
+    </section>
+
+    <!-- 자동결제 설정 -->
+    <section class="auto-payment">
+      <h3>자동결제 설정</h3>
+      <div class="auto-payment-options">
+        <label class="auto-option">
+          <input type="checkbox" id="auto-pay" checked>
+          <span class="checkmark"></span>
+          <div class="auto-details">
+            <strong>자동결제 활성화</strong>
+            <p>출차 시 자동으로 결제되어 편리합니다</p>
+          </div>
+        </label>
+
+        <div class="auto-settings" id="auto-settings">
+          <select class="auto-method">
+            <option value="card" selected>신한카드 (*1234)</option>
+            <option value="account">신한은행 (*5678)</option>
+            <option value="kakaopay">카카오페이</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- 최근 결제내역 -->
+    <section class="recent-payments">
+      <h3>최근 결제내역</h3>
+      <div class="payment-history">
+        <div class="payment-item">
+          <div class="payment-date">
+            <span class="date">07/01</span>
+            <span class="time">17:32</span>
+          </div>
+          <div class="payment-details">
+            <span>A-08번 주차요금</span>
+            <span class="payment-method-used">신한카드</span>
+          </div>
+          <div class="payment-amount">
+            <span class="amount">₩15,000</span>
+            <span class="payment-status completed">완료</span>
+          </div>
+        </div>
+
+        <div class="payment-item">
+          <div class="payment-date">
+            <span class="date">06/30</span>
+            <span class="time">15:47</span>
+          </div>
+          <div class="payment-details">
+            <span>B-12번 주차요금</span>
+            <span class="payment-method-used">카카오페이</span>
+          </div>
+          <div class="payment-amount">
+            <span class="amount">₩4,500</span>
+            <span class="payment-status completed">완료</span>
+          </div>
+        </div>
+
+        <div class="payment-item">
+          <div class="payment-date">
+            <span class="date">06/28</span>
+            <span class="time">17:05</span>
+          </div>
+          <div class="payment-details">
+            <span>C-05번 주차요금</span>
+            <span class="payment-method-used">자동결제</span>
+          </div>
+          <div class="payment-amount">
+            <span class="amount">₩4,000</span>
+            <span class="payment-status completed">완료</span>
+          </div>
+        </div>
+
+        <div class="payment-item">
+          <div class="payment-date">
+            <span class="date">06/20</span>
+            <span class="time">09:15</span>
+          </div>
+          <div class="payment-details">
+            <span>월 정기주차권</span>
+            <span class="payment-method-used">신한카드</span>
+          </div>
+          <div class="payment-amount">
+            <span class="amount">₩150,000</span>
+            <span class="payment-status completed">완료</span>
+          </div>
+        </div>
+      </div>
+      <a href="my-records.html" class="view-all-btn">전체 결제내역 보기 →</a>
+    </section>
+  </div>
+</main>
+
+<div id="paymentModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%, -30%); background:#fff; padding:20px; box-shadow:0 0 10px rgba(0,0,0,0.3); z-index:1000;">
+  <p id="carNumberField" style="margin-bottom: 5px;"></p>
+  <p id="extraFeeText"></p>
+  <button id="confirmPaymentBtn">결제하기</button>
+</div>
+
+<div id="reservationModal" class="reservation-modal" style="display:none;">
+  <div class="reservation-modal-content" onclick="event.stopPropagation();">
+    <h3>예약 목록</h3>
+    <div id="reservationList"></div>
+    <button class="close-btn" onclick="closeReservationModal()">닫기</button>
+  </div>
+</div>
+
+<div id="monthlyReservationModal" class="reservation-modal" style="display:none;">
+  <div class="reservation-modal-content" onclick="event.stopPropagation();">
+    <h3>월주차 예약 목록</h3>
+    <div id="monthlyReservationList"></div>
+    <button class="close-btn" onclick="closeMonthlyReservationModal()">닫기</button>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
+</footer>
+
+<!-- 공통 라이브러리 먼저 로드 -->
+<script src="/common/utils.js"></script>
+<script src="/common/api.js"></script>
+<script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+<script src="/js/payment.js"></script>
+<script src="/js/currentParkingPay.js"></script>
+<script src="/js/dailyPay.js"></script>
+<script src="/js/quickPay.js"></script>
+<script src="/js/monthlyPay.js"></script>
+<script src="/js/exit.js"></script>
+</body>
+
+
+</html>
+

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>번호판 업로드</title>
+</head>
+<body>
+<h2>🚗 차량 사진 업로드</h2>
+
+<form method="post" action="/detect" enctype="multipart/form-data">
+    <input type="file" name="image" required>
+    <button type="submit">번호판 인식</button>
+</form>
+</body>
+</html>

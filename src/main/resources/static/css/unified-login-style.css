@@ -1,0 +1,752 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+  min-height: 100vh;
+  color: #333;
+}
+
+/* ===== 로그인 컨테이너 ===== */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== 헤더 ===== */
+.login-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+}
+
+/* ===== 로고 스타일 (이미지 파일용) ===== */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-img {
+  height: 80px;          /* 로고 높이 조정 */
+  width: auto;           /* 비율 유지 */
+  max-width: 120px;       /* 최대 너비 제한 */
+  object-fit: contain;   /* 이미지 비율 유지 */
+  transition: all 0.3s ease;
+  cursor: pointer;
+  
+   
+}
+
+.logo-img:hover {
+  transform: scale(1.05);
+  filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(255, 255, 255, 0.3));
+}
+
+/* 로고 이미지 로드 실패 시 대체 스타일 */
+.logo-img::before {
+  content: attr(alt);
+  display: block;
+  font-size: 14px;
+  color: white;
+  text-align: center;
+}
+
+/* === 로고 크기별 스타일 옵션 === */
+/* 
+큰 로고 (높이 60px):
+.logo-img { height: 60px; max-width: 80px; }
+
+중간 로고 (높이 40px) - 현재 기본값:
+.logo-img { height: 40px; max-width: 50px; }
+
+작은 로고 (높이 24px):
+.logo-img { height: 24px; max-width: 30px; }
+*/
+
+.logo-text h1 {
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.logo-text p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+}
+
+.back-link a {
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.back-link a:hover {
+  opacity: 1;
+}
+
+/* ===== 메인 콘텐츠 ===== */
+.content-wrapper {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  padding: 20px 40px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ===== 로그인 카드 ===== */
+.login-card {
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+}
+
+.login-title h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.login-title p {
+  color: #666;
+  margin-bottom: 32px;
+  font-size: 14px;
+}
+
+/* ===== 에러/성공 메시지 ===== */
+.error-message,
+.success-message {
+  display: none; /* 기본적으로 숨김 */
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  animation: slideIn 0.3s ease;
+}
+
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.success-message {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 폼 스타일 ===== */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.label-icon {
+  font-size: 16px;
+}
+
+/* 입력 필드 공통 스타일 */
+#username, #password {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  background: white;
+  outline: none;
+}
+
+#username:focus, #password:focus {
+  border-color: #4A90E2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+/* 비밀번호 래퍼 */
+.password-wrapper {
+  position: relative;
+}
+
+#password {
+  padding-right: 48px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.password-toggle:hover {
+  color: #4A90E2;
+}
+
+/* 사용자 타입 인디케이터 */
+.user-type-indicator {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.2s ease;
+}
+
+.user-type-indicator.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.user-type-indicator.customer {
+  background: rgba(74, 144, 226, 0.1);
+  color: #4A90E2;
+}
+
+.user-type-indicator.admin {
+  background: rgba(239, 68, 68, 0.1);
+  color: #DC2626;
+}
+
+/* 폼 옵션 */
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+}
+
+#remember-me {
+  display: none;
+}
+
+.checkmark {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #E5E7EB;
+  border-radius: 4px;
+  margin-right: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+#remember-me:checked + .checkmark {
+  background: #4A90E2;
+  border-color: #4A90E2;
+}
+
+#remember-me:checked + .checkmark::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.forgot-link {
+  color: #4A90E2;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.forgot-link:hover {
+  color: #357ABD;
+}
+
+/* 로그인 버튼 */
+.login-btn {
+  width: 100%;
+  padding: 16px;
+  background: #4A90E2;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.login-btn:hover {
+  background: #357ABD;
+  transform: translateY(-1px);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 로딩 상태 */
+.btn-loading {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-loading::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== 소셜 로그인 ===== */
+.social-login {
+  text-align: center;
+}
+
+.divider {
+  position: relative;
+  margin: 24px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #E5E7EB;
+}
+
+.divider span {
+  background: white;
+  padding: 0 16px;
+}
+
+.social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: #333;
+}
+
+.social-btn:hover {
+  border-color: #4A90E2;
+  transform: translateY(-1px);
+}
+
+.social-btn.kakao {
+  border-color: #FEE500;
+  background: #FEE500;
+  color: #000;
+}
+
+.social-btn.naver {
+  border-color: #03C75A;
+  background: #03C75A;
+  color: white;
+}
+
+.social-icon {
+  font-size: 20px;
+}
+
+/* ===== 회원가입 섹션 ===== */
+.signup-section {
+  text-align: center;
+  padding-top: 24px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.signup-section p {
+  margin-bottom: 16px;
+  color: #666;
+  font-size: 14px;
+}
+
+.signup-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.signup-link {
+  flex: 1;
+  padding: 12px 16px;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.signup-link.customer {
+  background: #10B981;
+  color: white;
+}
+
+.signup-link.customer:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.signup-link.admin {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.signup-link.admin:hover {
+  background: #E5E7EB;
+  transform: translateY(-1px);
+}
+
+/* ===== 서비스 미리보기 ===== */
+.service-preview {
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+}
+
+.service-preview h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  color: #333;
+  text-align: center;
+}
+
+/* 고객 서비스 미리보기 */
+.features {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background: #F8FAFC;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.feature:hover {
+  background: #EEF2FF;
+  transform: translateY(-2px);
+}
+
+.feature-icon {
+  font-size: 32px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.feature-text h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.feature-text p {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* 관리자 서비스 미리보기 */
+.admin-features {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.admin-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #FEF2F2;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.admin-feature:hover {
+  background: #FECACA;
+  transform: translateY(-1px);
+}
+
+.admin-feature .feature-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 8px;
+}
+
+.admin-feature .feature-text h4 {
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.admin-feature .feature-text p {
+  font-size: 12px;
+}
+
+/* 시스템 상태 */
+.system-status {
+  background: #F8FAFC;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+}
+
+.system-status h4 {
+  margin-bottom: 16px;
+  color: #333;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.status-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.online {
+  background: #10B981;
+}
+
+.status-dot.warning {
+  background: #F59E0B;
+}
+
+.status-text {
+  margin-left: auto;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* ===== 사용자 타입별 스타일 ===== */
+.login-card.customer-mode {
+  border-left: 4px solid #4A90E2;
+}
+
+.login-card.admin-mode {
+  border-left: 4px solid #DC2626;
+}
+
+.service-preview.customer-mode {
+  border-left: 4px solid #4A90E2;
+}
+
+.service-preview.admin-mode {
+  border-left: 4px solid #DC2626;
+}
+
+#username.customer-mode {
+  border-color: #4A90E2;
+}
+
+#username.admin-mode {
+  border-color: #DC2626;
+}
+
+.login-btn.admin-mode {
+  background: #DC2626;
+}
+
+.login-btn.admin-mode:hover {
+  background: #B91C1C;
+}
+
+/* ===== 토스트 메시지 ===== */
+.toast-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #4A90E2;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10000;
+  font-size: 14px;
+  animation: slideInFromRight 0.3s ease-out;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+}
+
+@keyframes slideInFromRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutToRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 1024px) {
+  .content-wrapper {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 20px;
+  }
+  
+  .login-header {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-card,
+  .service-preview {
+    padding: 24px;
+  }
+  
+  .signup-buttons {
+    flex-direction: column;
+  }
+  
+  .form-options {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .logo-text h1 {
+    font-size: 20px;
+  }
+  
+  .logo-img {
+    height: 32px;
+    max-width: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-wrapper {
+    padding: 16px;
+  }
+  
+  .login-card,
+  .service-preview {
+    padding: 20px;
+  }
+  
+  .login-title h2 {
+    font-size: 20px;
+  }
+  
+  .service-preview h3 {
+    font-size: 18px;
+  }
+  
+  .logo-img {
+    height: 28px;
+    max-width: 35px;
+  }
+}

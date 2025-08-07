@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.ParkingLogMapper">
+
+    <!-- INSERT: 차량 로그 저장 -->
+    <insert id="insertLog" parameterType="com.aipms.domain.ParkingLog">
+        INSERT INTO parking_log (
+            car_number, member_id, entry_time, exit_time, camera_id,
+            is_paid, paid_at, payment_method, fee, parking_type,
+            image_path, created_at
+        )
+        VALUES (
+                   #{carNumber}, #{memberId}, #{entryTime}, #{exitTime}, #{cameraId},
+                   #{isPaid}, #{paidAt}, #{paymentMethod}, #{fee}, #{parkingType},
+                   #{imagePath}, #{createdAt}
+               )
+    </insert>
+    <!-- SELECT: 차량 로그 + 신청자 이름 포함 -->
+    <!-- ResultMap 정의 -->
+    <resultMap id="ParkingLogWithMemberMap" type="com.aipms.dto.ParkingLogWithMemberDto">
+        <id property="id" column="id" />
+        <result property="carNumber" column="car_number" />
+        <result property="memberId" column="member_id" />
+        <result property="entryTime" column="entry_time" />
+        <result property="exitTime" column="exit_time" />
+        <result property="cameraId" column="camera_id" />
+        <result property="createdAt" column="created_at" />
+        <result property="memberName" column="member_name"/> <!-- ✅ 이거 추가 -->
+
+        <!-- 회원 정보 추가 -->
+        <result property="subscription" column="subscription" />
+    </resultMap>
+
+    <!-- 전체 주차 로그 + 회원 정보 조회 -->
+    <select id="selectPagedLogs" resultMap="ParkingLogWithMemberMap">
+        SELECT
+            pl.*,
+            m.subscription,
+            m.name AS member_name
+        FROM parking_log pl
+                 LEFT JOIN member m ON pl.member_id = m.member_id
+        ORDER BY pl.entry_time DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countAllLogs" resultType="int">
+        SELECT COUNT(*) FROM parking_log
+    </select>
+
+    <select id="selectById" resultType="com.aipms.domain.ParkingLog">
+        SELECT * FROM parking_log WHERE id = #{entryId}
+    </select>
+
+    <select id="findLatestUnexitedLog" resultType="com.aipms.domain.ParkingLog" parameterType="string">
+        SELECT *
+        FROM parking_log
+        WHERE car_number = #{carNumber}
+          AND exit_time IS NULL
+        ORDER BY entry_time DESC
+            LIMIT 1
+    </select>
+
+    <update id="updatePaymentInfo" parameterType="com.aipms.domain.ParkingLog">
+        UPDATE parking_log
+        SET
+            is_paid = TRUE,
+            paid_at = #{paidAt},
+            payment_method = #{paymentMethod},
+            fee = #{fee},
+            exit_time = #{exitTime}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updatePaymentId">
+        UPDATE parking_log
+        SET payment_id = #{paymentId}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateExitTime" parameterType="com.aipms.domain.ParkingLog">
+        UPDATE parking_log
+        SET exit_time = #{exitTime}
+        WHERE id = #{id}
+    </update>
+
+    <select id="findLatestUnpaidByMemberId" parameterType="long" resultType="com.aipms.domain.ParkingLog">
+        SELECT *
+        FROM parking_log
+        WHERE member_id = #{memberId}
+          AND exit_time IS NULL
+        ORDER BY entry_time DESC
+            LIMIT 1
+    </select>
+
+    <update id="updatePaymentInfoOnly">
+        UPDATE parking_log
+        SET
+            payment_id = #{paymentId},
+            is_paid = #{isPaid},
+            paid_at = #{paidAt},
+            payment_method = #{paymentMethod},
+            fee = #{fee}
+        WHERE id = #{entryId}
+    </update>
+
+    <update id="updatePaymentAndExitInfo" parameterType="map">
+        UPDATE parking_log
+        SET
+            payment_id = #{paymentId},
+            exit_time = #{exitTime},
+            is_paid = #{isPaid},
+            paid_at = #{paidAt},
+            payment_method = #{paymentMethod},
+            fee = #{fee}
+        WHERE id = #{entryId}
+    </update>
+
+    <select id="countCurrentlyParkedCars" resultType="int">
+        SELECT COUNT(*)
+        FROM parking_log
+        WHERE exit_time IS NULL
+    </select>
+
+    <select id="selectFilteredLogs" resultType="com.aipms.dto.ParkingLogWithMemberDto">
+        SELECT
+        pl.id,
+        pl.car_number,
+        pl.entry_time,
+        pl.exit_time,
+        m.name AS member_name,
+        m.subscription AS subscription,
+        IFNULL(m.member_id, 0) AS member_id
+        FROM parking_log pl
+        LEFT JOIN member m ON pl.member_id = m.member_id
+        WHERE 1=1
+        <if test="carNumber != null and carNumber != ''">
+            AND pl.car_number LIKE CONCAT('%', #{carNumber}, '%')
+        </if>
+        <if test="requester != null and requester != ''">
+            AND m.name LIKE CONCAT('%', #{requester}, '%')
+        </if>
+        <choose>
+            <when test="subscription == '월주차'">
+                AND m.subscription = '월주차'
+            </when>
+            <when test="subscription == '일주차'">
+                AND EXISTS (
+                SELECT 1 FROM reservation r
+                WHERE r.member_id = m.member_id
+                AND DATE(pl.entry_time) BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+                )
+            </when>
+            <when test="subscription == '일반'">
+                AND (m.subscription IS NULL OR m.subscription = '')
+                AND NOT EXISTS (
+                SELECT 1 FROM reservation r
+                WHERE r.member_id = m.member_id
+                AND DATE(pl.entry_time) BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+                )
+            </when>
+        </choose>
+        ORDER BY pl.entry_time DESC
+        LIMIT #{size} OFFSET ${(page - 1) * size}
+    </select>
+
+    <select id="countFilteredLogs" resultType="int">
+        SELECT COUNT(*)
+        FROM parking_log pl
+        LEFT JOIN member m ON pl.member_id = m.member_id
+        WHERE 1=1
+        <if test="carNumber != null and carNumber != ''">
+            AND pl.car_number LIKE CONCAT('%', #{carNumber}, '%')
+        </if>
+        <if test="requester != null and requester != ''">
+            AND m.name LIKE CONCAT('%', #{requester}, '%')
+        </if>
+        <choose>
+            <when test="subscription == '월주차'">
+                AND m.subscription = '월주차'
+            </when>
+            <when test="subscription == '일주차'">
+                AND EXISTS (
+                SELECT 1 FROM reservation r
+                WHERE r.member_id = m.member_id
+                AND DATE(pl.entry_time) BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+                )
+            </when>
+            <when test="subscription == '일반'">
+                AND (m.subscription IS NULL OR m.subscription = '')
+                AND NOT EXISTS (
+                SELECT 1 FROM reservation r
+                WHERE r.member_id = m.member_id
+                AND DATE(pl.entry_time) BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+                )
+            </when>
+        </choose>
+    </select>
+
+    <select id="getParkedCarCountByDateList" resultType="map">
+        SELECT
+            DATE(p.entry_time) AS `date`,
+            COUNT(*) AS `count`
+        FROM parking_log p
+        WHERE p.exit_time IS NULL
+          AND p.parking_type != '월주차'
+          AND DATE(p.entry_time) <![CDATA[ BETWEEN #{startDate} AND #{endDate} ]]>
+    GROUP BY DATE(p.entry_time)
+    </select>
+
+    <select id="countTodayEntries" resultType="int">
+        SELECT COUNT(*) FROM parking_log
+        WHERE DATE(entry_time) = CURRENT_DATE
+    </select>
+
+    <select id="countTodayExits" resultType="int">
+        SELECT COUNT(*) FROM parking_log
+        WHERE DATE(exit_time) = CURRENT_DATE
+    </select>
+
+    <select id="countCurrentParked" resultType="int">
+        SELECT COUNT(*) FROM parking_log
+        WHERE exit_time IS NULL
+    </select>
+
+    <select id="findLogsBetween" resultType="com.aipms.domain.ParkingLog">
+        SELECT
+            id,
+            car_number,
+            member_id,
+            entry_time,
+            exit_time,
+            fee,
+            parking_type
+        FROM parking_log
+        WHERE entry_time BETWEEN #{start} AND #{end}
+    </select>
+
+    <select id="getAverageEntryByWeekday" resultType="com.aipms.dto.DayOfWeekEntryStatDto">
+        SELECT
+            DAYOFWEEK(entry_time) AS weekday,
+            COUNT(*) / COUNT(DISTINCT DATE(entry_time)) AS averageCount
+        FROM parking_log
+        WHERE MONTH(entry_time) = #{month}
+          AND YEAR(entry_time) = YEAR(CURDATE())
+        GROUP BY DAYOFWEEK(entry_time)
+        ORDER BY weekday
+    </select>
+
+    <select id="getEntryCountThisMonth" resultType="int">
+        SELECT COUNT(*)
+        FROM parking_log
+        WHERE MONTH(entry_time) = MONTH(NOW())
+          AND YEAR(entry_time) = YEAR(NOW())
+    </select>
+
+    <select id="findLatestUnpaidLogByCarNumber" resultType="com.aipms.domain.ParkingLog">
+        SELECT *
+        FROM parking_log
+        WHERE car_number = #{carNumber}
+          AND is_paid = false
+        ORDER BY entry_time DESC
+            LIMIT 1
+    </select>
+
+
+</mapper>

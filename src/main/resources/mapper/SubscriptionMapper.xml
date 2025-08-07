@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.SubscriptionMapper">
+
+<!--    <update id="updateSubscription" parameterType="com.aipms.domain.Subscription">-->
+<!--        UPDATE subscription-->
+<!--        SET customer_uid = #{customerUid},-->
+<!--            start_date = NOW(),-->
+<!--            end_date = DATE_ADD(NOW(), INTERVAL 1 MONTH),-->
+<!--            active = #{active}-->
+<!--        WHERE member_id = #{memberId}-->
+<!--    </update>-->
+
+    <update id="updateSubscription" parameterType="Subscription">
+        UPDATE subscription
+        SET customer_uid = #{customerUid},
+            start_date = #{startDate},
+            end_date = #{endDate},
+            active = #{active}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <select id="findByMemberId" resultType="com.aipms.domain.Subscription">
+        SELECT * FROM subscription WHERE member_id = #{memberId}
+    </select>
+
+    <update id="cancelSubscription">
+        UPDATE subscription SET active = false WHERE subscription_id = #{subscriptionId}
+    </update>
+
+    <select id="findAll" resultType="com.aipms.domain.Subscription">
+        SELECT * FROM subscription
+    </select>
+
+    <select id="existsByMemberId" parameterType="long" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM subscription WHERE member_id = #{memberId}
+    </select>
+
+    <insert id="insertSubscription"
+            parameterType="com.aipms.domain.Subscription"
+            useGeneratedKeys="true"
+            keyProperty="subscriptionId">
+        INSERT INTO subscription (
+            member_id,
+            customer_uid,
+            start_date,
+            end_date,
+            active
+        ) VALUES (
+             #{memberId},
+             #{customerUid},
+             #{startDate},       -- ✅ 서비스에서 지정한 값 사용
+             #{endDate},         -- ✅ 서비스에서 지정한 값 사용
+             #{active}
+                 )
+    </insert>
+
+    <select id="findCustomerUidByMemberId" resultType="string" parameterType="long">
+        SELECT customer_uid
+        FROM subscription
+        WHERE member_id = #{memberId}
+        ORDER BY subscription_id DESC
+            LIMIT 1
+    </select>
+
+    <select id="findActiveByMemberId" resultType="Subscription" parameterType="long">
+        SELECT *
+        FROM subscription
+        WHERE member_id = #{memberId}
+          AND active = 1
+          AND start_date &lt;= NOW()
+          AND end_date &gt;= NOW()
+            LIMIT 1
+    </select>
+
+
+
+    <update id="updateSubscriptionDates" parameterType="map">
+        UPDATE subscription
+        SET start_date = #{startDate},
+            end_date = #{endDate}
+        WHERE member_id = #{memberId}
+          AND active = 1
+    </update>
+
+    <select id="countActiveMonthlySubscriptions" resultType="int">
+        SELECT COUNT(*)
+        FROM subscription
+        WHERE active = 1
+          AND start_date &lt;= NOW()
+          AND end_date &gt;= NOW()
+    </select>
+
+
+    <delete id="deleteByMemberId" parameterType="long">
+        DELETE FROM subscription
+        WHERE member_id = #{memberId}
+    </delete>
+
+
+</mapper>

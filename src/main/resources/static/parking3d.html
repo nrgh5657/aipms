@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>3D 주차장 시뮬레이션</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #74b9ff, #0984e3); }
+        #container { display: flex; flex-direction: column; align-items: center; padding: 2rem; min-height: 100vh; }
+        #title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        #info-panel {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            background: rgba(255,255,255,0.95);
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .info-item {
+            text-align: center;
+        }
+        .info-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2d3436;
+        }
+        .info-label {
+            font-size: 0.9rem;
+            color: #636e72;
+            margin-top: 0.2rem;
+        }
+        .available { color: #00b894; }
+        .occupied { color: #e17055; }
+        #canvas-wrapper {
+            width: 900px;
+            height: 700px;
+            border: 3px solid #2d3436;
+            background: #ddd;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+        }
+        canvas { width: 100%; height: 100%; display: block; }
+        #controls {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+        button {
+            padding: 0.8rem 1.5rem;
+            background: #00b894;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,184,148,0.3);
+        }
+        button:hover {
+            background: #00a085;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,184,148,0.4);
+        }
+        .btn-danger {
+            background: #e17055;
+            box-shadow: 0 4px 12px rgba(225,112,85,0.3);
+        }
+        .btn-danger:hover {
+            background: #d63031;
+            box-shadow: 0 6px 20px rgba(225,112,85,0.4);
+        }
+    </style>
+</head>
+<body>
+<div id="container">
+    <div id="title">🏪 천호 주차장</div>
+
+    <div id="info-panel">
+        <div class="info-item">
+            <div class="info-number" id="total-count">-</div>
+            <div class="info-label">전체구역</div>
+        </div>
+        <div class="info-item">
+            <div class="info-number occupied" id="occupied-count">42</div>
+            <div class="info-label">주차중</div>
+        </div>
+        <div class="info-item">
+            <div class="info-number available" id="available-count">18</div>
+            <div class="info-label">이용가능</div>
+        </div>
+        <div class="info-item">
+            <div class="info-number" id="occupancy-rate">70%</div>
+            <div class="info-label">이용률</div>
+        </div>
+    </div>
+
+    <div id="canvas-wrapper">
+        <canvas id="parking-canvas"></canvas>
+    </div>
+
+    <div id="controls">
+        <button onclick="toggleView()">📷 시점변경</button>
+        <button onclick="addRandomCar()">🚗 입차</button>
+        <button class="btn-danger" onclick="removeRandomCar()">🚙 출차</button>
+        <button onclick="resetParking()">🔄 초기화</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    let totalSpaces = 0;
+    let occupiedSpaces = 0;
+
+    const canvas = document.getElementById('parking-canvas');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xa8e6cf);
+
+    const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    // 자연스러운 조명
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(20, 30, 20);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    scene.add(directionalLight);
+
+    // 아스팔트 바닥 (더 현실적인 색상)
+    const floorGeometry = new THREE.PlaneGeometry(100, 80);
+    const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x404040 });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // 마트 건물 (한쪽에만)
+    const mart = new THREE.Mesh(
+        new THREE.BoxGeometry(35, 8, 15),
+        new THREE.MeshLambertMaterial({ color: 0x2980b9 })
+    );
+    mart.position.set(-25, 4, -32);
+    mart.castShadow = true;
+    scene.add(mart);
+
+    // 마트 간판
+    const signGeometry = new THREE.PlaneGeometry(20, 4);
+    const signMaterial = new THREE.MeshBasicMaterial({ color: 0xff6b6b });
+    const sign = new THREE.Mesh(signGeometry, signMaterial);
+    sign.position.set(-25, 10, -24);
+    scene.add(sign);
+
+    async function fetchLiveStatus() {
+        try {
+            const response = await fetch('/api/parking/live-status');
+            const data = await response.json();
+
+            totalSpaces = data.totalSlots-data.subscriptionSlots;
+            const newOccupied = data.occupiedSlots;
+            const prevOccupied = getPreviousOccupiedCount();
+
+            const diff = newOccupied - prevOccupied;
+
+            if (diff > 0) {
+                // 차량 추가
+                for (let i = 0; i < diff; i++) {
+                    addRandomCar();
+                }
+            } else if (diff < 0) {
+                // 차량 제거
+                for (let i = 0; i < Math.abs(diff); i++) {
+                    removeRandomCar();
+                }
+            }
+
+
+            updateUI();
+            saveCurrentParkingToSession(); // 최신 상태 저장
+
+        } catch (error) {
+            console.error('실시간 주차장 정보 가져오기 실패:', error);
+        }
+    }
+
+
+    // 입구/출구 표시
+    function createGate(x, z, text, color) {
+        const gatePost1 = new THREE.Mesh(
+            new THREE.BoxGeometry(0.5, 4, 0.5),
+            new THREE.MeshLambertMaterial({ color: 0xf39c12 })
+        );
+        gatePost1.position.set(x-2, 2, z);
+        scene.add(gatePost1);
+
+        const gatePost2 = new THREE.Mesh(
+            new THREE.BoxGeometry(0.5, 4, 0.5),
+            new THREE.MeshLambertMaterial({ color: 0xf39c12 })
+        );
+        gatePost2.position.set(x+2, 2, z);
+        scene.add(gatePost2);
+
+        const gateSign = new THREE.Mesh(
+            new THREE.PlaneGeometry(4, 1),
+            new THREE.MeshBasicMaterial({ color: color })
+        );
+        gateSign.position.set(x, 3.5, z);
+        scene.add(gateSign);
+    }
+
+    createGate(-15, 35, '입구', 0x27ae60);
+    createGate(15, 35, '출구', 0xe74c3c);
+
+    // 조경 (간단한 화단)
+    function createGarden(x, z) {
+        const garden = new THREE.Mesh(
+            new THREE.CylinderGeometry(3, 3, 0.5),
+            new THREE.MeshLambertMaterial({ color: 0x27ae60 })
+        );
+        garden.position.set(x, 0.25, z);
+        scene.add(garden);
+
+        // 작은 나무
+        const trunk = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.2, 0.3, 2),
+            new THREE.MeshLambertMaterial({ color: 0x8b4513 })
+        );
+        trunk.position.set(x, 1.5, z);
+        scene.add(trunk);
+
+        const leaves = new THREE.Mesh(
+            new THREE.SphereGeometry(1.5, 8, 6),
+            new THREE.MeshLambertMaterial({ color: 0x228b22 })
+        );
+        leaves.position.set(x, 3, z);
+        scene.add(leaves);
+    }
+
+    // 주차장 중앙과 가장자리에 화단
+    createGarden(0, 10);
+    createGarden(-30, 15);
+    createGarden(30, 15);
+
+    // 주차 구역 데이터 (실제 주차장 배치)
+
+    const parkingSlots = [];
+    const cars = [];
+
+    // 일반적인 주차장 차량 색상
+    const carColors = [
+        0xffffff, // 흰색 (가장 많음)
+        0x000000, // 검정색
+        0x808080, // 회색
+        0xc0c0c0, // 은색
+        0x800000, // 적갈색
+        0x000080, // 진한 파랑
+        0x4169e1, // 로열블루
+        0x8b0000, // 진한 빨강
+    ];
+
+    // 현실적인 주차공간 배치 (양쪽으로 나누어진 형태)
+    let slotIndex = 0;
+
+    // 왼쪽 주차구역 (3줄)
+    for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 8; col++) {
+            const x = -35 + col * 5;
+            const z = -15 + row * 6;
+            createParkingSlot(x, z, slotIndex++);
+        }
+    }
+
+    // 오른쪽 주차구역 (3줄)
+    for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 8; col++) {
+            const x = 5 + col * 5;
+            const z = -15 + row * 6;
+            createParkingSlot(x, z, slotIndex++);
+        }
+    }
+
+    // 후면 주차구역 (1줄, 장애인 주차구역 포함)
+    for (let col = 0; col < 12; col++) {
+        const x = -27.5 + col * 5;
+        const z = 20;
+        const isHandicap = col < 2; // 처음 2개는 장애인 주차구역
+        createParkingSlot(x, z, slotIndex++, isHandicap);
+    }
+
+    function createParkingSlot(x, z, index, isHandicap = false) {
+        const slotColor = isHandicap ? 0x3498db : 0xffffff;
+
+        // 주차면 라인
+        const slotGeometry = new THREE.PlaneGeometry(4.5, 2.3);
+        const slotMaterial = new THREE.MeshBasicMaterial({
+            color: slotColor,
+            transparent: true,
+            opacity: 0.7
+        });
+        const slot = new THREE.Mesh(slotGeometry, slotMaterial);
+        slot.rotation.x = -Math.PI / 2;
+        slot.position.set(x, 0.01, z);
+        scene.add(slot);
+
+        // 주차면 테두리 라인
+        const borderPoints = [
+            new THREE.Vector3(-2.2, 0.02, -1.1),
+            new THREE.Vector3(2.2, 0.02, -1.1),
+            new THREE.Vector3(2.2, 0.02, 1.1),
+            new THREE.Vector3(-2.2, 0.02, 1.1),
+            new THREE.Vector3(-2.2, 0.02, -1.1)
+        ];
+        const borderGeometry = new THREE.BufferGeometry().setFromPoints(borderPoints);
+        const borderMaterial = new THREE.LineBasicMaterial({ color: slotColor, linewidth: 2 });
+        const border = new THREE.Line(borderGeometry, borderMaterial);
+        border.position.set(x, 0, z);
+        scene.add(border);
+
+        // 주차번호 (작고 자연스럽게)
+        if (index % 4 === 0) { // 4개마다 하나씩만 번호 표시
+            const canvas2d = document.createElement('canvas');
+            canvas2d.width = 64;
+            canvas2d.height = 32;
+            const ctx = canvas2d.getContext('2d');
+            ctx.fillStyle = slotColor === 0x3498db ? '#3498db' : '#555';
+            ctx.fillRect(0, 0, 64, 32);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${index + 1}`, 32, 20);
+
+            const texture = new THREE.CanvasTexture(canvas2d);
+            const numberPlate = new THREE.Mesh(
+                new THREE.PlaneGeometry(1, 0.5),
+                new THREE.MeshBasicMaterial({ map: texture })
+            );
+            numberPlate.rotation.x = -Math.PI / 2;
+            numberPlate.position.set(x, 0.03, z + 1);
+            scene.add(numberPlate);
+        }
+
+        parkingSlots.push({ x, z, occupied: false, car: null, isHandicap });
+    }
+
+    // 더 현실적인 차량 모델
+    function createCar(x, z, colorIndex = 0) {
+        const carGroup = new THREE.Group();
+        const color = carColors[colorIndex];
+
+        // 메인 차체 (더 자연스러운 비율)
+        const bodyGeometry = new THREE.BoxGeometry(4, 1.2, 1.8);
+        const bodyMaterial = new THREE.MeshLambertMaterial({ color: color });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.set(0, 0.8, 0);
+        body.castShadow = true;
+        carGroup.add(body);
+
+        // 지붕 (살짝 작게)
+        const roofGeometry = new THREE.BoxGeometry(2.5, 0.8, 1.6);
+        const roof = new THREE.Mesh(roofGeometry, bodyMaterial);
+        roof.position.set(-0.2, 1.8, 0);
+        roof.castShadow = true;
+        carGroup.add(roof);
+
+        // 바퀴 (더 현실적인 크기)
+        const wheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.2);
+        const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+
+        const wheelPositions = [
+            [-1.5, 0.3, -0.7], [1.5, 0.3, -0.7],
+            [-1.5, 0.3, 0.7], [1.5, 0.3, 0.7]
+        ];
+
+        wheelPositions.forEach(pos => {
+            const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+            wheel.rotation.z = Math.PI / 2;
+            wheel.position.set(...pos);
+            wheel.castShadow = true;
+            carGroup.add(wheel);
+        });
+
+        // 앞유리 (파란색 반투명)
+        const windshield = new THREE.Mesh(
+            new THREE.PlaneGeometry(2.4, 1.4),
+            new THREE.MeshLambertMaterial({
+                color: 0x87ceeb,
+                transparent: true,
+                opacity: 0.7
+            })
+        );
+        windshield.position.set(1.5, 1.5, 0);
+        windshield.rotation.y = Math.PI / 2;
+        windshield.rotation.z = 0.2;
+        carGroup.add(windshield);
+
+        carGroup.position.set(x, 0, z);
+        return carGroup;
+    }
+
+    function initializeCars() {
+        cars.forEach(car => scene.remove(car));
+        cars.length = 0;
+        parkingSlots.forEach(slot => {
+            slot.occupied = false;
+            slot.car = null;
+        });
+
+        let placedCars = 0;
+        const availableSlots = parkingSlots.filter(slot => !slot.isHandicap);
+
+        while (placedCars < occupiedSpaces && availableSlots.length > 0) {
+            const randomIndex = Math.floor(Math.random() * availableSlots.length);
+            const slot = availableSlots[randomIndex];
+
+            const colorIndex = Math.floor(Math.random() * carColors.length);
+            const car = createCar(slot.x, slot.z, colorIndex);
+            scene.add(car);
+            slot.occupied = true;
+            slot.car = car;
+            cars.push(car);
+            placedCars++;
+
+            availableSlots.splice(randomIndex, 1);
+        }
+    }
+
+
+    // 카메라 설정
+    let viewMode = 0;
+
+    function updateCamera() {
+        switch(viewMode) {
+            case 0: // 메인 뷰
+                camera.position.set(0, 25, 40);
+                camera.lookAt(0, 0, 0);
+                break;
+            case 1: // 측면 뷰
+                camera.position.set(45, 20, 0);
+                camera.lookAt(0, 0, 0);
+                break;
+            case 2: // 높은 각도
+                camera.position.set(0, 45, 20);
+                camera.lookAt(0, 0, 0);
+                break;
+        }
+    }
+    updateCamera();
+
+    // UI 업데이트
+    function updateUI() {
+        const available = totalSpaces - occupiedSpaces;
+        const rate = Math.round((occupiedSpaces / totalSpaces) * 100);
+        document.getElementById('total-count').textContent = totalSpaces;
+        document.getElementById('occupied-count').textContent = occupiedSpaces;
+        document.getElementById('available-count').textContent = available;
+        document.getElementById('occupancy-rate').textContent = rate + '%';
+    }
+
+    // 컨트롤 함수들
+    function toggleView() {
+        viewMode = (viewMode + 1) % 3;
+        updateCamera();
+    }
+
+    function addRandomCar() {
+        const emptySlots = parkingSlots.filter(slot => !slot.occupied);
+        if (emptySlots.length > 0) {
+            const slot = emptySlots[Math.floor(Math.random() * emptySlots.length)];
+            const colorIndex = Math.floor(Math.random() * carColors.length);
+            const car = createCar(slot.x, slot.z, colorIndex);
+            car.userData.colorIndex = colorIndex;  // ✅ 여기에 저장
+            scene.add(car);
+            slot.occupied = true;
+            slot.car = car;
+            cars.push(car);
+            occupiedSpaces++;
+            updateUI();
+        }
+    }
+
+
+    function removeRandomCar() {
+        const occupiedSlots = parkingSlots.filter(slot => slot.occupied);
+        if (occupiedSlots.length > 0) {
+            const slot = occupiedSlots[Math.floor(Math.random() * occupiedSlots.length)];
+            scene.remove(slot.car);
+            const carIndex = cars.indexOf(slot.car);
+            if (carIndex > -1) cars.splice(carIndex, 1);
+            slot.occupied = false;
+            slot.car = null;
+            occupiedSpaces--;
+            updateUI();
+        }
+    }
+
+    function resetParking() {
+        // 모든 차량 제거
+        cars.forEach(car => scene.remove(car));
+        cars.length = 0;
+        parkingSlots.forEach(slot => {
+            slot.occupied = false;
+            slot.car = null;
+        });
+        occupiedSpaces = 0;
+
+        // 일부 차량 다시 배치
+        const newOccupied = 15 + Math.floor(Math.random() * 20);
+        for (let i = 0; i < newOccupied; i++) {
+            addRandomCar();
+        }
+    }
+
+    // 애니메이션
+    let time = 0;
+    function animate() {
+        requestAnimationFrame(animate);
+        time += 0.01;
+
+        // 부드러운 카메라 움직임
+        if (viewMode === 0) {
+            camera.position.x = Math.sin(time * 0.1) * 3;
+        }
+
+        renderer.render(scene, camera);
+    }
+    function saveCurrentParkingToSession() {
+        const state = parkingSlots.map(slot => ({
+            occupied: slot.occupied,
+            colorIndex: slot.car?.userData?.colorIndex ?? null
+        }));
+        sessionStorage.setItem('parkingState', JSON.stringify(state));
+    }
+    function getPreviousOccupiedCount() {
+        const saved = sessionStorage.getItem('parkingState');
+        if (!saved) return 0;
+        const state = JSON.parse(saved);
+        return state.filter(s => s.occupied).length;
+    }
+    function loadFromSession() {
+        const saved = sessionStorage.getItem('parkingState');
+        if (!saved) return;
+
+        const state = JSON.parse(saved);
+        state.forEach((data, i) => {
+            if (data.occupied) {
+                const slot = parkingSlots[i];
+                const colorIndex = data.colorIndex || 0;
+                const car = createCar(slot.x, slot.z, colorIndex);
+                car.userData.colorIndex = colorIndex;
+                scene.add(car);
+                slot.occupied = true;
+                slot.car = car;
+                cars.push(car);
+            }
+        });
+
+        occupiedSpaces = state.filter(s => s.occupied).length;
+        updateUI();
+    }
+
+
+    updateUI();
+    animate();
+    loadFromSession();
+    fetchLiveStatus();
+    // 반응형 처리
+    window.addEventListener('resize', () => {
+        camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    });
+</script>
+</body>
+</html>

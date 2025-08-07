@@ -1,0 +1,35 @@
+package com.aipms.service;
+
+import com.aipms.dto.*;
+import com.siot.IamportRestClient.exception.IamportResponseException;
+
+import java.io.IOException;
+
+public interface PaymentService {
+    PaymentResultDto processPayment(PaymentRequestDto requestDto);
+
+    AccountInfoResponseDto getAccountInfo(Long memberId);
+
+    PaymentHistoryResponseDto getPaymentHistory(PaymentHistoryRequestDto req);
+
+    boolean verifyAndRecord(PaymentVerifyRequestDto dto, Long memberId);
+
+    void markAsPaid(Long paymentId);
+
+    boolean requestSubscriptionPayment(Long memberId, String customerUid, Integer amount);
+
+    boolean recordSubscriptionPayment(Long memberId, String customerUid, String merchantUid, String impUid, Integer amount, String paymentType, String carNumber);
+
+    PageDto<AdminPaymentDto> getAdminPaymentList(AdminPaymentHistoryRequestDto req);
+
+    void payForDailyReservation(DailyReservationPaymentDto dto);
+
+    void payForMonthlyReservation(MonthlyReservationPaymentDto dto);
+
+
+    void processAdminRefund(Long reservationId, String reason);
+
+    PaymentSummaryDto getPaymentSummary();
+
+    PaymentRes createPayment(PaymentReq paymentReq, Long memberId) throws IamportResponseException, IOException;
+}

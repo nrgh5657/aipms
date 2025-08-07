@@ -1,0 +1,155 @@
+/* ✅ 카드 2개를 가로로 정렬하는 컨테이너 */
+.card-row-wrapper {
+    display: flex;
+    gap: 32px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;  /* ✅ 추가: 중앙 정렬 */
+}
+
+/* ✅ 공통 카드 스타일 */
+.dashboard-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ✅ 도넛 카드 (왼쪽 고정폭) */
+.donut-card {
+    width: 700px;
+    height: 380px;
+    flex-shrink: 0;
+}
+
+.donut-row {
+    display: flex;
+    gap: 30px;
+    justify-content: space-between;
+    padding-top: 10px;
+}
+
+/* ✅ 각 도넛 차트 */
+.donut-chart-wrapper {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    text-align: center;
+}
+
+.donut-chart-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.center-number {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 700;
+    font-size: 20px;
+    color: #1f2937;
+}
+
+.chart-title {
+    margin-top: 10px;
+    font-weight: 500;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+/* ✅ 혼합 그래프 카드 (오른쪽 가변폭) */
+.chart-card {
+    flex: 1;
+    min-width: 400px; /* ✅ 최소 너비 보장 */
+    max-width: 800px;
+    height: 380px;
+}
+
+/* 그래프 제목 + 필터 영역 */
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.chart-title-label {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #1f2937;
+}
+
+.chart-filters label {
+    margin-right: 8px;
+    font-size: 13px;
+    color: #374151;
+}
+
+.chart-filters input,
+.chart-filters select {
+    margin-left: 5px;
+    font-size: 13px;
+}
+
+/* ✅ Chart.js 그래프 사이즈 조절 */
+.chart-card canvas {
+    width: 100% !important;
+    height: 280px !important;
+}
+
+.chart-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.chart-filters select,
+.chart-filters input[type="date"],
+.chart-filters input[type="number"],
+.chart-filters button {
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
+/* ✅ 요일별 그래프 카드 */
+.weekly-chart-card {
+    width: 700px;
+    height: 400px;
+    flex-shrink: 0;
+}
+
+.line-chart-card {
+    flex: 1;
+    height: 400px;
+    min-width: 300px;
+    max-width: 800px;
+}
+
+/* 📌 월간 수익 비교용 카드 전용 스타일 */
+.line-chart-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin-top: 24px;
+}
+
+/* 타이틀 라벨 */
+.line-chart-card .chart-title-label {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #374151;
+}
+
+/* 캔버스 스타일 */
+.line-chart-card canvas {
+    max-height: 300px;
+    width: 100%;
+}

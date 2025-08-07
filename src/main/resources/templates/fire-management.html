@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Parking Management System - 화재 관리</title>
+  <link rel="stylesheet" href="/css/fireStyle.css">
+</head>
+<body>
+
+  <!-- 헤더: 맨위 상단 파트 -->
+  <header class="header">
+    <div class="header-top">
+      <div class="header-info">
+        <span id="currentScreen">화면ID: Fire_001</span>
+        <span id="screenName">화면명: 화재 관리</span>
+      </div>
+      <div class="header-info">
+        <span>사용자: <span id="adminName">Admin</span></span>
+        <span id="currentDate">작성일: 2025-07-10</span>
+      </div>
+    </div>
+
+    <!-- 헤더: 메인 헤더(제목, 버튼 등) -->
+    <div class="main-header">
+      <div class="logo-container">
+        <div class="system-title">🅿 AI 주차 관리 시스템</div>
+       </div>
+      <div class="header-actions">
+        <form id="logoutForm" action="/logout" method="POST" style="display: none;"></form>
+        <button class="header-btn" onclick="showNotifications()">🔔 알림</button>
+        <button class="header-btn" onclick="showSettings()">⚙️ 설정</button>
+        <button class="header-btn" onclick="showAdminRegister()">👥 관리자 등록</button>
+        <button class="header-btn logout" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+    
+    <nav class="nav-tabs">
+      <a href="/management/admin" class="nav-tab active">대시보드</a>
+      <a href="/management/parking" class="nav-tab">주차 관리</a>
+      <a href="/management/fee" class="nav-tab">요금 관리</a>
+      <a href="/management/fireManage" class="nav-tab">화재 관리</a>
+      <a href="/management/member" class="nav-tab">회원 관리</a>
+      <a href="/management/systemLogs" class="nav-tab">시스템 로그</a>
+    </nav>
+  </header>
+
+  <!-- 좌측 사이드바-->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h3>관리 메뉴</h3>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <h4>🅿️ 주차 관리</h4>
+        <ul>
+          <li><a href="/management/parking" class="active">주차 현황 확인</a></li>
+          <li><a href="/management/parkingLog">차량 입출차 로그</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>💰 요금 관리</h4>
+        <ul>
+          <li><a href="/management/fee">요금 정책 관리</a></li>
+          <li><a href="/management/fee">환불 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>🔥 화재 관리</h4>
+        <ul>
+          <li><a href="/management/fireManage" class="active">화재 기록 관리</a></li>
+          <li><a href="/management/fireCctv">CCTV 영상 확인</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>👥 회원 관리</h4>
+        <ul>
+          <li><a href="/management/member">회원 정보 관리</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>📊 시스템 로그</h4>
+        <ul>
+          <li><a href="/management/systemLogs">시스템 상태</a></li>
+        </ul>
+      </div>
+    </nav>
+  </aside>
+<!--공통된 디자인: 디자인 수정하지 말 것-->
+
+
+
+  <!-- 메인 컨테이너 -->
+  <main class="main-content">
+    <!-- 화재 관리 섹션 -->
+    <section class="content-section" id="fire-management-section">
+      <div class="section-header">
+        <h2>🔥 화재 감지 기록 관리</h2>
+        <div class="section-actions">
+          <button class="action-btn primary" onclick="addManualFireLog()">+ 수동 기록 추가</button>
+          <button class="action-btn" onclick="exportFireLog()">로그 내보내기</button>
+          <button class="action-btn" onclick="refreshFireLog()">새로고침</button>
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">전체</button>
+          <button class="filter-btn" data-filter="fire">화재</button>
+          <button class="filter-btn" data-filter="normal">정상</button>
+        </div>
+        
+        <div class="search-group">
+          <select class="search-select" id="cctvLocationFilter">
+            <option value="">전체 위치</option>
+            <option value="1층 주차장">1층 주차장</option>
+            <option value="2층 주차장">2층 주차장</option>
+            <option value="3층 주차장">3층 주차장</option>
+          </select>
+          <input type="date" class="search-input" id="dateFilter">
+          <button class="search-btn" onclick="applyFireFilters()">검색</button>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Log ID</th>
+              <th>감지 시간</th>
+              <th>CCTV 위치</th>
+              <th>AI 판별 결과</th>
+              <th>신뢰도</th>
+              <th>관리자 판단</th>
+              <th>알림 상태</th>
+              <th>알림 시간</th>
+              <th>Notes</th>
+              <th>처리</th>
+            </tr>
+          </thead>
+          <tbody id="fireLogTable">
+            <!-- 동적으로 생성됨 -->
+          </tbody>
+        </table>
+      </div>
+      
+
+       <!--페이징:기능추가-->
+      <div class="pagination" id="pagination">
+
+      </div>
+    </section>
+  </main>
+
+  <!-- 모달 영역 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent">
+      <!-- 동적으로 생성됨 -->
+    </div>
+  </div>
+
+  <!-- 알림 메시지 팝업 -->
+  <div class="alert-popup" id="alertPopup">
+    <div class="alert-content">
+      <div class="alert-message" id="alertMessage"></div>
+      <button class="alert-close-btn" onclick="closeAlert()">확인</button>
+    </div>
+  </div>
+
+  <script src="/js/fireScript.js"></script>
+</body>
+</html>

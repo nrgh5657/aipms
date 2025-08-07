@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트파킹 - 고객지원</title>
+  <link rel="stylesheet" href="/css/customer-style.css">
+  <script th:inline="javascript">
+    const serverUserData = /*[[${userDataJson}]]*/ null;
+  </script>
+</head>
+<body>
+<header>
+  <div class="top-bar">
+    <div class="logo">
+      <a th:href="@{/}" >
+        <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img">
+      </a>
+    </div>
+
+    <div class="user-info">
+      <span class="welcome">안녕하세요, <strong id="user-name" th:text="${myInfo.memberInfo.name}">사용자</strong>님!</span>
+      <span class="user-grade" id="membership-grade">
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'VIP'}">💎 VIP</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Gold'}">🥇 Gold</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Silver'}">🥈 Silver</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Bronze'}">🥉 Bronze</span>
+                <span th:if="${myInfo.membershipInfo == null || myInfo.membershipInfo.membershipGrade == null}">일반회원</span>
+            </span>
+      <form id="logoutForm" th:action="@{/logout}" method="post" th:csrf="true">
+        <a href="/logout" class="logout-btn">로그아웃</a>
+
+      </form>
+    </div>
+  </div>
+  <nav class="main-menu">
+    <ul>
+      <li><a th:href="@{/reservation}">🅿️ 주차 예약</a></li>
+      <li><a th:href="@{/payment}">💳 요금 결제</a></li>
+      <li><a th:href="@{/my-records}">📊 이용 내역</a></li>
+      <li><a th:href="@{/my-info}">⚙️ 내 정보</a></li>
+      <li><a th:href="@{/support}">🎧 고객지원</a></li>
+    </ul>
+  </nav>
+</header>
+<main>
+  <div class="page-header">
+    <h2>고객지원 센터</h2>
+    <p>궁금한 점이 있으시면 언제든지 문의해주세요</p>
+  </div>
+
+  <!-- 연락처 정보 -->
+  <section class="contact-info">
+    <div class="contact-grid">
+      <div class="contact-card phone">
+        <div class="contact-icon">📞</div>
+        <h3>전화 문의</h3>
+        <div class="contact-number">1588-1234</div>
+        <p>평일 09:00 - 18:00<br>주말/공휴일 10:00 - 17:00</p>
+        <button class="contact-btn" onclick="makeCall()">전화하기</button>
+      </div>
+
+      <div class="contact-card email">
+        <div class="contact-icon">📧</div>
+        <h3>이메일 문의</h3>
+        <div class="contact-email">support@aipms.com</div>
+        <p>24시간 접수 가능<br>평균 답변시간: 2시간 이내</p>
+        <button class="contact-btn" onclick="sendEmail()">메일보내기</button>
+      </div>
+
+      <div class="contact-card chat">
+        <div class="contact-icon">💬</div>
+        <h3>실시간 채팅</h3>
+        <div class="chat-status online">상담사 대기중</div>
+        <p>평일 09:00 - 18:00<br>실시간 1:1 상담 서비스</p>
+        <button class="contact-btn chat-btn" onclick="startChat()">채팅시작</button>
+      </div>
+
+      <div class="contact-card visit">
+        <div class="contact-icon">🏢</div>
+        <h3>방문 문의</h3>
+        <div class="visit-address">서울시 강남구 테헤란로 123</div>
+        <p>평일 09:00 - 18:00<br>점심시간 12:00 - 13:00</p>
+        <button class="contact-btn" onclick="showMap()">위치보기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ 섹션 -->
+  <section class="faq-section">
+    <h3>자주 묻는 질문 (FAQ)</h3>
+
+    <div class="faq-categories">
+      <button class="category-btn active" onclick="filterFAQ('all')">전체</button>
+      <button class="category-btn" onclick="filterFAQ('reservation')">예약</button>
+      <button class="category-btn" onclick="filterFAQ('payment')">결제</button>
+      <button class="category-btn" onclick="filterFAQ('service')">서비스</button>
+      <button class="category-btn" onclick="filterFAQ('account')">계정</button>
+    </div>
+
+    <div class="faq-search">
+      <input type="text" id="faq-search" placeholder="궁금한 내용을 검색해보세요..." onkeyup="searchFAQ()">
+      <button class="search-btn">🔍</button>
+    </div>
+
+    <div class="faq-list">
+      <!-- 예약 관련 FAQ -->
+      <div class="faq-item" data-category="reservation">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>예약을 취소하고 싶은데 어떻게 하나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>예약 취소는 다음과 같은 방법으로 가능합니다:</p>
+          <ul>
+            <li><strong>온라인:</strong> 대시보드 > 이용내역 > 예약내역에서 "취소" 버튼 클릭</li>
+            <li><strong>전화:</strong> 고객센터 1588-1234로 연락</li>
+            <li><strong>취소 수수료:</strong> 예약 시간 2시간 전까지는 무료, 이후 취소시 20% 수수료</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="reservation">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>주차장이 만차일 때는 어떻게 하나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>주차장 만차 시 대응 방법:</p>
+          <ul>
+            <li><strong>대기 등록:</strong> 대기자 명단에 등록하여 자리가 나면 자동 알림</li>
+            <li><strong>근처 주차장:</strong> 시스템에서 인근 이용 가능한 주차장 추천</li>
+            <li><strong>시간 연장:</strong> 기존 이용자의 시간 연장 여부에 따라 자리 확보</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="reservation">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>예약 없이 당일 주차가 가능한가요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>당일 주차는 주차장 상황에 따라 가능합니다:</p>
+          <ul>
+            <li><strong>현장 결제:</strong> 주차장 입구에서 QR코드로 즉시 결제 후 이용</li>
+            <li><strong>실시간 확인:</strong> 앱에서 실시간 주차 가능 여부 확인</li>
+            <li><strong>요금:</strong> 당일 요금은 예약 요금보다 10% 할증</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 결제 관련 FAQ -->
+      <div class="faq-item" data-category="payment">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>어떤 결제 방법을 사용할 수 있나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>다양한 결제 방법을 지원합니다:</p>
+          <ul>
+            <li><strong>카드 결제:</strong> 신용카드, 체크카드</li>
+            <li><strong>간편 결제:</strong> 카카오페이, 네이버페이, 페이코</li>
+            <li><strong>계좌 이체:</strong> 실시간 계좌이체</li>
+            <li><strong>포인트:</strong> 적립된 포인트 사용</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="payment">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>자동결제는 어떻게 설정하나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>자동결제 설정 방법:</p>
+          <ul>
+            <li><strong>설정 경로:</strong> 결제하기 > 자동결제 설정 > 결제수단 등록</li>
+            <li><strong>장점:</strong> 매번 결제할 필요 없이 자동으로 정산</li>
+            <li><strong>안전:</strong> 토큰 방식으로 카드 정보 안전 보관</li>
+            <li><strong>해지:</strong> 언제든지 해지 가능</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="payment">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>영수증은 어디서 확인할 수 있나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>영수증 확인 및 출력:</p>
+          <ul>
+            <li><strong>온라인:</strong> 이용내역 > 결제내역에서 영수증 보기</li>
+            <li><strong>이메일:</strong> 결제 완료 시 등록된 이메일로 자동 발송</li>
+            <li><strong>현장:</strong> 주차장 관리실에서 출력 가능</li>
+            <li><strong>세금계산서:</strong> 사업자는 세금계산서 발행 가능</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 서비스 관련 FAQ -->
+      <div class="faq-item" data-category="service">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>주차장 내에서 차량 손상이 발생했을 때는?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>차량 손상 발생 시 처리 절차:</p>
+          <ul>
+            <li><strong>즉시 신고:</strong> 고객센터 1588-1234로 즉시 연락</li>
+            <li><strong>현장 확인:</strong> 관리실 직원과 함께 손상 부위 확인</li>
+            <li><strong>보험 처리:</strong> 주차장 보험으로 손해 배상 처리</li>
+            <li><strong>CCTV:</strong> 필요시 CCTV 영상 확인</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="service">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>주차장 이용 시간은 어떻게 되나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>주차장 이용 시간 안내:</p>
+          <ul>
+            <li><strong>24시간 이용:</strong> 대부분의 주차장은 24시간 이용 가능</li>
+            <li><strong>입출차 시간:</strong> 특별한 제한 없음</li>
+            <li><strong>관리실:</strong> 평일 09:00-18:00, 주말 10:00-17:00</li>
+            <li><strong>응급상황:</strong> 24시간 비상연락망 운영</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="service">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>전기차 충전은 가능한가요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>전기차 충전 서비스:</p>
+          <ul>
+            <li><strong>충전소 위치:</strong> 대부분의 주차장에 전기차 충전소 설치</li>
+            <li><strong>충전 요금:</strong> 주차비 별도, 전력 사용량에 따라 과금</li>
+            <li><strong>예약:</strong> 전기차 충전 구역 우선 예약 가능</li>
+            <li><strong>앱 연동:</strong> 충전 현황 실시간 확인</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 계정 관련 FAQ -->
+      <div class="faq-item" data-category="account">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>비밀번호를 잊어버렸어요</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>비밀번호 재설정 방법:</p>
+          <ul>
+            <li><strong>온라인:</strong> 로그인 페이지 > 비밀번호 찾기 클릭</li>
+            <li><strong>휴대폰 인증:</strong> 등록된 휴대폰으로 인증번호 전송</li>
+            <li><strong>새 비밀번호 설정:</strong> 인증 완료 후 새 비밀번호 설정</li>
+            <li><strong>전화 문의:</strong> 고객센터로 연락하여 본인 확인 후 재설정</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="account">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>회원가입은 어떻게 하나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>회원가입 절차:</p>
+          <ul>
+            <li><strong>1단계:</strong> 웹사이트 또는 앱에서 "회원가입" 클릭</li>
+            <li><strong>2단계:</strong> 개인정보 입력 (이름, 휴대폰, 이메일)</li>
+            <li><strong>3단계:</strong> 휴대폰 인증번호 확인</li>
+            <li><strong>4단계:</strong> 차량정보 등록 및 약관 동의</li>
+            <li><strong>완료:</strong> 가입 완료 후 즉시 서비스 이용 가능</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" data-category="account">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <span>개인정보는 안전하게 보호되나요?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          <p>개인정보 보호 정책:</p>
+          <ul>
+            <li><strong>암호화:</strong> 모든 개인정보는 256bit SSL 암호화로 보호</li>
+            <li><strong>최소 수집:</strong> 서비스 이용에 필요한 최소한의 정보만 수집</li>
+            <li><strong>동의 철회:</strong> 언제든지 개인정보 이용 동의 철회 가능</li>
+            <li><strong>정기 폐기:</strong> 서비스 탈퇴시 즉시 개인정보 폐기</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer>
+    <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
+  </footer>
+
+  <!-- 공통 라이브러리 먼저 로드 -->
+  <script src="/common/utils.js"></script>
+  <script src="/common/api.js"></script>
+  <script src="/js/support.js"></script>
+</body>
+</html>

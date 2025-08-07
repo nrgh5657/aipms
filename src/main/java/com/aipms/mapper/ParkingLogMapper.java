@@ -1,0 +1,69 @@
+package com.aipms.mapper;
+
+import com.aipms.domain.ParkingLog;
+import com.aipms.dto.DayOfWeekEntryStatDto;
+import com.aipms.dto.ParkingLogFilterRequestDto;
+import com.aipms.dto.ParkingLogWithMemberDto;
+import com.aipms.dto.UsageHistoryDto;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+@Mapper
+public interface ParkingLogMapper {
+    void insertLog(ParkingLog log);
+
+    List<ParkingLogWithMemberDto> selectPagedLogs(@Param("limit") int limit, @Param("offset") int offset);
+
+    int countAllLogs();
+
+    ParkingLog findLatestUnexitedLog(String carNumber);
+
+    void updateExitTime(ParkingLog existing);
+
+    ParkingLog findLatestUnpaidByMemberId(Long memberId);
+
+
+
+    void updatePaymentInfoOnly(@Param("entryId") Long entryId,
+                                  @Param("paymentId") Long paymentId,
+                                  @Param("isPaid") boolean isPaid,
+                                  @Param("paidAt") LocalDateTime paidAt,
+                                  @Param("paymentMethod") String paymentMethod,
+                                  @Param("fee") int fee);
+
+
+    ParkingLog selectById(Long entryId);
+
+    void updatePaymentAndExitInfo(Map<String,? extends Serializable> entryId);
+
+    int countCurrentlyParkedCars();
+
+    List<ParkingLogWithMemberDto> selectFilteredLogs(ParkingLogFilterRequestDto filter);
+
+    int countFilteredLogs(ParkingLogFilterRequestDto filter);
+
+
+    List<Map<String, Object>> getParkedCarCountByDateList(@Param("startDate") LocalDate startDate,
+                                                          @Param("endDate") LocalDate endDate);
+
+    int countTodayEntries();
+
+    int countTodayExits();
+
+    int countCurrentParked();
+
+    List<ParkingLog> findLogsBetween(LocalDateTime start, LocalDateTime end);
+
+
+    List<DayOfWeekEntryStatDto> getAverageEntryByWeekday(int targetMonth);
+
+    int getEntryCountThisMonth();
+
+    ParkingLog findLatestUnpaidLogByCarNumber(@Param("carNumber") String carNumber);
+}

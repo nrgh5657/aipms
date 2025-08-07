@@ -1,0 +1,68 @@
+package com.aipms.mapper;
+
+import com.aipms.domain.Reservation;
+import com.aipms.dto.ReservationDto;
+import com.aipms.dto.ReservationHistoryDto;
+import com.aipms.dto.ReservationHistoryRequestDto;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+@Mapper
+public interface ReservationMapper {
+    void insertReservation(Reservation reservation);
+    List<Reservation> findByMemberId(Long memberId);
+
+    void updateStatus(Long reservationId, String status);
+    List<Reservation> findAll();
+
+    ReservationDto findUpcomingReservation(Long memberId, LocalDateTime now);
+
+    int countActiveSubscriptions();
+
+    // 예약 ID + 회원 ID로 예약 정보 조회
+    Reservation findByIdAndMemberId(@Param("reservationId") Long reservationId,
+                                    @Param("memberId") Long memberId);
+
+    // 예약 상태를 취소로 업데이트
+    int cancelReservation(@Param("reservationId") Long reservationId,
+                          @Param("cancelReason") String reason,
+                          @Param("refundAmount") int refundAmount);
+
+    List<ReservationHistoryDto> getPagedReservationHistory(ReservationHistoryRequestDto dto);
+    int countReservationHistory(ReservationHistoryRequestDto dto);
+
+    int existsTodayReservation(Long memberId, LocalDate date);
+
+    int countOverlappingReservation(Long memberId, LocalDateTime start, LocalDateTime end);
+
+    boolean existsReservationForTime(Long memberId, LocalDateTime entryTime);
+
+    int countActiveReservations();
+
+    int cancelUnpaidExpiredReservations();
+
+    ReservationDto selectReservationById(Long reservationId);
+
+    List<ReservationDto> selectUnpaidDailyReservations(Long memberId);
+
+    List<ReservationDto> selectUnpaidMonthlyReservations(Long memberId);
+
+    int countMonthlyReservation(Long memberId, LocalDate startOfMonth);
+
+    int countActiveMonthlyReservations();
+
+    List<Map<String, Object>> getDailyReservationCountByDate(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    Reservation findById(Long reservationId);
+
+    int countActiveMonthlyMembers();
+}

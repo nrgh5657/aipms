@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.PaymentMapper">
+
+    <insert id="insertPayment" parameterType="com.aipms.domain.Payment" useGeneratedKeys="true" keyProperty="paymentId">
+        INSERT INTO payment (
+            member_id,
+            reservation_id,
+            entry_id,
+            total_fee,
+            payment_method,
+            payment_gateway,
+            paid,
+            status,
+            cancelled,
+            payment_time,
+            transaction_id,
+            merchant_uid,
+            imp_uid,
+            car_number
+        )
+        VALUES (
+                #{memberId},
+                #{reservationId},
+                #{entryId},
+                #{totalFee},
+                #{paymentMethod},
+                #{gateway},
+                #{paid},
+                #{status},
+                #{cancelled},
+                #{paymentTime},
+                #{transactionId},
+                #{merchantUid},
+                #{impUid},
+                #{carNumber}
+               )
+    </insert>
+
+    <select id="selectByTransactionId" resultType="com.aipms.domain.Payment">
+        SELECT *
+        FROM payment
+        WHERE transaction_id = #{transactionId}
+    </select>
+
+    <select id="selectPaymentById" resultType="com.aipms.domain.Payment">
+        SELECT * FROM payment WHERE payment_id = #{paymentId}
+    </select>
+
+    <select id="selectPaymentByEntryId" resultType="com.aipms.domain.Payment">
+        SELECT * FROM payment WHERE entry_id = #{entryId}
+    </select>
+
+
+    <select id="getAccountInfo" resultType="com.aipms.dto.AccountInfoResponseDto">
+        SELECT
+            point,
+            point_expire_next_month AS pointExpireNextMonth,
+            prepaid_balance AS prepaidBalance,
+            last_charged_at AS lastChargedAt,
+            monthly_usage AS monthlyUsage,
+            compare_last_month AS compareLastMonth
+        FROM account_info
+        WHERE member_id = #{memberId}
+    </select>
+
+    <!-- ✅ 결제 내역 목록 조회 (필터 + 페이징) -->
+    <select id="selectPayments" resultType="com.aipms.dto.PaymentHistoryDto">
+        SELECT
+        p.payment_id AS paymentId,
+        p.total_fee AS totalFee,
+        p.payment_method AS paymentMethod,
+        p.payment_gateway AS paymentGateway,
+        p.status,
+        p.payment_time AS paymentTime,
+        p.cancelled,
+        p.car_number AS carNumber
+        FROM payment p
+        <where>
+            <if test="req.memberId != null">
+                AND p.member_id = #{req.memberId}
+            </if>
+            <if test="req.startDate != null and req.startDate != ''">
+                AND p.payment_time &gt;= #{req.startDate}
+            </if>
+            <if test="req.endDate != null and req.endDate != ''">
+                AND p.payment_time &lt;= CONCAT(#{req.endDate}, ' 23:59:59')
+            </if>
+            <if test="req.status != null and req.status != '' and req.status != 'all'">
+                AND p.status = #{req.status}
+            </if>
+            <if test="req.keyword != null and req.keyword != ''">
+                AND (
+                CAST(p.payment_id AS CHAR) LIKE CONCAT('%', #{req.keyword}, '%')
+                OR p.payment_method LIKE CONCAT('%', #{req.keyword}, '%')
+                OR p.payment_gateway LIKE CONCAT('%', #{req.keyword}, '%')
+                OR p.car_number LIKE CONCAT('%', #{req.keyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY p.payment_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+
+
+
+    <!-- ✅ 결제 총 건수 (페이징용) -->
+    <select id="countPayments" resultType="int">
+        SELECT COUNT(*)
+        FROM payment p
+        <where>
+            <if test="req.memberId != null">
+                AND p.member_id = #{req.memberId}
+            </if>
+            <if test="req.startDate != null and req.startDate != ''">
+                AND p.payment_time &gt;= #{req.startDate}
+            </if>
+            <if test="req.endDate != null and req.endDate != ''">
+                AND p.payment_time &lt;= CONCAT(#{req.endDate}, ' 23:59:59')
+            </if>
+            <if test="req.status != null and req.status != '' and req.status != 'all'">
+                AND p.status = #{req.status}
+            </if>
+            <if test="req.keyword != null and req.keyword != ''">
+                AND (
+                CAST(p.payment_id AS CHAR) LIKE CONCAT('%', #{req.keyword}, '%')
+                OR p.payment_method LIKE CONCAT('%', #{req.keyword}, '%')
+                OR p.payment_gateway LIKE CONCAT('%', #{req.keyword}, '%')
+                OR p.car_number LIKE CONCAT('%', #{req.keyword}, '%')
+                )
+            </if>
+        </where>
+    </select>
+
+    <update id="updatePaidStatus">
+        UPDATE payment
+        SET paid = #{paid}
+        WHERE payment_id = #{paymentId}
+    </update>
+
+
+    <!-- 관리자 결제 내역 목록 조회 -->
+    <select id="selectAdminPayments" resultType="com.aipms.dto.AdminPaymentDto">
+        SELECT
+        p.payment_id AS id,
+        p.car_number AS carNumber,
+        m.name AS payer,
+        CASE
+        WHEN p.reservation_id IS NULL THEN '일반'
+        WHEN r.type = 'MONTHLY' THEN '월주차'
+        WHEN r.type = 'DAILY' THEN '일주차'
+        END AS paymentType,
+        p.total_fee AS amount,
+        p.payment_method AS paymentMethod,
+        p.payment_time AS paidAt,
+        p.status AS status,
+        p.reservation_id AS reservationId
+        FROM payment p
+        LEFT JOIN member m ON p.member_id = m.member_id
+        LEFT JOIN subscription s ON s.member_id = m.member_id AND s.active = 1
+        LEFT JOIN reservation r ON p.reservation_id = r.reservation_id <!-- ✅ 이 줄 추가됨 -->
+        <where>
+            <if test="req.keyword != null and req.keyword != ''">
+                AND (
+                m.name LIKE CONCAT('%', #{req.keyword}, '%') OR
+                p.car_number LIKE CONCAT('%', #{req.keyword}, '%')
+                )
+            </if>
+            <if test="req.status != null and req.status != '' and req.status != 'all'">
+                <choose>
+                    <when test="req.status == 'paid'">
+                        AND p.paid = 1 AND p.status = '결제 완료'
+                    </when>
+                    <when test="req.status == 'cancelled'">
+                        AND p.status = '결제 취소'
+                    </when>
+                    <when test="req.status == 'failed'">
+                        AND p.paid = 0 AND p.status = '결제 실패'
+                    </when>
+                    <when test="req.status == 'unpaid'">
+                        AND p.paid = 0 AND p.status IS NULL
+                    </when>
+                </choose>
+            </if>
+            <!-- ✅ 추가된 필터 -->
+            <if test="req.type != null and req.type != '' and req.type != 'all'">
+                <choose>
+                    <when test="req.type == 'MONTHLY'">
+                        AND r.type = 'MONTHLY'
+                    </when>
+                    <when test="req.type == 'DAILY'">
+                        AND r.type = 'DAILY'
+                    </when>
+                    <when test="req.type == 'GENERAL'">
+                        AND p.reservation_id IS NULL
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY p.payment_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+
+    <!-- 관리자 결제 내역 총 건수 -->
+    <select id="countAdminPayments" resultType="int">
+        SELECT COUNT(*)
+        FROM payment p
+        LEFT JOIN parking_log pl ON p.payment_id = pl.payment_id
+        LEFT JOIN member m ON p.member_id = m.member_id
+        LEFT JOIN subscription s ON s.member_id = m.member_id AND s.active = 1
+        <where>
+            <if test="req.status != null and req.status != '' and req.status != 'all'">
+                <choose>
+                    <when test="req.status == 'paid'">
+                        AND p.paid = 1 AND p.status = '결제 완료'
+                    </when>
+                    <when test="req.status == 'cancelled'">
+                        AND p.status = '결제 취소'
+                    </when>
+                    <when test="req.status == 'failed'">
+                        AND p.paid = 0 AND p.status = '결제 실패'
+                    </when>
+                    <when test="req.status == 'unpaid'">
+                        AND p.paid = 0 AND p.status IS NULL
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <!-- 예약 ID로 결제 조회 -->
+    <select id="findByReservationId" resultType="com.aipms.domain.Payment">
+        SELECT *
+        FROM payment
+        WHERE reservation_id = #{reservationId}
+    </select>
+
+    <!-- 환불 완료 처리 -->
+    <update id="markAsCancelled">
+        UPDATE payment
+        SET cancelled = 1,
+            cancel_reason = #{cancelReason},
+            status = '환불 완료'
+        WHERE payment_id = #{paymentId}
+    </update>
+
+    <select id="findLatestSubscriptionPayment" parameterType="long" resultType="com.aipms.domain.Payment">
+        SELECT *
+        FROM payment
+        WHERE member_id = #{memberId}
+          AND payment_type = '정기권'
+          AND status = '결제 완료'
+        ORDER BY payment_time DESC
+            LIMIT 1
+    </select>
+
+    <!-- 오늘 매출 -->
+    <select id="getTodayRevenue" resultType="int">
+        SELECT IFNULL(SUM(total_fee), 0)
+        FROM payment
+        WHERE DATE(payment_time) = CURDATE()
+          AND status = '결제 완료'
+    </select>
+
+    <!-- 이번 달 매출 -->
+    <select id="getMonthlyRevenue" resultType="int">
+        SELECT IFNULL(SUM(total_fee), 0)
+        FROM payment
+        WHERE YEAR(payment_time) = YEAR(CURDATE())
+          AND MONTH(payment_time) = MONTH(CURDATE())
+          AND status = '결제 완료'
+    </select>
+
+    <!-- 이번 달 환불 완료 건수 (✅ SELECT 누락 보완) -->
+    <select id="countPendingRefunds" resultType="int">
+        SELECT COUNT(*)
+        FROM payment
+        WHERE YEAR(payment_time) = YEAR(CURDATE())
+          AND MONTH(payment_time) = MONTH(CURDATE())
+          AND status = '환불 완료'
+    </select>
+
+    <!-- 이번 달 결제 실패 + 취소 건수 -->
+    <select id="countFailedPayments" resultType="int">
+        SELECT COUNT(*)
+        FROM payment
+        WHERE YEAR(payment_time) = YEAR(CURDATE())
+          AND MONTH(payment_time) = MONTH(CURDATE())
+          AND status IN ('결제 실패', '결제 취소')
+    </select>
+
+    <select id="existsByImpUid" resultType="boolean" parameterType="string">
+        SELECT COUNT(*) > 0
+        FROM payment
+        WHERE imp_uid = #{impUid}
+    </select>
+
+
+
+</mapper>

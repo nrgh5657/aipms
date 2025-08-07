@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>인식 결과</title>
+    <link rel="stylesheet" href="/css/fast.css">
+</head>
+<body>
+<h2>번호판 인식 결과</h2>
+<p>인식된 번호판: <span th:text="${plateNumber}"></span></p>
+<img th:src="${plateImage}" alt="번호판 인식 이미지" style="max-width: 600px;">
+</body>
+</html>

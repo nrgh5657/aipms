@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.KakaoTokenMapper">
+
+    <!--카카오 아이디로 카카오 토큰 조회-->
+    <select id="findByKakaoId" parameterType="string" resultType="com.aipms.domain.KakaoToken">
+        SELECT token_id, kakao_id, access_token, refresh_token, issued_at, expires_at, uuid
+        FROM kakao_token
+        WHERE kakao_id = #{kakaoId}
+    </select>
+
+    <!--카카오 토큰 정보 저장-->
+    <insert id="insertToken" parameterType="com.aipms.domain.KakaoToken">
+        INSERT INTO kakao_token (kakao_id, access_token, refresh_token, issued_at, expires_at, uuid, nickname)
+        VALUES (#{kakaoId}, #{accessToken}, #{refreshToken}, #{issuedAt}, #{expiresAt}, #{uuid}, #{nickname})
+    </insert>
+
+    <!--카카오 아이디를 가진 카카오 토큰 정보 업데이트-->
+    <update id="updateToken" parameterType="com.aipms.domain.KakaoToken">
+        UPDATE kakao_token
+        SET access_token = #{accessToken},
+            refresh_token = #{refreshToken},
+            issued_at = #{issuedAt},
+            expires_at = #{expiresAt},
+            uuid = #{uuid},
+            nickname = #{nickname}
+        WHERE kakao_id = #{kakaoId}
+    </update>
+
+    <!--카카오 아이디를 가진 카카오 토큰 정보 삭제-->
+    <delete id="deleteByKakaoId" parameterType="string">
+        DELETE FROM kakao_token WHERE kakao_id = #{kakaoId}
+    </delete>
+
+</mapper>

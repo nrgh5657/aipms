@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트파킹 - 이용내역</title>
+  <link rel="stylesheet" href="/css/customer-style.css">
+  <script th:inline="javascript">
+    const serverUserData = /*[[${userDataJson}]]*/ null;
+  </script>
+</head>
+<body>
+<header>
+  <div class="top-bar">
+    <div class="logo">
+      <a th:href="@{/}" >
+        <img src="/img/logo.png" alt="스마트파킹 로고" class="logo-img">
+      </a>
+    </div>
+
+    <div class="user-info">
+      <span class="welcome">안녕하세요, <strong id="user-name" th:text="${myInfo.memberInfo.name}">사용자</strong>님!</span>
+      <span class="user-grade" id="membership-grade">
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'VIP'}">💎 VIP</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Gold'}">🥇 Gold</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Silver'}">🥈 Silver</span>
+                <span th:if="${myInfo.membershipInfo != null and myInfo.membershipInfo.membershipGrade == 'Bronze'}">🥉 Bronze</span>
+                <span th:if="${myInfo.membershipInfo == null || myInfo.membershipInfo.membershipGrade == null}">일반회원</span>
+            </span>
+      <form id="logoutForm" th:action="@{/logout}" method="post" th:csrf="true">
+        <a href="/logout" class="logout-btn">로그아웃</a>
+      </form>
+    </div>
+  </div>
+  <nav class="main-menu">
+    <ul>
+      <li><a th:href="@{/reservation}">🅿️ 주차 예약</a></li>
+      <li><a th:href="@{/payment}">💳 요금 결제</a></li>
+      <li><a th:href="@{/my-records}">📊 이용 내역</a></li>
+      <li><a th:href="@{/my-info}">⚙️ 내 정보</a></li>
+      <li><a th:href="@{/support}">🎧 고객지원</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <section class="page-header">
+    <h2>이용 내역</h2>
+    <p>주차 이용기록과 결제내역을 확인하세요!</p>
+  </section>
+
+  <!-- 에러 메시지 -->
+  <div id="records-error-message" class="error-message" style="display: none;"></div>
+
+  <div class="records-container">
+    <!-- 통계 요약 -->
+    <section class="records-summary">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-icon">🚗</div>
+          <div class="summary-data">
+            <span class="summary-number" id="total-count">47</span>
+            <span class="summary-label">총 이용횟수</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">⏱️</div>
+          <div class="summary-data">
+            <span class="summary-number" id="total-time">156h</span>
+            <span class="summary-label">총 이용시간</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">💰</div>
+          <div class="summary-data">
+            <span class="summary-number" id="total-paid">₩342K</span>
+            <span class="summary-label">총 결제금액</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">⭐</div>
+          <div class="summary-data">
+            <span class="summary-number" id="average-time">3.2h</span>
+            <span class="summary-label">평균 이용시간</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 필터 및 검색 -->
+    <section class="records-filter">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="date-from">기간</label>
+          <input type="date" id="date-from">
+          <span>~</span>
+          <input type="date" id="date-to">
+        </div>
+
+        <div class="filter-group">
+          <label for="record-type">유형</label>
+          <select id="record-type">
+            <option value="all">전체</option>
+            <option value="parking">주차이용</option>
+            <option value="payment">결제내역</option>
+            <option value="reservation">예약내역</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="status-filter">상태</label>
+          <select id="status-filter">
+            <option value="all">전체</option>
+            <option value="completed">완료</option>
+            <option value="pending">진행중</option>
+            <option value="cancelled">취소</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="search-keyword">검색</label>
+          <input type="text" id="search-keyword" placeholder="차량번호, 위치 검색">
+        </div>
+
+        <button class="filter-btn" onclick="applyFilter()">검색</button>
+        <button class="filter-btn" onclick="resetFilters()">초기화</button>
+        <button class="export-btn" onclick="exportRecords()">📁 내보내기</button>
+      </div>
+    </section>
+
+    <!-- 탭 메뉴 -->
+    <section class="records-tabs">
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="switchRecordTab('usage')">주차 이용내역</button>
+        <button class="tab-btn" onclick="switchRecordTab('payment')">결제 내역</button>
+        <button class="tab-btn" onclick="switchRecordTab('reservation')">예약 내역</button>
+      </div>
+    </section>
+
+    <!-- 주차 이용내역 -->
+    <section id="usage-records" class="records-content active">
+      <div class="usage-history history-list">
+        <div class="usage-history-header">
+          <div class="header-date">날짜</div>
+          <div class="header-duration">이용시간</div>
+          <div class="header-time">시간</div>
+          <div class="header-car">차량</div>
+          <div class="header-fee">요금</div>
+          <div class="header-status">상태</div>
+          <div class="header-actions">작업</div>
+        </div>
+        <!-- 이용 내역 항목들이 여기에 동적으로 추가됩니다 -->
+      </div>
+
+      <!-- 페이지네이션 -->
+      <div class="pagination" id="usage-pagination">
+        <button id="usage-prev-page" class="page-btn">‹ 이전</button>
+        <span id="usage-page-info" class="page-info">1 / 1 페이지 (총 0건)</span>
+        <button id="usage-next-page" class="page-btn">다음 ›</button>
+      </div>
+    </section>
+
+    <!-- 결제 내역 -->
+    <section id="payment-records" class="records-content">
+      <div class="payment-history history-list">
+        <!-- ✅ 공통 스타일 클래스 사용 -->
+        <div class="usage-history-header">
+          <div>날짜</div>         <!-- item-date -->
+          <div>대행사</div>     <!-- item-duration -->
+          <div>결제수단</div>     <!-- item-time -->
+          <div>차량</div>          <!-- item-car (여기엔 paymentId) -->
+          <div>요금</div>         <!-- item-fee -->
+          <div>상태</div>         <!-- item-status -->
+          <div>작업</div>         <!-- item-actions -->
+        </div>
+        <!-- ✅ 동적으로 .history-item 들이 추가됨 -->
+      </div>
+
+      <!-- 페이지네이션 -->
+      <div class="pagination" id="payment-pagination">
+        <button id="payment-prev-page" class="page-btn">‹ 이전</button>
+        <span id="payment-page-info" class="page-info">1 / 1 페이지 (총 0건)</span>
+        <button id="payment-next-page" class="page-btn">다음 ›</button>
+      </div>
+    </section>
+
+    <!-- 예약 내역 -->
+    <section id="reservation-records" class="records-content">
+      <div class="reservation-history history-list">
+        <div class="history-header">
+          <div class="header-date">날짜</div>
+          <div class="header-duration">시간</div>
+          <div class="header-spot">슬롯</div>
+          <div class="header-car">차량번호</div>
+          <div class="header-fee">요금</div>
+          <div class="header-status">상태</div>
+          <div class="header-actions">액션</div>
+        </div>
+        <!-- 예약 내역 항목들이 여기에 동적으로 추가됩니다 -->
+      </div>
+
+      <div class="pagination" id="reservation-pagination">
+        <button id="reservation-prev-page" class="page-btn">‹ 이전</button>
+        <span id="reservation-page-info" class="page-info">1 / 1 페이지 (총 0건)</span>
+        <button id="reservation-next-page" class="page-btn">다음 ›</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- 상세보기 모달 -->
+  <div id="detail-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>상세 내역</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">이용 번호:</span>
+            <span class="detail-value" id="detail-id">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">주차 위치:</span>
+            <span class="detail-value" id="detail-spot">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">차량 번호:</span>
+            <span class="detail-value" id="detail-car">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">입차 시간:</span>
+            <span class="detail-value" id="detail-entry">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">출차 시간:</span>
+            <span class="detail-value" id="detail-exit">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">이용 시간:</span>
+            <span class="detail-value" id="detail-duration">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">기본 요금:</span>
+            <span class="detail-value" id="detail-base">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">부가세:</span>
+            <span class="detail-value" id="detail-tax">-</span>
+          </div>
+          <div class="detail-item total">
+            <span class="detail-label">총 요금:</span>
+            <span class="detail-value" id="detail-total">-</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="receipt-btn" onclick="downloadReceipt()">📄 영수증 다운로드</button>
+        <button class="close-modal-btn" onclick="closeModal()">닫기</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 환불 안내 모달창 -->
+<div class="record-modal refund-modal" id="refundModal" style="display: none;">
+  <div class="record-modal-content">
+    <span class="close-btn" onclick="closeRefundModal()">&times;</span>
+    <h3>예약 환불 안내</h3>
+
+    <!-- 🔹 환불 정책 안내 문구 -->
+    <ul class="refund-policy-list">
+      <li>결제 후 <strong>60분 이내</strong> 환불 시 전액 환불됩니다.</li>
+      <li>예약일 <strong>2일 전까지</strong> 취소 시 전액 환불됩니다.</li>
+      <li>예약일 <strong>1일 전</strong> 취소 시 <strong>10%</strong> 위약금이 부과됩니다.</li>
+      <li><strong>예약 당일</strong> 취소 시 <strong>환불이 불가</strong>합니다.</li>
+    </ul>
+
+    <!-- 🔹 결제 및 환불 금액 -->
+    <div class="refund-amount-info">
+      <p>💳 결제 금액: <span id="refundOriginalAmount">10,000원</span></p>
+      <p>🧾 환불 금액: <strong id="refundAmountDisplay">9,000원</strong></p>
+    </div>
+
+    <!-- 🔹 환불 사유 입력 -->
+    <div class="refund-reason-section">
+      <label for="refundReason">환불 사유:</label>
+      <textarea id="refundReason" rows="3" placeholder="환불 사유를 입력해주세요"></textarea>
+    </div>
+
+    <!-- 🔹 버튼 영역 -->
+    <div class="modal-actions">
+      <button class="btn danger" onclick="confirmRefund()">환불 진행</button>
+      <button class="btn cancel" onclick="closeRefundModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+
+<footer>
+  <p>&copy; 2025 스마트파킹 | 편리하고 안전한 주차 서비스</p>
+</footer>
+
+<!-- 공통 라이브러리 먼저 로드 -->
+<script src="/common/utils.js"></script>
+<script src="/common/api.js"></script>
+<script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+<!-- 올바른 스크립트 참조 -->
+<script src="/js/records.js"></script>
+<script src="/js/exit.js"></script>
+</body>
+</html>

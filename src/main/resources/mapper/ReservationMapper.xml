@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.aipms.mapper.ReservationMapper">
+
+    <insert id="insertReservation" parameterType="com.aipms.dto.ReservationDto">
+        INSERT INTO reservation (
+            member_id,
+            vehicle_number,
+            reservation_start,
+            reservation_end,
+            status,
+            fee,
+            type
+        )
+        VALUES (
+                   #{memberId},
+                   #{vehicleNumber},
+                   #{reservationStart},
+                   #{reservationEnd},
+                   'UNPAID',
+                   #{fee},
+                   #{type}
+               )
+    </insert>
+
+    <select id="findByMemberId" resultType="com.aipms.domain.Reservation">
+        SELECT * FROM reservation WHERE member_id = #{memberId}
+    </select>
+
+    <select id="findById" resultType="com.aipms.domain.Reservation">
+        SELECT * FROM reservation WHERE reservation_id = #{reservationId}
+    </select>
+
+
+    <update id="updateStatus">
+        UPDATE reservation SET status = #{status} WHERE reservation_id = #{reservationId}
+    </update>
+
+    <select id="findAll" resultType="com.aipms.domain.Reservation">
+        SELECT * FROM reservation
+    </select>
+
+    <select id="countActiveReservations" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE type = 'DAILY'
+          AND status = 'PAID'
+          AND CURDATE() BETWEEN DATE(reservation_start) AND DATE(reservation_end);
+    </select>
+
+    <select id="findUpcomingReservation" parameterType="long" resultType="com.aipms.dto.ReservationDto">
+        SELECT
+        reservation_id   AS reservationId,
+        member_id        AS memberId,
+        vehicle_number   AS vehicleNumber,
+        reservation_start AS reservationStart,
+        reservation_end   AS reservationEnd,
+        status,
+        fee
+        FROM reservation
+        WHERE member_id = #{memberId}
+        AND status = 'PAID'
+        AND reservation_end >= NOW()  <!-- 🔍 현재 시각 기준으로 아직 유효한 예약만 -->
+        ORDER BY reservation_start ASC
+        LIMIT 1
+    </select>
+
+    <select id="countActiveSubscriptions" resultType="int">
+        SELECT COUNT(*)
+        FROM subscription
+        WHERE active = 1
+    </select>
+
+    <!-- 예약 조회 -->
+    <select id="findByIdAndMemberId" resultType="com.aipms.domain.Reservation">
+        SELECT *
+        FROM reservation
+        WHERE reservation_id = #{reservationId}
+          AND member_id = #{memberId}
+    </select>
+
+    <!-- 예약 상태 변경 -->
+    <update id="cancelReservation">
+        UPDATE reservation
+        SET status = 'CANCELLED',
+            cancel_reason = #{cancelReason},
+            cancelled_at = NOW(),
+            refund_amount = #{refundAmount},
+            updated_at = NOW()
+        WHERE reservation_id = #{reservationId}
+    </update>
+
+    <select id="getPagedReservationHistory" resultType="com.aipms.dto.ReservationHistoryDto">
+        SELECT
+        reservation_id AS id,
+        reservation_start,
+        reservation_end,
+        vehicle_number AS carNumber,
+        fee,
+        status
+        FROM reservation
+        WHERE member_id = #{memberId}
+        <if test="startDate != null and startDate != ''">
+            AND reservation_start &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND reservation_end &lt;= #{endDate}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND vehicle_number LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY reservation_start DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countReservationHistory" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE member_id = #{memberId}
+        <if test="startDate != null and startDate != ''">
+            AND reservation_start &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND reservation_end &lt;= #{endDate}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND vehicle_number LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <select id="existsTodayReservation" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE member_id = #{memberId}
+          AND DATE(reservation_start) = #{date}
+          AND status = 'PAID'
+    </select>
+
+    <select id="existsReservationForTime" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM reservation
+            WHERE member_id = #{memberId}
+              AND DATE(#{entryTime}) BETWEEN DATE(reservation_start) AND DATE(reservation_end)
+        )
+    </select>
+
+
+
+    <!--중복예약 방지-->
+    <select id="countOverlappingReservation" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE member_id = #{memberId}
+        AND status IN ('PAID', 'CONFIRMED')
+        AND
+        (
+            reservation_start &lt;= #{end}
+            AND reservation_end &gt;= #{start}
+        )
+    </select>
+
+    <update id="cancelUnpaidExpiredReservations">
+        UPDATE reservation
+        SET status = 'CANCELLED'
+        WHERE status = 'UNPAID'
+          AND DATE(created_at) &lt; CURDATE()
+    </update>
+
+    <select id="selectReservationById" resultType="com.aipms.dto.ReservationDto">
+        SELECT * FROM reservation
+        WHERE reservation_id = #{reservationId}
+    </select>
+
+    <select id="selectUnpaidDailyReservations" resultType="com.aipms.dto.ReservationDto">
+        SELECT
+            reservation_id,
+            member_id,
+            vehicle_number,
+            reservation_start,
+            reservation_end,
+            status,
+            fee,
+            type,
+            created_at
+        FROM reservation
+        WHERE member_id = #{memberId}
+          AND status = 'UNPAID'
+          AND type = 'DAILY'
+        ORDER BY created_at ASC
+    </select>
+
+    <select id="selectUnpaidMonthlyReservations" resultType="com.aipms.dto.ReservationDto">
+        SELECT
+            reservation_id,
+            member_id,
+            vehicle_number,
+            reservation_start,
+            reservation_end,
+            status,
+            fee,
+            type,
+            created_at
+        FROM reservation
+        WHERE member_id = #{memberId}
+          AND status = 'UNPAID'
+          AND type = 'MONTHLY'
+        ORDER BY created_at ASC
+    </select>
+
+    <select id="countMonthlyReservation" resultType="int">
+        SELECT COUNT(*)
+        FROM reservation
+        WHERE member_id = #{memberId}
+          AND type = 'MONTHLY'
+          AND status != 'CANCELLED'
+      AND reservation_start = #{startOfMonth}
+    </select>
+
+    <select id="countActiveMonthlyReservations" resultType="int">
+        SELECT COUNT(*) FROM reservation
+        WHERE type = 'MONTHLY'
+          AND status IN ('UNPAID', 'PAID')
+          AND reservation_end >= CURRENT_DATE()
+    </select>
+
+    <select id="getDailyReservationCountByDate" resultType="map">
+        SELECT
+            calendar.date AS `date`,
+            COUNT(r.reservation_id) AS `count`
+        FROM (
+                 SELECT DATE_ADD(#{startDate}, INTERVAL seq DAY) AS date
+                 FROM seq_0_to_30
+                 WHERE DATE_ADD(#{startDate}, INTERVAL seq DAY) &lt;= #{endDate}
+             ) calendar
+                 LEFT JOIN reservation r
+                           ON calendar.date BETWEEN DATE(r.reservation_start) AND DATE(r.reservation_end)
+            AND r.status = 'PAID'
+            AND r.type = 'DAILY'
+        GROUP BY calendar.date
+    </select>
+
+    <select id="countActiveMonthlyMembers" resultType="int">
+        SELECT COUNT(DISTINCT member_id)
+        FROM reservation
+        WHERE type = 'MONTHLY'
+          AND status = 'PAID'
+          AND CURDATE() BETWEEN DATE(reservation_start) AND DATE(reservation_end)
+    </select>
+
+
+
+</mapper>

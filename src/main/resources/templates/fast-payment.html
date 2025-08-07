@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주차장 결제</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #191f28;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f3f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #191f28;
+        }
+
+        .search-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 60vh;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .search-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #191f28;
+            margin-bottom: 8px;
+        }
+
+        .search-subtitle {
+            font-size: 16px;
+            color: #6b7684;
+            margin-bottom: 40px;
+        }
+
+        .search-form {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 18px 24px;
+            border: 2px solid #e5e8eb;
+            border-radius: 24px;
+            font-size: 18px;
+            background: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #0064ff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 0 0 4px rgba(0, 100, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .search-input::placeholder {
+            color: #9ca3af;
+            font-weight: 400;
+        }
+
+        .search-btn {
+            width: 100%;
+            max-width: 200px;
+            padding: 14px 32px;
+            background: #0064ff;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 100, 255, 0.25);
+        }
+
+        .search-btn:hover {
+            background: #0056e0;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 100, 255, 0.35);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 20px;
+            pointer-events: none;
+        }
+
+        .parking-info {
+            display: none;
+            padding: 0 20px;
+        }
+
+        .license-plate-section {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .plate-image {
+            width: 120px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .plate-info {
+            flex: 1;
+        }
+
+        .plate-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: #191f28;
+            margin-bottom: 4px;
+        }
+
+        .plate-type {
+            font-size: 14px;
+            color: #6b7684;
+        }
+
+        .info-grid {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #f1f3f4;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 16px;
+            color: #6b7684;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #191f28;
+        }
+
+        .total-section {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 32px 24px 80px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .total-label {
+            font-size: 16px;
+            color: #6b7684;
+            margin-bottom: 8px;
+        }
+
+        .total-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0064ff;
+            margin-bottom: 4px;
+        }
+
+        .total-currency {
+            font-size: 16px;
+            color: #6b7684;
+        }
+
+        .payment-button {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #f1f3f4;
+        }
+
+        .pay-btn {
+            width: 100%;
+            padding: 18px;
+            background: #0064ff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 100, 255, 0.3);
+        }
+
+        .pay-btn:hover {
+            background: #0056e0;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 100, 255, 0.4);
+        }
+
+        .pay-btn:active {
+            transform: translateY(0);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7684;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease;
+        }
+    </style>
+    <script src="https://js.tosspayments.com/v1/payment"></script>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>주차장 결제</h1>
+    </div>
+
+    <div class="search-section">
+        <h2>🚗 차량 번호 검색</h2>
+        <p class="search-subtitle">차량 번호를 입력해 조회해 보세요!</p>
+
+        <div class="search-form">
+            <div class="search-input-wrapper" style="text-align: center;">
+                <input type="text" id="plateSearchInput" class="search-input" placeholder="예: 12가3456" required>
+            </div>
+            <button class="search-btn" onclick="searchAndLoad()">조회하기</button>
+        </div>
+    </div>
+
+    <!-- ✅ 인식된 번호판 정보 영역 -->
+    <div id="ocrResult" style="display:none; padding: 20px;">
+        <span id="ocrPlateNumber" style="font-weight:bold; display:none;"></span></p>
+        <img id="ocrPlateImage" src="" alt="번호판 인식 이미지" style="max-width: 100%; border: 1px solid #ccc; border-radius: 8px;">
+    </div>
+
+    <!-- ✅ 요금 정보 표시 영역 -->
+    <div class="parking-info" id="parkingInfo" style="display:none;">
+        <div class="license-plate-section fade-in">
+            <div class="plate-image" id="plateImage">12가3456</div>
+            <div class="plate-info">
+                <div class="plate-number" id="plateNumber">12가3456</div>
+                <div class="plate-type">일반승용차</div>
+            </div>
+        </div>
+
+        <div class="info-grid fade-in">
+            <div class="info-item">
+                <span class="info-label">회원 여부</span>
+                <span class="info-value" id="memberStatus">-</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">입차 시간</span>
+                <span class="info-value" id="entryTime">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">이용 시간</span>
+                <span class="info-value" id="usageTime">2시간 15분</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">주차 구역</span>
+                <span class="info-value">B2구역 A-15</span>
+            </div>
+        </div>
+
+        <div class="total-section fade-in">
+            <div class="total-label">총 결제 금액</div>
+            <div class="total-amount" id="totalAmount">4,500원</div>
+        </div>
+    </div>
+
+    <!-- ✅ 결제 버튼 -->
+    <div class="payment-button" id="paymentButton" style="display: none;">
+        <button id="payBtn" class="pay-btn">결제하기</button>
+    </div>
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+    <script src="/js/main.js"></script>
+
+</div>
+
+</div>
+
+<script>
+    let latestFee = 0;
+    let finalFee = 0;
+
+    function searchAndLoad() {
+        // 초기화
+        document.getElementById('ocrPlateImage').src = '';
+        document.getElementById('ocrResult').style.display = 'none';
+        sessionStorage.removeItem('entryImage');
+        sessionStorage.removeItem('id');
+
+        const plate = document.getElementById('plateSearchInput').value.replace(/\s+/g, '');
+        if (!plate) {
+            alert('차량 번호를 입력해주세요.');
+            return;
+        }
+
+        fetch(`/search?plate=${encodeURIComponent(plate)}`, {
+            method: 'GET',
+            credentials: 'include'
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("서버 응답 실패");
+                return res.json();
+            })
+            .then(data => {
+                if (!data.entryTime) throw new Error("입차 정보 없음");
+
+                const id = data.id;
+                if (!id) throw new Error("id 없음");
+                sessionStorage.setItem('id', id); // 주차 로그 ID 저장
+
+                // 입차/출차 시간 계산
+                const plateNumber = data.plateNumber || plate;
+                const entryTime = new Date(data.entryTime);
+                const exitTime = new Date();
+                const durationMin = Math.floor((exitTime - entryTime) / 60000);
+                const hours = Math.floor(durationMin / 60);
+                const minutes = durationMin % 60;
+
+                // ✅ 요금 정책 적용
+                const baseFee = data.baseFee ?? 1000;
+                const unitMinutes = data.unitMinutes ?? 30;
+                const maxFee = data.maxFee ?? 20000;
+                const discountRate = data.discountRate ?? 0.0;
+
+                let fee = baseFee;
+                if (durationMin > unitMinutes) {
+                    const extraMinutes = durationMin - unitMinutes;
+                    const extraUnits = Math.ceil(extraMinutes / unitMinutes);
+                    fee += extraUnits * baseFee;
+                }
+                fee = Math.min(fee, maxFee);
+                finalFee = Math.floor(fee * (1 - discountRate));
+                latestFee = fee;
+
+                sessionStorage.setItem('finalFee', finalFee); // 외부 결제 모듈 연동용
+
+                // 날짜 포맷 함수
+                const formatDate = (d) =>
+                    `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+                // UI 업데이트
+                document.getElementById('memberStatus').textContent = data.member ? '회원' : '비회원';
+                document.getElementById('plateImage').textContent = plateNumber;
+                document.getElementById('plateNumber').textContent = plateNumber;
+                document.getElementById('entryTime').textContent = formatDate(entryTime);
+                document.getElementById('usageTime').textContent = `${hours}시간 ${minutes}분`;
+                document.getElementById('totalAmount').textContent = finalFee.toLocaleString() + '원';
+
+                if (data.imagePath) {
+                    document.getElementById('ocrPlateImage').src = data.imagePath;
+                    document.getElementById('ocrResult').style.display = 'block';
+                }
+
+                document.getElementById('parkingInfo').style.display = 'block';
+                document.getElementById('paymentButton').style.display = 'block';
+
+                // 부드럽게 스크롤
+                setTimeout(() => {
+                    document.getElementById('parkingInfo').scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+            })
+            .catch(err => {
+                alert('차량 정보를 찾을 수 없습니다.\n' + err.message);
+                console.error('검색 에러:', err);
+            });
+    }
+
+
+
+
+    const tossPayments = TossPayments('test_ck_5OWRapdA8dG2ZkZ6ovJPro1zEqZK');
+
+    function requestPayment() {
+        tossPayments.requestPayment('카드', {
+            amount: finalFee,  // ✅ 할인 후 금액으로 변경
+            orderId: 'ORDER_' + Date.now(),
+            orderName: '주차 요금',
+            customerName: '테스트 고객',
+            successUrl: 'http://localhost:8080/success',
+            failUrl: 'http://localhost:8080/fail'
+        });
+
+
+    }
+</script>
+
+</body>
+</html>
+</html>
